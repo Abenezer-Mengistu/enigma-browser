@@ -10,6 +10,7 @@ const { listTemplates } = require('./session-templates');
 const { DEFAULT_PRIVACY, effectiveSettings } = require('./privacy-store');
 const { encryptVault, decryptVault } = require('./sync-crypto');
 const { sharedEngine } = require('./filter-engine');
+const { initUpdater, checkForUpdates, downloadUpdate, quitAndInstall } = require('./updater');
 
 app.setName('Enigma');
 if (process.platform === 'win32') app.setAppUserModelId('app.enigmabrowser');
@@ -542,6 +543,7 @@ function createMain() {
   mainWin.on('unmaximize', () => mainWin.webContents.send('win-state', 'normal'));
   mainWin.on('closed', () => { mainWin = null; });
 
+  initUpdater(() => mainWin);
   ensureUsersMigrated();
   const reg = getRegistry();
   if (reg.activeUserId) setActiveUser(reg.activeUserId);
@@ -905,52 +907,9 @@ ipcMain.handle('app-icon-url', () => {
 ipcMain.handle('chromium-version', () => process.versions.chrome);
 ipcMain.handle('electron-version', () => process.versions.electron);
 
-const UPDATE_REPO = 'Abenezer-Mengistu/enigma-browser';
-const UPDATE_PAGE = 'https://abenezer-mengistu.github.io/enigma-browser/';
-
-function parseVersion(v) {
-  const m = String(v || '').replace(/^v/i, '').match(/(\d+)\.(\d+)\.(\d+)/);
-  if (!m) return null;
-  return [+m[1], +m[2], +m[3]];
-}
-
-function isVersionNewer(latest, current) {
-  const a = parseVersion(latest);
-  const b = parseVersion(current);
-  if (!a || !b) return false;
-  for (let i = 0; i < 3; i++) {
-    if (a[i] > b[i]) return true;
-    if (a[i] < b[i]) return false;
-  }
-  return false;
-}
-
-ipcMain.handle('check-for-update', async () => {
-  const current = app.getVersion();
-  try {
-    const res = await fetch(`https://api.github.com/repos/${UPDATE_REPO}/releases/latest`, {
-      headers: { 'User-Agent': 'Enigma-Browser', Accept: 'application/vnd.github+json' },
-    });
-    if (!res.ok) throw new Error('release fetch failed');
-    const data = await res.json();
-    const latest = (data.tag_name || '').replace(/^v/i, '');
-    return {
-      available: isVersionNewer(latest, current),
-      currentVersion: current,
-      latestVersion: latest,
-      url: data.html_url || UPDATE_PAGE,
-      downloadUrl: UPDATE_PAGE,
-    };
-  } catch {
-    return {
-      available: false,
-      currentVersion: current,
-      latestVersion: current,
-      url: UPDATE_PAGE,
-      downloadUrl: UPDATE_PAGE,
-    };
-  }
-});
+ipcMain.handle('check-for-update', () => checkForUpdates());
+ipcMain.handle('download-update', () => downloadUpdate());
+ipcMain.handle('quit-and-install', () => quitAndInstall());
 
 ipcMain.handle('context-menu', (_, p) => {
   const items = [];

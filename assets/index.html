@@ -422,6 +422,19 @@ html.compact-tabs .navbar{gap:4px;padding:3px 8px 4px}
 
 /* ═══ DOWNLOAD BAR ═══ */
 .dlbar{position:absolute;bottom:0;left:0;right:0;background:var(--s2);border-top:1px solid var(--b2);padding:8px 12px;display:flex;align-items:center;gap:10px;overflow-x:auto;z-index:55;transform:translateY(100%);transition:transform .2s}
+.update-banner{
+  display:none;align-items:center;gap:10px;padding:8px 14px;flex-shrink:0;
+  background:linear-gradient(90deg,rgba(124,58,237,.22),rgba(34,211,238,.12));
+  border-bottom:1px solid rgba(34,211,238,.22);font-size:12px;color:var(--t1);
+}
+.update-banner.show{display:flex}
+.update-banner strong{color:var(--cyan)}
+.update-banner .ubtn{
+  margin-left:auto;padding:6px 14px;border-radius:8px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#0891b2,#22d3ee);color:#042f3a;font-weight:700;font-size:11px;white-space:nowrap;
+}
+.update-banner .ubtn:hover{filter:brightness(1.06)}
+.update-banner .ubtn-x{background:none;border:none;color:var(--t3);cursor:pointer;padding:4px 8px;font-size:14px;line-height:1}
 .dlbar.open{transform:translateY(0)}
 .dli{display:flex;align-items:center;gap:8px;background:var(--s3);border-radius:var(--r);padding:7px 10px;min-width:200px;max-width:260px;flex-shrink:0;position:relative;overflow:hidden}
 .dli-prog{position:absolute;left:0;top:0;bottom:0;background:rgba(144,97,249,.1);transition:width .3s;pointer-events:none}
@@ -447,6 +460,36 @@ html.compact-tabs .navbar{gap:4px;padding:3px 8px 4px}
 
 /* ═══ MODAL ═══ */
 .overlay{position:fixed;inset:0;background:rgba(4,3,12,.7);display:flex;align-items:center;justify-content:center;z-index:400;backdrop-filter:blur(12px)}
+.onboarding{z-index:500;background:linear-gradient(165deg,rgba(12,74,110,.92),rgba(4,3,12,.96))}
+.onboarding-card{
+  width:min(440px,92vw);padding:36px 32px 28px;border-radius:20px;
+  background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+  border:1px solid rgba(34,211,238,.22);box-shadow:0 24px 80px rgba(0,0,0,.45),0 0 60px rgba(34,211,238,.08);
+  text-align:center;
+}
+.onboarding-logo{width:56px;height:56px;border-radius:14px;margin:0 auto 16px;box-shadow:0 0 28px rgba(124,58,237,.45)}
+.onboarding-card h1{font-size:1.65rem;font-weight:800;letter-spacing:-.03em;margin-bottom:8px}
+.onboarding-card .ob-sub{color:var(--t2);font-size:.9rem;line-height:1.55;margin-bottom:24px}
+.onboarding-card .ob-note{
+  font-size:.78rem;color:var(--t3);background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.15);
+  border-radius:10px;padding:10px 12px;margin-bottom:20px;text-align:left;
+}
+.ob-actions{display:flex;flex-direction:column;gap:10px}
+.ob-btn{
+  width:100%;padding:14px 18px;border-radius:12px;border:none;font-size:.95rem;font-weight:600;cursor:pointer;
+  transition:transform .12s,filter .15s;
+}
+.ob-btn:active{transform:scale(.98)}
+.ob-btn-primary{background:linear-gradient(135deg,#0891b2,#22d3ee);color:#042f3a}
+.ob-btn-primary:hover{filter:brightness(1.06)}
+.ob-btn-ghost{background:rgba(255,255,255,.06);color:var(--t1);border:1px solid var(--bdr)}
+.ob-btn-ghost:hover{background:rgba(255,255,255,.1)}
+.ob-form{margin-top:4px;text-align:left;display:none}
+.ob-form.show{display:block}
+.ob-form .m-inp{margin-bottom:14px}
+.ob-back{margin-top:14px;font-size:.8rem;color:var(--t3);cursor:pointer;background:none;border:none;width:100%}
+.ob-back:hover{color:var(--cyan)}
+.app.onboarding-pending{visibility:hidden}
 .modal{background:var(--glass);backdrop-filter:blur(28px);border:1px solid var(--b2);border-radius:var(--r-xl);padding:28px;width:min(400px,calc(100vw - 32px));display:flex;flex-direction:column;gap:18px;box-shadow:var(--shadow-lg)}
 .m-header{display:flex;flex-direction:column;gap:8px}
 .m-title{font-size:17px;font-weight:700;color:var(--t1);letter-spacing:-.02em;line-height:1.3}
@@ -696,6 +739,29 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
 </style>
 </head>
 <body>
+<div class="overlay onboarding" id="onboarding" style="display:none">
+  <div class="onboarding-card">
+    <img class="onboarding-logo" id="ob-logo" src="" alt="Enigma" width="56" height="56"/>
+    <h1>Welcome to Enigma</h1>
+    <p class="ob-sub" id="ob-version">Your private, multi-session browser</p>
+    <div class="ob-note">🔒 Sessions and data stay on <strong>this computer only</strong>. Nothing is copied from other installs or devices.</div>
+    <div id="ob-step-main">
+      <div class="ob-actions">
+        <button type="button" class="ob-btn ob-btn-primary" onclick="B.showOnboardingSignIn()">Sign in on this device</button>
+        <button type="button" class="ob-btn ob-btn-ghost" onclick="B.finishOnboardingGuest()">Continue without account</button>
+      </div>
+    </div>
+    <div class="ob-form" id="ob-step-signin">
+      <div class="m-label">Your name</div>
+      <input class="m-inp" id="ob-name" placeholder="How should we call you?" maxlength="24"
+        onkeydown="if(event.key==='Enter')B.finishOnboardingAccount()"/>
+      <div class="m-label">Accent color</div>
+      <div class="swatches" id="ob-swatches"></div>
+      <button type="button" class="ob-btn ob-btn-primary" style="margin-top:16px" onclick="B.finishOnboardingAccount()">Get started</button>
+      <button type="button" class="ob-back" onclick="B.showOnboardingMain()">← Back</button>
+    </div>
+  </div>
+</div>
 <div class="app" id="app">
   <div class="chrome">
 
@@ -727,6 +793,12 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
         <button class="tl-win-btn" id="btn-max" onclick="eAPI.winMax()" title="Maximize">&#9633;</button>
         <button class="tl-win-btn tl-win-close" onclick="eAPI.winClose()" title="Close">&#10005;</button>
       </div>
+    </div>
+
+    <div class="update-banner" id="update-banner">
+      <span>⬆ Update available — Enigma <strong id="update-ver">1.1.2</strong> is ready. Please update for privacy fixes and new features.</span>
+      <button type="button" class="ubtn" onclick="B.downloadUpdate()">Download update</button>
+      <button type="button" class="ubtn-x" onclick="B.dismissUpdate()" title="Dismiss">✕</button>
     </div>
 
     <!-- USER → SESSION → PAGES -->
@@ -1068,10 +1140,10 @@ const IFACTS = [
 
 // ══ STATE ════════════════════════════════════════════════════════════════
 const B = (() => {
-  let profiles  = [{id:'default',name:'Main',color:'#8b5cf6',isIncognito:false,ephemeral:false,partition:null}];
-  let users     = [{id:'u_default',name:'You',color:'#8b5cf6'}];
-  let activeUserId = 'u_default';
-  let mainUserPartition = 'persist:u_default_main';
+  let profiles  = [];
+  let users     = [];
+  let activeUserId = null;
+  let mainUserPartition = '';
   let activePid = 'default';
   let tabsByPid = {default:[]};
   let activeTid = {default:null};
@@ -3035,11 +3107,98 @@ const B = (() => {
     if(last) addTab(last.pid,last.url); else toast('No recently closed tabs');
   }
 
+  function showOnboarding(reg) {
+    $('app').classList.add('onboarding-pending');
+    $('ob-logo').src = APP_ICON_SVG;
+    $('ob-version').textContent = `Enigma ${reg.appVersion || ''} — set up on this device`;
+    selColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+    renderObSwatches();
+    $('onboarding').style.display = 'flex';
+    showOnboardingMain();
+  }
+
+  function hideOnboarding() {
+    $('onboarding').style.display = 'none';
+    $('app').classList.remove('onboarding-pending');
+  }
+
+  function showOnboardingMain() {
+    $('ob-step-main').style.display = 'block';
+    $('ob-step-signin').classList.remove('show');
+  }
+
+  function showOnboardingSignIn() {
+    $('ob-step-main').style.display = 'none';
+    $('ob-step-signin').classList.add('show');
+    setTimeout(() => $('ob-name').focus(), 60);
+  }
+
+  function renderObSwatches() {
+    const el = $('ob-swatches');
+    if (!el) return;
+    el.innerHTML = COLORS.map(c => `<div class="sw${c === selColor ? ' sel' : ''}" style="background:${c}" onclick="B._scOb('${c}')"></div>`).join('');
+  }
+  function _scOb(c) { selColor = c; renderObSwatches(); }
+
+  async function finishOnboardingGuest() {
+    const res = await eAPI.onboardingComplete({ mode: 'guest', name: 'Guest', color: selColor });
+    users = res.users;
+    activeUserId = res.activeUserId;
+    hideOnboarding();
+    await continueInit();
+    toast('Welcome — browsing as Guest on this device');
+  }
+
+  async function finishOnboardingAccount() {
+    const name = ($('ob-name')?.value || '').trim() || 'User';
+    const res = await eAPI.onboardingComplete({ mode: 'account', name, color: selColor });
+    users = res.users;
+    activeUserId = res.activeUserId;
+    hideOnboarding();
+    await continueInit();
+    toast(`Welcome, ${name}`);
+  }
+
+  let pendingUpdate = null;
+
+  async function checkForUpdate() {
+    try {
+      const info = await eAPI.checkForUpdate();
+      if (!info?.available) return;
+      if (settings.dismissedUpdateVersion === info.latestVersion) return;
+      pendingUpdate = info;
+      $('update-ver').textContent = info.latestVersion;
+      $('update-banner').classList.add('show');
+      toast(`Update available — Enigma ${info.latestVersion}. Please update.`);
+    } catch (e) { console.warn('[update]', e); }
+  }
+
+  function downloadUpdate() {
+    const url = pendingUpdate?.downloadUrl || pendingUpdate?.url || 'https://abenezer-mengistu.github.io/enigma-browser/';
+    eAPI.openExternal(url);
+  }
+
+  function dismissUpdate() {
+    $('update-banner').classList.remove('show');
+    if (pendingUpdate?.latestVersion) {
+      settings.dismissedUpdateVersion = pendingUpdate.latestVersion;
+      eAPI.settingsSave(settings);
+    }
+  }
+
   // ── INIT ─────────────────────────────────────────────────────────────────
   async function init() {
     const reg = await eAPI.usersInit();
+    if (reg.needsOnboarding) {
+      showOnboarding(reg);
+      return;
+    }
     users = reg.users?.length ? reg.users : users;
     activeUserId = reg.activeUserId || activeUserId;
+    await continueInit();
+  }
+
+  async function continueInit() {
     mainUserPartition = await eAPI.userMainPartition();
     renderUserStrip();
     const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:true};
@@ -3080,6 +3239,7 @@ const B = (() => {
     await renderAll();
     removeBootShell();
     window.addEventListener('beforeunload', saveSessionState);
+    checkForUpdate();
   }
 
   bindNewTabEvents();
@@ -3091,6 +3251,8 @@ const B = (() => {
     closeTab, switchTab, dupeTab, togglePin, toggleMute, _pinTab, _muteTab, reopenClosed,
     switchProfile, removeProfile, openProfileModal, closeModal, createProfile, _sc, toggleEphem,
     switchUser, removeUser, openUserModal, closeUserModal, createUser, _scUser,
+    showOnboarding, showOnboardingMain, showOnboardingSignIn, finishOnboardingGuest, finishOnboardingAccount, _scOb,
+    checkForUpdate, downloadUpdate, dismissUpdate,
     navigate:(url)=>navigate(url),
     goBack, goFwd, reload, hardReload, goHome, focusUrl, viewSource,
     copyPageUrl, copyPageTitle, toggleFullscreen, toggleDesktopSite, screenshotPage, muteAllTabs,

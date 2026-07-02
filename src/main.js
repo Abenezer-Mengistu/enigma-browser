@@ -4,10 +4,23 @@ const {
 const path = require('path');
 const fs   = require('fs');
 const os   = require('os');
+const crypto = require('crypto');
 const { isSafeExternalUrl, isNavigableUrl, hardenSession } = require('./security');
 
 app.setName('Enigma');
 if (process.platform === 'win32') app.setAppUserModelId('app.enigmabrowser');
+
+/** Always use OS app-data — never store profiles beside a portable/USB .exe */
+function resolveUserDataRoot() {
+  if (process.platform === 'win32') {
+    return path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'Enigma');
+  }
+  if (process.platform === 'darwin') {
+    return path.join(os.homedir(), 'Library', 'Application Support', 'Enigma');
+  }
+  return path.join(os.homedir(), '.config', 'Enigma');
+}
+app.setPath('userData', resolveUserDataRoot());
 
 app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer');
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
@@ -15,6 +28,7 @@ app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
 const DATA = app.getPath('userData');
 const USERS_ROOT = path.join(DATA, 'users');
 const REGISTRY_PATH = path.join(USERS_ROOT, 'registry.json');
+const INSTALL_BINDING_PATH = path.join(DATA, 'install-binding.json');
 const LEGACY_PATHS = {
   history: path.join(DATA, 'history.json'),
   bookmarks: path.join(DATA, 'bookmarks.json'),
@@ -51,36 +65,113 @@ function mainPartition(userId = activeUserId) {
   return `persist:u${userId}_main`;
 }
 
-function ensureUsersMigrated() {
-  fs.mkdirSync(USERS_ROOT, { recursive: true });
-  if (fs.existsSync(REGISTRY_PATH)) return;
-  const userId = 'u_default';
-  userDir(userId);
+function machineFingerprint() {
+  const parts = [os.hostname(), os.userInfo().username, process.platform, 'enigma-v1'];
+  return crypto.createHash('sha256').update(parts.join('|')).digest('hex').slice(0, 32);
+}
+
+function wipeAllLocalData() {
+  try {
+    if (fs.existsSync(USERS_ROOT)) fs.rmSync(USERS_ROOT, { recursive: true, force: true });
+    for (const legacy of Object.values(LEGACY_PATHS)) {
+      try { if (fs.existsSync(legacy)) fs.unlinkSync(legacy); } catch {}
+    }
+    const partsDir = path.join(DATA, 'Partitions');
+    if (fs.existsSync(partsDir)) fs.rmSync(partsDir, { recursive: true, force: true });
+    try { if (fs.existsSync(INSTALL_BINDING_PATH)) fs.unlinkSync(INSTALL_BINDING_PATH); } catch {}
+  } catch (e) { console.error('[wipeAllLocalData]', e); }
+}
+
+/** Bind profile storage to this computer — new machine = fresh start */
+function ensureMachineBinding() {
+  fs.mkdirSync(DATA, { recursive: true });
+  const machineId = machineFingerprint();
+  const binding = read(INSTALL_BINDING_PATH, null);
+  const hadUsers = fs.existsSync(REGISTRY_PATH);
+
+  if (!binding) {
+    write(INSTALL_BINDING_PATH, {
+      machineId,
+      boundAt: Date.now(),
+      appVersion: app.getVersion(),
+    });
+    return !hadUsers;
+  }
+
+  if (binding.machineId !== machineId) {
+    wipeAllLocalData();
+    write(INSTALL_BINDING_PATH, {
+      machineId,
+      boundAt: Date.now(),
+      appVersion: app.getVersion(),
+    });
+    return true;
+  }
+  return false;
+}
+
+function emptySessionSeed(color = '#8b5cf6') {
+  return {
+    profiles: [{ id: 'default', name: 'Main', color, isIncognito: false, ephemeral: false, partition: null }],
+    activePid: 'default',
+    tabsByPid: { default: [] },
+    activeTid: { default: null },
+  };
+}
+
+function seedUserFiles(userId, { color }) {
   const paths = userPaths(userId);
+  if (!migrateLegacyIntoUser(userId)) {
+    write(paths.settings, { ...DEFAULT_SETTINGS, restoreSession: true });
+    write(paths.history, []);
+    write(paths.bookmarks, []);
+    write(paths.session, emptySessionSeed(color));
+    try { fs.writeFileSync(paths.notes, ''); } catch {}
+  } else if (!fs.existsSync(paths.settings)) {
+    write(paths.settings, { ...DEFAULT_SETTINGS, restoreSession: true });
+  }
+}
+
+function migrateLegacyIntoUser(userId) {
+  const paths = userPaths(userId);
+  let copied = false;
   for (const [key, legacy] of Object.entries(LEGACY_PATHS)) {
     const dest = paths[key];
     if (fs.existsSync(legacy) && !fs.existsSync(dest)) {
-      try { fs.copyFileSync(legacy, dest); } catch (e) { console.error('[migrate]', key, e); }
+      try { fs.copyFileSync(legacy, dest); copied = true; } catch (e) { console.error('[migrate]', key, e); }
     }
   }
-  if (!fs.existsSync(paths.settings)) write(paths.settings, DEFAULT_SETTINGS);
-  if (!fs.existsSync(paths.session)) {
-    write(paths.session, {
-      profiles: [{ id: 'default', name: 'Main', color: '#8b5cf6', isIncognito: false, ephemeral: false, partition: null }],
-      activePid: 'default',
-      tabsByPid: {},
-      activeTid: {},
-    });
-  }
+  return copied;
+}
+
+function ensureUsersMigrated() {
+  fs.mkdirSync(USERS_ROOT, { recursive: true });
+  if (fs.existsSync(REGISTRY_PATH)) return;
+
+  const hasLegacy = Object.values(LEGACY_PATHS).some(p => fs.existsSync(p));
+  if (!hasLegacy) return;
+
+  const userId = 'u_default';
+  userDir(userId);
+  seedUserFiles(userId, { name: 'You', color: '#8b5cf6', type: 'account' });
   write(REGISTRY_PATH, {
     activeUserId: userId,
-    users: [{ id: userId, name: 'You', color: '#8b5cf6', created: Date.now() }],
+    onboardingComplete: true,
+    users: [{ id: userId, name: 'You', color: '#8b5cf6', type: 'account', created: Date.now() }],
   });
 }
 
 function getRegistry() {
-  ensureUsersMigrated();
-  return read(REGISTRY_PATH, { activeUserId: 'u_default', users: [] });
+  fs.mkdirSync(USERS_ROOT, { recursive: true });
+  if (!fs.existsSync(REGISTRY_PATH)) {
+    return { activeUserId: null, users: [], onboardingComplete: false };
+  }
+  const reg = read(REGISTRY_PATH, { activeUserId: null, users: [], onboardingComplete: false });
+  if (!reg.onboardingComplete && reg.users?.length) {
+    reg.onboardingComplete = true;
+    saveRegistry(reg);
+  }
+  return reg;
 }
 
 function saveRegistry(reg) {
@@ -88,6 +179,7 @@ function saveRegistry(reg) {
 }
 
 function setActiveUser(userId) {
+  if (!userId) return;
   activeUserId = userId;
   appSettings = getSettings();
   applySessionPolicy(session.fromPartition(mainPartition(userId)));
@@ -118,8 +210,9 @@ const hookedSessions = new WeakSet();
 let appSettings = { ...DEFAULT_SETTINGS };
 let blockedTrackerCount = 0;
 
-function getSettings() {
-  return { ...DEFAULT_SETTINGS, ...read(userPaths().settings, {}) };
+function getSettings(userId = activeUserId) {
+  if (!userId) return { ...DEFAULT_SETTINGS };
+  return { ...DEFAULT_SETTINGS, ...read(userPaths(userId).settings, {}) };
 }
 
 function permissionLabel(permission) {
@@ -291,7 +384,7 @@ function createMain() {
 
   ensureUsersMigrated();
   const reg = getRegistry();
-  setActiveUser(reg.activeUserId || 'u_default');
+  if (reg.activeUserId) setActiveUser(reg.activeUserId);
 }
 
 // ── IPC: window chrome ────────────────────────────────────────────────────────
@@ -305,8 +398,38 @@ ipcMain.handle('open-devtools', () => mainWin?.webContents.openDevTools({ mode: 
 ipcMain.handle('users-init', () => {
   ensureUsersMigrated();
   const reg = getRegistry();
-  setActiveUser(reg.activeUserId || reg.users[0]?.id || 'u_default');
-  return reg;
+  if (reg.onboardingComplete && reg.activeUserId) setActiveUser(reg.activeUserId);
+  return {
+    ...reg,
+    needsOnboarding: !reg.onboardingComplete,
+    appVersion: app.getVersion(),
+  };
+});
+
+ipcMain.handle('onboarding-complete', (_, { mode, name, color }) => {
+  const reg = getRegistry();
+  if (reg.onboardingComplete) {
+    return { ...reg, needsOnboarding: false, appVersion: app.getVersion() };
+  }
+  const id = `u_${Date.now()}`;
+  const displayName = (name || '').trim() || (mode === 'guest' ? 'Guest' : 'User');
+  const accent = color || '#8b5cf6';
+  userDir(id);
+  seedUserFiles(id, { name: displayName, color: accent, type: mode === 'guest' ? 'guest' : 'account' });
+  const next = {
+    activeUserId: id,
+    onboardingComplete: true,
+    users: [{
+      id,
+      name: displayName,
+      color: accent,
+      type: mode === 'guest' ? 'guest' : 'account',
+      created: Date.now(),
+    }],
+  };
+  saveRegistry(next);
+  setActiveUser(id);
+  return { ...next, needsOnboarding: false, appVersion: app.getVersion() };
 });
 
 ipcMain.handle('users-switch', (_, userId) => {
@@ -321,20 +444,18 @@ ipcMain.handle('users-switch', (_, userId) => {
 ipcMain.handle('users-create', (_, { name, color }) => {
   const reg = getRegistry();
   const id = `u_${Date.now()}`;
-  reg.users.push({ id, name: name || 'User', color: color || '#8b5cf6', created: Date.now() });
-  reg.activeUserId = id;
-  saveRegistry(reg);
-  const paths = userPaths(id);
-  write(paths.settings, { ...DEFAULT_SETTINGS });
-  write(paths.history, []);
-  write(paths.bookmarks, []);
-  write(paths.session, {
-    profiles: [{ id: 'default', name: 'Main', color: color || '#8b5cf6', isIncognito: false, ephemeral: false, partition: null }],
-    activePid: 'default',
-    tabsByPid: {},
-    activeTid: { default: null },
+  reg.users.push({
+    id,
+    name: name || 'User',
+    color: color || '#8b5cf6',
+    type: 'account',
+    created: Date.now(),
   });
-  try { fs.writeFileSync(paths.notes, ''); } catch {}
+  reg.activeUserId = id;
+  reg.onboardingComplete = true;
+  saveRegistry(reg);
+  userDir(id);
+  seedUserFiles(id, { name: name || 'User', color: color || '#8b5cf6', type: 'account' });
   setActiveUser(id);
   return { id, name: name || 'User', color: color || '#8b5cf6', users: reg.users };
 });
@@ -346,6 +467,10 @@ ipcMain.handle('users-remove', async (_, userId) => {
   if (reg.activeUserId === userId) reg.activeUserId = reg.users[0].id;
   saveRegistry(reg);
   setActiveUser(reg.activeUserId);
+  try {
+    const dir = path.join(USERS_ROOT, userId);
+    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+  } catch (e) { console.error('[users-remove]', e); }
   return reg;
 });
 
@@ -467,6 +592,53 @@ ipcMain.handle('app-version', () => app.getVersion());
 ipcMain.handle('chromium-version', () => process.versions.chrome);
 ipcMain.handle('electron-version', () => process.versions.electron);
 
+const UPDATE_REPO = 'Abenezer-Mengistu/enigma-browser';
+const UPDATE_PAGE = 'https://abenezer-mengistu.github.io/enigma-browser/';
+
+function parseVersion(v) {
+  const m = String(v || '').replace(/^v/i, '').match(/(\d+)\.(\d+)\.(\d+)/);
+  if (!m) return null;
+  return [+m[1], +m[2], +m[3]];
+}
+
+function isVersionNewer(latest, current) {
+  const a = parseVersion(latest);
+  const b = parseVersion(current);
+  if (!a || !b) return false;
+  for (let i = 0; i < 3; i++) {
+    if (a[i] > b[i]) return true;
+    if (a[i] < b[i]) return false;
+  }
+  return false;
+}
+
+ipcMain.handle('check-for-update', async () => {
+  const current = app.getVersion();
+  try {
+    const res = await fetch(`https://api.github.com/repos/${UPDATE_REPO}/releases/latest`, {
+      headers: { 'User-Agent': 'Enigma-Browser', Accept: 'application/vnd.github+json' },
+    });
+    if (!res.ok) throw new Error('release fetch failed');
+    const data = await res.json();
+    const latest = (data.tag_name || '').replace(/^v/i, '');
+    return {
+      available: isVersionNewer(latest, current),
+      currentVersion: current,
+      latestVersion: latest,
+      url: data.html_url || UPDATE_PAGE,
+      downloadUrl: UPDATE_PAGE,
+    };
+  } catch {
+    return {
+      available: false,
+      currentVersion: current,
+      latestVersion: current,
+      url: UPDATE_PAGE,
+      downloadUrl: UPDATE_PAGE,
+    };
+  }
+});
+
 ipcMain.handle('context-menu', (_, p) => {
   const items = [];
   if (p.selectionText?.trim()) {
@@ -516,8 +688,10 @@ if (!lock) {
     }
   });
   app.whenReady().then(() => {
+    ensureMachineBinding();
     ensureUsersMigrated();
-    setActiveUser(getRegistry().activeUserId || 'u_default');
+    const reg = getRegistry();
+    if (reg.activeUserId) setActiveUser(reg.activeUserId);
     syncNativeTheme(appSettings.theme);
     createSplash();
     createMain();

@@ -1,20 +1,12 @@
 /**
- * Embed Enigma icon into the packaged .exe BEFORE NSIS/portable targets run.
- * (Post-build rcedit was too late — installers already contained Electron's icon.)
+ * Embed Enigma icon + Windows version metadata BEFORE NSIS/portable run.
  */
 import { existsSync } from 'fs';
-import { join, resolve } from 'path';
-import { rcedit } from 'rcedit';
+import { join } from 'path';
+import { applyWindowsBranding } from './win-exe-branding.mjs';
 
 export default async function afterPack(context) {
   if (context.electronPlatformName !== 'win32') return;
-
-  const root = resolve(import.meta.dirname, '..');
-  const icon = join(root, 'assets', 'icons', 'icon.ico');
-  if (!existsSync(icon)) {
-    console.warn('[afterPack] icon.ico missing — run npm run build:icon');
-    return;
-  }
 
   const exeName = `${context.packager.appInfo.productFilename}.exe`;
   const exe = join(context.appOutDir, exeName);
@@ -23,6 +15,7 @@ export default async function afterPack(context) {
     return;
   }
 
-  await rcedit(exe, { icon });
-  console.log('[afterPack] Enigma icon embedded in', exeName);
+  const version = context.packager.appInfo.version;
+  await applyWindowsBranding(exe, version);
+  console.log('[afterPack] Enigma branding applied to', exeName, `(v${version})`);
 }

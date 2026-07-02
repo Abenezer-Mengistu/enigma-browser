@@ -357,9 +357,31 @@ function hookDownloads(ses) {
 }
 
 function syncNativeTheme(theme) {
+  // Enigma chrome theme is CSS (data-theme). Do not push dark mode to web content —
+  // sites like LinkedIn use prefers-color-scheme and break when the shell is dark.
   if (theme === 'system') nativeTheme.themeSource = 'system';
-  else if (theme === 'light') nativeTheme.themeSource = 'light';
-  else nativeTheme.themeSource = 'dark';
+  else nativeTheme.themeSource = 'light';
+}
+
+/** Keep guest pages on their intended light palettes regardless of Enigma/OS theme. */
+async function forceLightColorScheme(webContents) {
+  if (!webContents || webContents.isDestroyed()) return;
+  try {
+    const dbg = webContents.debugger;
+    if (!dbg.isAttached()) dbg.attach('1.3');
+    await dbg.sendCommand('Emulation.setEmulatedMedia', {
+      features: [{ name: 'prefers-color-scheme', value: 'light' }],
+    });
+  } catch {}
+}
+
+function hookWebviewColorScheme() {
+  if (!mainWin) return;
+  mainWin.webContents.on('did-attach-webview', (_, contents) => {
+    const apply = () => { void forceLightColorScheme(contents); };
+    contents.on('did-finish-load', apply);
+    apply();
+  });
 }
 
 function buildEffectiveSettings(sessionId = null) {
@@ -428,6 +450,7 @@ function createMain() {
   });
 
   mainWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  hookWebviewColorScheme();
   if (process.platform === 'win32' && !APP_ICON.isEmpty()) mainWin.setIcon(APP_ICON);
   mainWin.loadFile(path.join(__dirname, '../assets/index.html'));
 

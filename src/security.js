@@ -144,8 +144,12 @@ function hardenSession(ses, getEffectiveSettings, onPermissionDenied, onTrackerB
 
   ses.webRequest.onBeforeSendHeaders((details, cb) => {
     const settings = getEffectiveSettings();
-    if (settings.doNotTrack === false) return cb({});
-    cb({ requestHeaders: { ...details.requestHeaders, DNT: '1' } });
+    const requestHeaders = { ...details.requestHeaders };
+    if (settings.doNotTrack !== false) requestHeaders.DNT = '1';
+    // Never tell sites the browser prefers dark — Enigma theme is chrome-only.
+    requestHeaders['Sec-CH-Prefers-Color-Scheme'] = 'light';
+    requestHeaders['Sec-CH-Prefers-Color-Scheme-Reduced-Transparency'] = 'no-preference';
+    cb({ requestHeaders });
   });
 }
 
@@ -172,9 +176,41 @@ const FINGERPRINT_INJECT = `(function(){
   }catch(e){}
 })();`;
 
+/** Injected before any page script — pages must not inherit Enigma/OS dark preference. */
+const FORCE_LIGHT_PAGE = `(function(){
+  if(window.__enigmaForceLight)return;
+  window.__enigmaForceLight=1;
+  try{
+    var root=document.documentElement;
+    if(root)root.style.colorScheme='light';
+    if(!document.querySelector('meta[name="color-scheme"]')&&document.head){
+      var meta=document.createElement('meta');
+      meta.name='color-scheme';
+      meta.content='light only';
+      document.head.prepend(meta);
+    }
+    var orig=window.matchMedia.bind(window);
+    window.matchMedia=function(q){
+      var s=String(q||'');
+      if(/prefers-color-scheme\\s*:\\s*dark/i.test(s)){
+        var fake=orig('(max-width:0px)');
+        try{Object.defineProperty(fake,'matches',{get:function(){return false}});}catch(e){}
+        return fake;
+      }
+      if(/prefers-color-scheme\\s*:\\s*light/i.test(s)){
+        var lite=orig('(min-width:0px)');
+        try{Object.defineProperty(lite,'matches',{get:function(){return true}});}catch(e){}
+        return lite;
+      }
+      return orig(q);
+    };
+  }catch(e){}
+})();`;
+
 module.exports = {
   TRACKER_PATTERNS,
   FINGERPRINT_INJECT,
+  FORCE_LIGHT_PAGE,
   isSafeExternalUrl,
   isNavigableUrl,
   upgradeToHttps,

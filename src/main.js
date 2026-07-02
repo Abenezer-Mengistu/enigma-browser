@@ -5,7 +5,7 @@ const path = require('path');
 const fs   = require('fs');
 const os   = require('os');
 const crypto = require('crypto');
-const { isSafeExternalUrl, isNavigableUrl, hardenSession, FINGERPRINT_INJECT } = require('./security');
+const { isSafeExternalUrl, isNavigableUrl, hardenSession, FINGERPRINT_INJECT, FORCE_LIGHT_PAGE } = require('./security');
 const { listTemplates } = require('./session-templates');
 const { DEFAULT_PRIVACY, effectiveSettings } = require('./privacy-store');
 const { encryptVault, decryptVault } = require('./sync-crypto');
@@ -27,6 +27,7 @@ function resolveUserDataRoot() {
 app.setPath('userData', resolveUserDataRoot());
 
 app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer');
+app.commandLine.appendSwitch('disable-features', 'WebContentsForceDark');
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
 app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
 
@@ -356,14 +357,23 @@ function hookDownloads(ses) {
   });
 }
 
-function syncNativeTheme(theme) {
-  // Enigma chrome theme is CSS (data-theme). Do not push dark mode to web content —
-  // sites like LinkedIn use prefers-color-scheme and break when the shell is dark.
-  if (theme === 'system') nativeTheme.themeSource = 'system';
-  else nativeTheme.themeSource = 'light';
+function syncNativeTheme(_theme) {
+  // Enigma chrome theme is CSS-only — never propagate to Chromium / web pages.
+  nativeTheme.themeSource = 'light';
 }
 
-/** Keep guest pages on their intended light palettes regardless of Enigma/OS theme. */
+/** Read OS dark preference without leaving web content on system/dark scheme. */
+function readOsPrefersDark() {
+  const prev = nativeTheme.themeSource;
+  nativeTheme.themeSource = 'system';
+  const dark = nativeTheme.shouldUseDarkColors;
+  nativeTheme.themeSource = 'light';
+  return dark;
+}
+
+const webContentsLightHooked = new WeakSet();
+
+/** Keep guest pages on light color scheme — runs before any page script. */
 async function forceLightColorScheme(webContents) {
   if (!webContents || webContents.isDestroyed()) return;
   try {
@@ -372,6 +382,13 @@ async function forceLightColorScheme(webContents) {
     await dbg.sendCommand('Emulation.setEmulatedMedia', {
       features: [{ name: 'prefers-color-scheme', value: 'light' }],
     });
+    if (!webContentsLightHooked.has(webContents)) {
+      webContentsLightHooked.add(webContents);
+      await dbg.sendCommand('Page.enable');
+      await dbg.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
+        source: FORCE_LIGHT_PAGE,
+      });
+    }
   } catch {}
 }
 
@@ -379,9 +396,30 @@ function hookWebviewColorScheme() {
   if (!mainWin) return;
   mainWin.webContents.on('did-attach-webview', (_, contents) => {
     const apply = () => { void forceLightColorScheme(contents); };
+    contents.on('did-start-loading', apply);
     contents.on('did-finish-load', apply);
+    contents.on('did-navigate', apply);
+    contents.on('did-navigate-in-page', apply);
     apply();
   });
+}
+
+let osThemeWatchTimer = null;
+function syncOsThemeWatcher(theme) {
+  if (osThemeWatchTimer) {
+    clearInterval(osThemeWatchTimer);
+    osThemeWatchTimer = null;
+  }
+  if (theme !== 'system') return;
+  let last = readOsPrefersDark();
+  osThemeWatchTimer = setInterval(() => {
+    if (getSettings().theme !== 'system') return;
+    const dark = readOsPrefersDark();
+    if (dark !== last) {
+      last = dark;
+      mainWin?.webContents.send('os-theme-changed', dark);
+    }
+  }, 1500);
 }
 
 function buildEffectiveSettings(sessionId = null) {
@@ -786,8 +824,10 @@ ipcMain.handle('settings-save', (_, d) => {
   appSettings = { ...DEFAULT_SETTINGS, ...d };
   write(userPaths().settings, appSettings);
   syncNativeTheme(appSettings.theme);
+  syncOsThemeWatcher(appSettings.theme);
   return true;
 });
+ipcMain.handle('os-prefers-dark', () => readOsPrefersDark());
 ipcMain.handle('dl-list', () => downloads);
 ipcMain.handle('session-save', (_, d) => { write(userPaths().session, d); return true; });
 ipcMain.handle('session-load', () => read(userPaths().session, null));
@@ -966,6 +1006,7 @@ if (!lock) {
     const reg = getRegistry();
     if (reg.activeUserId) setActiveUser(reg.activeUserId);
     syncNativeTheme(appSettings.theme);
+    syncOsThemeWatcher(appSettings.theme);
     createSplash();
     createMain();
   });

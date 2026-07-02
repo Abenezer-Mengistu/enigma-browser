@@ -1325,6 +1325,10 @@ const B = (() => {
     sessionBlockedByPid[sessionId] = count;
     if (dashboardPid === sessionId) $('sd-blocked').textContent = String(count);
   });
+  eAPI.on('os-theme-changed', dark => {
+    osPrefersDarkCached = !!dark;
+    if (settings.theme === 'system') applyTheme('system');
+  });
   eAPI.on('open-link', url => openUrlInSession(null, url));
   eAPI.on('open-link-incog', url => openLinkIncognito(url));
   eAPI.on('permission-blocked', ({ permission, url }) => {
@@ -1597,7 +1601,12 @@ const B = (() => {
 
   function resolveTheme(t) {
     if (t !== 'system') return t;
-    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    return osPrefersDarkCached ? 'dark' : 'light';
+  }
+
+  let osPrefersDarkCached = false;
+  async function refreshOsTheme() {
+    try { osPrefersDarkCached = await eAPI.osPrefersDark(); } catch { osPrefersDarkCached = false; }
   }
 
   function updateThemeBtn() {
@@ -3018,7 +3027,13 @@ const B = (() => {
   let electronVer = '';
 
   function setTheme(t) {
-    settings.theme=t; applyTheme(t); eAPI.settingsSave(settings); renderSettings();
+    settings.theme = t;
+    void (async () => {
+      if (t === 'system') await refreshOsTheme();
+      applyTheme(t);
+      await eAPI.settingsSave(settings);
+      renderSettings();
+    })();
   }
   function applyCompactTabs() {
     document.documentElement.classList.toggle('compact-tabs', !!settings.compactTabs);
@@ -3623,11 +3638,9 @@ const B = (() => {
     privacyDoc = { filterLists: true, fingerprintProtection: true, webrtcProtection: true, mixedContentBlock: false, siteExceptions: {}, ...(privacyDoc || {}) };
     $('tb-logo-img').src = APP_ICON_SVG;
     eAPI.appIconUrl().then(url => { if (url) $('tb-logo-img').src = url; }).catch(() => {});
-    applyTheme(settings.theme||'dark');
+    await refreshOsTheme();
+    applyTheme(settings.theme || 'dark');
     applyCompactTabs();
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-      if (settings.theme === 'system') applyTheme('system');
-    });
     const bootDate = $('boot-date');
     if (bootDate) {
       const n = new Date();

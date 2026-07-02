@@ -1,6 +1,6 @@
 {
   "name": "enigma-browser",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "Enigma - Multi-session privacy container browser",
   "productName": "Enigma",
   "main": "src/main.js",
@@ -14,7 +14,7 @@
     "postinstall": "node scripts/patch-exe-icon.mjs",
     "build:icon": "node scripts/generate-icons.mjs",
     "build:dir": "npm run build:icon && electron-builder --win --x64 --dir --publish never && node scripts/patch-exe-icon.mjs",
-    "build:win": "npm run build:icon && electron-builder --win --x64 --publish never && node scripts/patch-exe-icon.mjs",
+    "build:win": "npm run build:icon && electron-builder --win --x64 --publish never && node scripts/patch-exe-icon.mjs && node scripts/regenerate-latest-yml.mjs",
     "build:mac": "npm run build:icon && electron-builder --mac --x64 --arm64 --publish never",
     "build:linux": "npm run build:icon && electron-builder --linux --x64 --publish never",
     "build:all": "npm run build:icon && electron-builder -mwl --x64 --publish never && node scripts/patch-exe-icon.mjs",

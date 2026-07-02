@@ -22,6 +22,9 @@ let periodicTimer = null;
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
 autoUpdater.allowDowngrade = false;
+autoUpdater.disableDifferentialDownload = true;
+
+let suppressAutoUpdaterErrors = false;
 
 function send(channel, payload) {
   mainWinRef()?.webContents.send(channel, payload);
@@ -68,18 +71,18 @@ function htmlToPlainText(input) {
     .replace(/<[^>]+>/g, ''));
 }
 
-function releaseNotesSnippet(body, maxLen = 220) {
+function releaseNotesSnippet(body, maxLen = 120) {
   if (!body) return '';
   const text = htmlToPlainText(body)
     .replace(/^#+\s+/gm, '')
     .replace(/\*\*/g, '')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/^[-*]\s+/gm, '• ')
+    .replace(/^[-*•]\s+/gm, '')
     .split('\n')
     .map(l => l.trim())
-    .filter(Boolean)
-    .slice(0, 4)
-    .join(' · ');
+    .filter(l => l && !/^what'?s new/i.test(l) && !/^also in/i.test(l) && !/^bug fix/i.test(l))
+    .slice(0, 1)
+    .join(' ');
   if (!text) return '';
   return text.length > maxLen ? `${text.slice(0, maxLen - 1)}…` : text;
 }
@@ -104,13 +107,20 @@ function buildUpdateResult(base, extra = {}) {
   return { ...base, ...extra };
 }
 
+function assetDownloadUrl(asset) {
+  return asset?.url || asset?.browser_download_url || '';
+}
+
 async function downloadAsset(url, dest, onProgress) {
+  if (!url) throw new Error('No download URL for update');
   const res = await fetch(url, {
+    redirect: 'follow',
     headers: { 'User-Agent': 'Enigma-Browser', Accept: 'application/octet-stream' },
   });
   if (!res.ok) throw new Error(`Download failed (${res.status})`);
   const total = Number(res.headers.get('content-length') || 0);
   await fs.promises.mkdir(path.dirname(dest), { recursive: true });
+
   const file = fs.createWriteStream(dest);
   let received = 0;
   let lastTime = Date.now();
@@ -118,29 +128,33 @@ async function downloadAsset(url, dest, onProgress) {
   const reader = res.body?.getReader?.();
   if (!reader) throw new Error('Download stream unavailable');
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    received += value.length;
-    file.write(Buffer.from(value));
-    const percent = total ? (received / total) * 100 : 0;
-    const now = Date.now();
-    const elapsed = (now - lastTime) / 1000;
-    let bytesPerSecond = 0;
-    let etaSeconds = 0;
-    if (elapsed >= 0.4) {
-      bytesPerSecond = (received - lastReceived) / elapsed;
-      etaSeconds = total && bytesPerSecond > 0 ? (total - received) / bytesPerSecond : 0;
-      lastTime = now;
-      lastReceived = received;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.length;
+      await new Promise((resolve, reject) => {
+        file.write(Buffer.from(value), (err) => (err ? reject(err) : resolve()));
+      });
+      const percent = total ? (received / total) * 100 : 0;
+      const now = Date.now();
+      const elapsed = (now - lastTime) / 1000;
+      let bytesPerSecond = 0;
+      let etaSeconds = 0;
+      if (elapsed >= 0.4) {
+        bytesPerSecond = (received - lastReceived) / elapsed;
+        etaSeconds = total && bytesPerSecond > 0 ? (total - received) / bytesPerSecond : 0;
+        lastTime = now;
+        lastReceived = received;
+      }
+      onProgress?.({ percent, transferred: received, total, bytesPerSecond, etaSeconds });
     }
-    onProgress?.({ percent, transferred: received, total, bytesPerSecond, etaSeconds });
+  } finally {
+    await new Promise((resolve, reject) => {
+      file.end(() => resolve());
+      file.on('error', reject);
+    });
   }
-
-  await new Promise((resolve, reject) => {
-    file.end(() => resolve());
-    file.on('error', reject);
-  });
   return dest;
 }
 
@@ -221,6 +235,7 @@ function initUpdater(getMainWindow, opts = {}) {
 
   autoUpdater.on('error', (err) => {
     downloading = false;
+    if (suppressAutoUpdaterErrors) return;
     send('update-error', { message: err?.message || String(err) });
   });
 
@@ -301,6 +316,24 @@ async function checkForUpdates() {
   }
 }
 
+async function downloadViaGithub() {
+  const release = pendingRelease?.release || await fetchLatestRelease();
+  const portable = isPortableBuild();
+  const asset = pickAsset(release, portable);
+  const url = assetDownloadUrl(asset);
+  if (!url) throw new Error('No update installer found for this build');
+
+  const dest = path.join(app.getPath('temp'), 'enigma-updates', asset.name);
+  await downloadAsset(url, dest, (p) => send('update-progress', p));
+
+  const version = (pendingRelease?.version || release.tag_name || '').replace(/^v/i, '');
+  const mode = portable ? 'portable' : 'installer';
+  pendingRelease = { ...pendingRelease, release, version, via: 'github' };
+  pendingInstall = { path: dest, mode, version, assetName: asset.name };
+  markUpdateReady(version, mode);
+  return { ok: true, mode, ready: true };
+}
+
 async function downloadUpdate() {
   if (downloading) return { ok: false, reason: 'busy' };
   if (!app.isPackaged) {
@@ -316,23 +349,18 @@ async function downloadUpdate() {
 
   try {
     if (pendingRelease?.via === 'autoUpdater' && !isPortableBuild()) {
-      await autoUpdater.downloadUpdate();
-      return { ok: true, mode: 'autoUpdater' };
+      suppressAutoUpdaterErrors = true;
+      try {
+        await autoUpdater.downloadUpdate();
+        suppressAutoUpdaterErrors = false;
+        return { ok: true, mode: 'autoUpdater' };
+      } catch {
+        suppressAutoUpdaterErrors = false;
+        /* fall through to direct GitHub download */
+      }
     }
 
-    const release = pendingRelease?.release || await fetchLatestRelease();
-    const portable = isPortableBuild();
-    const asset = pickAsset(release, portable);
-    if (!asset?.browser_download_url) throw new Error('No update installer found for this build');
-
-    const dest = path.join(app.getPath('temp'), 'enigma-updates', asset.name);
-    await downloadAsset(asset.browser_download_url, dest, (p) => send('update-progress', p));
-
-    const version = (pendingRelease?.version || release.tag_name || '').replace(/^v/i, '');
-    const mode = portable ? 'portable' : 'installer';
-    pendingInstall = { path: dest, mode, version, assetName: asset.name };
-    markUpdateReady(version, mode);
-    return { ok: true, mode, ready: true };
+    return await downloadViaGithub();
   } catch (e) {
     downloading = false;
     send('update-error', { message: e?.message || String(e) });

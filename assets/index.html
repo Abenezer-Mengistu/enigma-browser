@@ -1504,7 +1504,7 @@ const B = (() => {
   eAPI.onUpdateError(({ message }) => {
     updateBusy = false;
     updateReady = false;
-    $('update-banner')?.classList.remove('update-busy', 'update-ready');
+    $('update-banner')?.classList.remove('update-busy', 'update-ready', 'show-notes');
     $('update-banner')?.classList.add('update-failed');
     $('update-progress-wrap')?.classList.remove('show');
     $('update-btn').style.display = 'none';
@@ -1514,7 +1514,10 @@ const B = (() => {
     $('update-pbar').style.width = '0%';
     $('update-pct').textContent = '0%';
     $('update-detail').textContent = '';
-    $('update-msg').innerHTML = `Update failed — <strong>${esc(pendingUpdate?.latestVersion || '')}</strong>`;
+    const notes = $('update-notes');
+    if (notes) notes.textContent = '';
+    const errHint = message ? ` — ${message}` : '';
+    $('update-msg').innerHTML = `Update failed — <strong>${esc(pendingUpdate?.latestVersion || '')}</strong>${esc(errHint)}`;
     toast('Update failed — ' + (message || 'try again later'));
     refreshSettingsUpdateStatus();
   });

@@ -8,10 +8,16 @@ const { autoUpdater } = require('electron-updater');
 
 const UPDATE_REPO = 'Abenezer-Mengistu/enigma-browser';
 const UPDATE_PAGE = 'https://abenezer-mengistu.github.io/enigma-browser/';
+const CHECK_INTERVAL_MS = 8 * 60 * 60 * 1000;
 
 let mainWinRef = () => null;
+let hasActiveDownloadsFn = () => false;
+let shouldCheckUpdatesFn = () => true;
 let pendingRelease = null;
+let pendingInstall = null;
 let downloading = false;
+let updateReady = false;
+let periodicTimer = null;
 
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
@@ -42,6 +48,22 @@ function isVersionNewer(latest, current) {
   return false;
 }
 
+function releaseNotesSnippet(body, maxLen = 220) {
+  if (!body) return '';
+  const text = String(body)
+    .replace(/^#+\s+/gm, '')
+    .replace(/\*\*/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/^[-*]\s+/gm, '• ')
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean)
+    .slice(0, 4)
+    .join(' ');
+  if (!text) return '';
+  return text.length > maxLen ? `${text.slice(0, maxLen - 1)}…` : text;
+}
+
 async function fetchLatestRelease() {
   const res = await fetch(`https://api.github.com/repos/${UPDATE_REPO}/releases/latest`, {
     headers: { 'User-Agent': 'Enigma-Browser', Accept: 'application/vnd.github+json' },
@@ -58,6 +80,10 @@ function pickAsset(release, portable) {
   return assets.find(a => /^Enigma-Setup-.*\.exe$/i.test(a.name));
 }
 
+function buildUpdateResult(base, extra = {}) {
+  return { ...base, ...extra };
+}
+
 async function downloadAsset(url, dest, onProgress) {
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Enigma-Browser', Accept: 'application/octet-stream' },
@@ -67,6 +93,8 @@ async function downloadAsset(url, dest, onProgress) {
   await fs.promises.mkdir(path.dirname(dest), { recursive: true });
   const file = fs.createWriteStream(dest);
   let received = 0;
+  let lastTime = Date.now();
+  let lastReceived = 0;
   const reader = res.body?.getReader?.();
   if (!reader) throw new Error('Download stream unavailable');
 
@@ -76,7 +104,17 @@ async function downloadAsset(url, dest, onProgress) {
     received += value.length;
     file.write(Buffer.from(value));
     const percent = total ? (received / total) * 100 : 0;
-    onProgress?.({ percent, transferred: received, total });
+    const now = Date.now();
+    const elapsed = (now - lastTime) / 1000;
+    let bytesPerSecond = 0;
+    let etaSeconds = 0;
+    if (elapsed >= 0.4) {
+      bytesPerSecond = (received - lastReceived) / elapsed;
+      etaSeconds = total && bytesPerSecond > 0 ? (total - received) / bytesPerSecond : 0;
+      lastTime = now;
+      lastReceived = received;
+    }
+    onProgress?.({ percent, transferred: received, total, bytesPerSecond, etaSeconds });
   }
 
   await new Promise((resolve, reject) => {
@@ -103,8 +141,44 @@ function runPortableAndQuit(portablePath) {
   setTimeout(() => app.quit(), 400);
 }
 
-function initUpdater(getMainWindow) {
+async function applyPortableUpdate(downloadedPath, assetName) {
+  const currentExe = process.env.PORTABLE_EXECUTABLE_FILE || process.execPath;
+  const targetDir = process.env.PORTABLE_EXECUTABLE_DIR || path.dirname(currentExe);
+  const targetPath = path.join(targetDir, assetName || path.basename(downloadedPath));
+
+  try {
+    await fs.promises.access(targetDir, fs.constants.W_OK);
+  } catch {
+    throw new Error('Cannot write to the portable folder — move Enigma to a writable location');
+  }
+
+  const backupPath = `${currentExe}.old`;
+  try { await fs.promises.unlink(backupPath); } catch { /* ignore */ }
+
+  if (fs.existsSync(currentExe)) {
+    await fs.promises.copyFile(currentExe, backupPath);
+  }
+
+  await fs.promises.copyFile(downloadedPath, targetPath);
+
+  const launchPath = path.normalize(targetPath);
+  if (!fs.existsSync(launchPath)) {
+    throw new Error('Updated portable file could not be written');
+  }
+
+  runPortableAndQuit(launchPath);
+}
+
+function markUpdateReady(version, mode) {
+  updateReady = true;
+  downloading = false;
+  send('update-downloaded', { version, mode, ready: true });
+}
+
+function initUpdater(getMainWindow, opts = {}) {
   mainWinRef = getMainWindow;
+  hasActiveDownloadsFn = opts.hasActiveDownloads || (() => false);
+  shouldCheckUpdatesFn = opts.shouldCheckUpdates || (() => true);
 
   autoUpdater.on('download-progress', (p) => {
     send('update-progress', {
@@ -112,18 +186,32 @@ function initUpdater(getMainWindow) {
       transferred: p.transferred,
       total: p.total,
       bytesPerSecond: p.bytesPerSecond,
+      etaSeconds: p.bytesPerSecond > 0 && p.total
+        ? (p.total - p.transferred) / p.bytesPerSecond
+        : 0,
     });
   });
 
   autoUpdater.on('update-downloaded', (info) => {
+    updateReady = true;
     downloading = false;
-    send('update-downloaded', { version: info.version, mode: 'autoUpdater' });
+    pendingInstall = { mode: 'autoUpdater', version: info.version };
+    send('update-downloaded', { version: info.version, mode: 'autoUpdater', ready: true });
   });
 
   autoUpdater.on('error', (err) => {
     downloading = false;
     send('update-error', { message: err?.message || String(err) });
   });
+
+  if (periodicTimer) clearInterval(periodicTimer);
+  periodicTimer = setInterval(async () => {
+    if (!app.isPackaged || !shouldCheckUpdatesFn()) return;
+    try {
+      const result = await checkForUpdates();
+      if (result.available) send('update-available', result);
+    } catch { /* ignore background check errors */ }
+  }, CHECK_INTERVAL_MS);
 }
 
 async function checkForUpdates() {
@@ -134,23 +222,41 @@ async function checkForUpdates() {
     available: false,
     url: UPDATE_PAGE,
     downloadUrl: UPDATE_PAGE,
+    releaseNotes: '',
     portable: isPortableBuild(),
     canAutoUpdate: app.isPackaged,
+    ready: updateReady,
   };
 
   try {
+    if (updateReady && pendingInstall?.version) {
+      return buildUpdateResult(base, {
+        available: true,
+        ready: true,
+        latestVersion: pendingInstall.version,
+        releaseNotes: pendingRelease?.releaseNotes || '',
+      });
+    }
+
     if (app.isPackaged && !isPortableBuild()) {
       try {
         const result = await autoUpdater.checkForUpdates();
         const info = result?.updateInfo;
         if (info && isVersionNewer(info.version, current)) {
-          pendingRelease = { version: info.version, via: 'autoUpdater' };
-          return {
-            ...base,
+          const notes = releaseNotesSnippet(
+            typeof info.releaseNotes === 'string'
+              ? info.releaseNotes
+              : Array.isArray(info.releaseNotes)
+                ? info.releaseNotes.map(n => n.note || '').join('\n')
+                : '',
+          );
+          pendingRelease = { version: info.version, via: 'autoUpdater', releaseNotes: notes };
+          return buildUpdateResult(base, {
             available: true,
             latestVersion: info.version,
             downloadUrl: info.path || UPDATE_PAGE,
-          };
+            releaseNotes: notes,
+          });
         }
       } catch {
         /* fall through to GitHub API */
@@ -159,16 +265,17 @@ async function checkForUpdates() {
 
     const release = await fetchLatestRelease();
     const latest = (release.tag_name || '').replace(/^v/i, '');
-    pendingRelease = { release, version: latest, via: 'github' };
+    const notes = releaseNotesSnippet(release.body || '');
+    pendingRelease = { release, version: latest, via: 'github', releaseNotes: notes };
     const asset = pickAsset(release, isPortableBuild());
-    return {
-      ...base,
+    return buildUpdateResult(base, {
       available: isVersionNewer(latest, current),
       latestVersion: latest,
       url: release.html_url || UPDATE_PAGE,
       downloadUrl: asset?.browser_download_url || UPDATE_PAGE,
       assetName: asset?.name || null,
-    };
+      releaseNotes: notes,
+    });
   } catch {
     return base;
   }
@@ -180,9 +287,12 @@ async function downloadUpdate() {
     shell.openExternal(UPDATE_PAGE);
     return { ok: false, reason: 'dev' };
   }
+  if (updateReady) return { ok: true, ready: true, mode: pendingInstall?.mode };
 
   downloading = true;
-  send('update-progress', { percent: 0, transferred: 0, total: 0 });
+  updateReady = false;
+  pendingInstall = null;
+  send('update-progress', { percent: 0, transferred: 0, total: 0, bytesPerSecond: 0, etaSeconds: 0 });
 
   try {
     if (pendingRelease?.via === 'autoUpdater' && !isPortableBuild()) {
@@ -195,29 +305,14 @@ async function downloadUpdate() {
     const asset = pickAsset(release, portable);
     if (!asset?.browser_download_url) throw new Error('No update installer found for this build');
 
-    const dest = path.join(
-      app.getPath('temp'),
-      'enigma-updates',
-      asset.name,
-    );
-
+    const dest = path.join(app.getPath('temp'), 'enigma-updates', asset.name);
     await downloadAsset(asset.browser_download_url, dest, (p) => send('update-progress', p));
-    downloading = false;
+
     const version = (pendingRelease?.version || release.tag_name || '').replace(/^v/i, '');
-    send('update-downloaded', { version, mode: portable ? 'portable' : 'installer' });
-
-    setTimeout(async () => {
-      if (portable) {
-        const targetDir = process.env.PORTABLE_EXECUTABLE_DIR || app.getPath('downloads');
-        const finalPath = path.join(targetDir, asset.name);
-        try { await fs.promises.copyFile(dest, finalPath); runPortableAndQuit(finalPath); }
-        catch { runPortableAndQuit(dest); }
-      } else {
-        runInstallerAndQuit(dest);
-      }
-    }, 900);
-
-    return { ok: true, mode: portable ? 'portable' : 'installer' };
+    const mode = portable ? 'portable' : 'installer';
+    pendingInstall = { path: dest, mode, version, assetName: asset.name };
+    markUpdateReady(version, mode);
+    return { ok: true, mode, ready: true };
   } catch (e) {
     downloading = false;
     send('update-error', { message: e?.message || String(e) });
@@ -225,16 +320,54 @@ async function downloadUpdate() {
   }
 }
 
+async function installUpdate({ force = false } = {}) {
+  if (!updateReady && !pendingInstall) {
+    if (pendingRelease?.via === 'autoUpdater' && !isPortableBuild()) {
+      autoUpdater.quitAndInstall(false, true);
+      return { ok: true };
+    }
+    return { ok: false, reason: 'not-ready' };
+  }
+
+  if (!force && hasActiveDownloadsFn()) {
+    return { ok: false, reason: 'downloads-active' };
+  }
+
+  if (pendingInstall?.mode === 'autoUpdater' || pendingRelease?.via === 'autoUpdater') {
+    autoUpdater.quitAndInstall(false, true);
+    return { ok: true };
+  }
+
+  if (!pendingInstall?.path) return { ok: false, reason: 'not-ready' };
+
+  if (pendingInstall.mode === 'portable') {
+    await applyPortableUpdate(pendingInstall.path, pendingInstall.assetName);
+    return { ok: true };
+  }
+
+  runInstallerAndQuit(pendingInstall.path);
+  return { ok: true };
+}
+
 function quitAndInstall() {
-  if (isPortableBuild()) return false;
-  autoUpdater.quitAndInstall(false, true);
-  return true;
+  return installUpdate();
+}
+
+function getUpdateStatus() {
+  return {
+    downloading,
+    ready: updateReady,
+    version: pendingInstall?.version || pendingRelease?.version || null,
+    mode: pendingInstall?.mode || pendingRelease?.via || null,
+  };
 }
 
 module.exports = {
   initUpdater,
   checkForUpdates,
   downloadUpdate,
+  installUpdate,
   quitAndInstall,
+  getUpdateStatus,
   isPortableBuild,
 };

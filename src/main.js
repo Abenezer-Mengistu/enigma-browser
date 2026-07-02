@@ -10,7 +10,9 @@ const { listTemplates } = require('./session-templates');
 const { DEFAULT_PRIVACY, effectiveSettings } = require('./privacy-store');
 const { encryptVault, decryptVault } = require('./sync-crypto');
 const { sharedEngine } = require('./filter-engine');
-const { initUpdater, checkForUpdates, downloadUpdate, quitAndInstall } = require('./updater');
+const {
+  initUpdater, checkForUpdates, downloadUpdate, installUpdate, quitAndInstall, getUpdateStatus,
+} = require('./updater');
 
 app.setName('Enigma');
 if (process.platform === 'win32') app.setAppUserModelId('app.enigmabrowser');
@@ -234,6 +236,8 @@ const DEFAULT_SETTINGS = {
   fingerprintProtection: true,
   webrtcProtection: true,
   mixedContentBlock: false,
+  checkUpdates: true,
+  autoInstallUpdates: false,
 };
 
 const sessionConfigs = new Map();
@@ -543,7 +547,10 @@ function createMain() {
   mainWin.on('unmaximize', () => mainWin.webContents.send('win-state', 'normal'));
   mainWin.on('closed', () => { mainWin = null; });
 
-  initUpdater(() => mainWin);
+  initUpdater(() => mainWin, {
+    hasActiveDownloads: () => downloads.some(d => d.state === 'progressing'),
+    shouldCheckUpdates: () => getSettings().checkUpdates !== false,
+  });
   ensureUsersMigrated();
   const reg = getRegistry();
   if (reg.activeUserId) setActiveUser(reg.activeUserId);
@@ -909,7 +916,10 @@ ipcMain.handle('electron-version', () => process.versions.electron);
 
 ipcMain.handle('check-for-update', () => checkForUpdates());
 ipcMain.handle('download-update', () => downloadUpdate());
+ipcMain.handle('install-update', (_, opts) => installUpdate(opts || {}));
 ipcMain.handle('quit-and-install', () => quitAndInstall());
+ipcMain.handle('update-status', () => getUpdateStatus());
+ipcMain.handle('has-active-downloads', () => downloads.some(d => d.state === 'progressing'));
 
 ipcMain.handle('context-menu', (_, p) => {
   const items = [];

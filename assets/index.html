@@ -436,7 +436,21 @@ html.compact-tabs .navbar{gap:4px;padding:3px 8px 4px}
 .update-banner .ubtn:hover{filter:brightness(1.06)}
 .update-banner .ubtn-x{background:none;border:none;color:var(--t3);cursor:pointer;padding:4px 8px;font-size:14px;line-height:1}
 .update-banner.update-busy .ubtn,.update-banner.update-busy .ubtn-x{display:none}
-.update-progress-wrap{display:none;align-items:center;gap:10px;margin-left:auto;min-width:200px;flex:1;max-width:340px}
+.update-banner.update-failed #update-btn{display:none}
+.update-notes{font-size:11px;color:var(--t2);max-width:420px;line-height:1.35;display:none}
+.update-banner.show-notes .update-notes{display:block}
+.update-detail{font-size:10px;color:var(--t3);min-width:88px;text-align:right;white-space:nowrap}
+.update-actions{display:none;gap:6px;margin-left:auto;flex-shrink:0}
+.update-actions.show{display:flex}
+.update-banner.update-ready .update-progress-wrap{display:none}
+.update-banner.update-ready .update-actions.show{display:flex}
+.update-banner .ubtn-secondary{
+  padding:6px 12px;border-radius:8px;border:1px solid rgba(34,211,238,.35);cursor:pointer;
+  background:rgba(255,255,255,.04);color:var(--t1);font-weight:600;font-size:11px;white-space:nowrap;
+}
+.update-banner .ubtn-secondary:hover{background:rgba(255,255,255,.08)}
+.update-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.update-progress-wrap{display:none;align-items:center;gap:10px;margin-left:auto;min-width:200px;flex:1;max-width:420px}
 .update-progress-wrap.show{display:flex}
 .update-progress-track{flex:1;height:6px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
 .update-progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#0891b2,#22d3ee);border-radius:999px;transition:width .15s}
@@ -858,12 +872,21 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
     </div>
 
     <div class="update-banner" id="update-banner">
-      <span id="update-msg">⬆ Update available — Enigma <strong id="update-ver">2.0.0</strong> is ready.</span>
+      <div class="update-copy">
+        <span id="update-msg">⬆ Update available — Enigma <strong id="update-ver">2.0.0</strong> is ready.</span>
+        <div class="update-notes" id="update-notes"></div>
+      </div>
       <div class="update-progress-wrap" id="update-progress-wrap">
         <div class="update-progress-track"><div class="update-progress-bar" id="update-pbar"></div></div>
         <span class="update-pct" id="update-pct">0%</span>
+        <span class="update-detail" id="update-detail"></span>
+      </div>
+      <div class="update-actions" id="update-actions">
+        <button type="button" class="ubtn-secondary" id="update-restart-later" onclick="B.deferUpdateRestart()">Restart later</button>
+        <button type="button" class="ubtn" id="update-restart-now" onclick="B.installUpdateNow()">Restart now</button>
       </div>
       <button type="button" class="ubtn" id="update-btn" onclick="B.downloadUpdate()">Update now</button>
+      <button type="button" class="ubtn" id="update-retry-btn" style="display:none" onclick="B.retryUpdate()">Retry</button>
       <button type="button" class="ubtn-x" id="update-dismiss" onclick="B.dismissUpdate()" title="Dismiss">✕</button>
     </div>
 
@@ -1344,27 +1367,43 @@ const B = (() => {
     const pct = Math.max(0, Math.min(100, Math.round(p.percent || 0)));
     $('update-pbar').style.width = pct + '%';
     $('update-pct').textContent = pct + '%';
+    $('update-detail').textContent = formatUpdateProgress(p);
     $('update-msg').textContent = 'Downloading update…';
   });
   eAPI.onUpdateDownloaded(({ version, mode }) => {
+    updateBusy = false;
+    updateReady = true;
+    $('update-banner')?.classList.remove('update-busy', 'update-failed');
     $('update-progress-wrap')?.classList.add('show');
     $('update-pbar').style.width = '100%';
     $('update-pct').textContent = '100%';
-    $('update-msg').innerHTML = `Installing Enigma <strong>${esc(version || pendingUpdate?.latestVersion || '')}</strong>… Restarting`;
-    $('update-banner')?.classList.add('update-busy');
-    if (mode === 'autoUpdater') {
-      setTimeout(() => { eAPI.quitAndInstall(); }, 700);
+    $('update-detail').textContent = '';
+    $('update-retry-btn').style.display = 'none';
+    showUpdateReadyState(version || pendingUpdate?.latestVersion || '');
+    if (settings.autoInstallUpdates) {
+      void promptInstallUpdate(version || pendingUpdate?.latestVersion || '');
     }
   });
   eAPI.onUpdateError(({ message }) => {
-    $('update-banner')?.classList.remove('update-busy');
+    updateBusy = false;
+    updateReady = false;
+    $('update-banner')?.classList.remove('update-busy', 'update-ready');
+    $('update-banner')?.classList.add('update-failed');
     $('update-progress-wrap')?.classList.remove('show');
-    $('update-btn').style.display = '';
+    $('update-btn').style.display = 'none';
+    $('update-retry-btn').style.display = '';
     $('update-dismiss').style.display = '';
+    $('update-actions')?.classList.remove('show');
     $('update-pbar').style.width = '0%';
     $('update-pct').textContent = '0%';
-    $('update-msg').innerHTML = `⬆ Update available — Enigma <strong id="update-ver">${esc(pendingUpdate?.latestVersion || '')}</strong> is ready.`;
+    $('update-detail').textContent = '';
+    $('update-msg').innerHTML = `Update failed — <strong>${esc(pendingUpdate?.latestVersion || '')}</strong>`;
     toast('Update failed — ' + (message || 'try again later'));
+    refreshSettingsUpdateStatus();
+  });
+  eAPI.onUpdateAvailable(info => {
+    if (settings.checkUpdates === false) return;
+    applyPendingUpdate(info, { toastOnNew: true });
   });
   eAPI.on('open-link', url => openUrlInSession(null, url));
   eAPI.on('open-link-incog', url => openLinkIncognito(url));
@@ -2990,15 +3029,34 @@ const B = (() => {
         </div>
       </div>
       <div class="s-sec">
+        <div class="s-sec-title">Updates</div>
+        <div class="s-row">
+          <div class="s-lbl">Automatically check for updates<div class="s-sub">Look on startup and every 8 hours</div></div>
+          <button class="tgl${settings.checkUpdates!==false?' on':''}" onclick="B.toggleSetting('checkUpdates',this)"></button>
+        </div>
+        <div class="s-row">
+          <div class="s-lbl">Install updates automatically<div class="s-sub">Download and restart without clicking Update now</div></div>
+          <button class="tgl${settings.autoInstallUpdates?' on':''}" onclick="B.toggleSetting('autoInstallUpdates',this)"></button>
+        </div>
+        <div class="s-row" style="flex-direction:column;align-items:stretch;gap:8px">
+          <div class="s-lbl">Status<div class="s-sub" id="settings-update-status">Checking…</div></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-g" style="padding:5px 12px;font-size:11px" id="settings-check-update" onclick="B.checkForUpdateFromSettings()">Check for updates</button>
+            <button class="btn btn-p" style="padding:5px 12px;font-size:11px;display:none" id="settings-install-update" onclick="B.installUpdateNow()">Restart to update</button>
+          </div>
+        </div>
+      </div>
+      <div class="s-sec">
         <div class="s-sec-title">About Enigma</div>
         <div class="s-row" style="flex-direction:column;align-items:flex-start;gap:4px">
-          <div class="s-lbl">Version <span id="settings-ver">2.0.0</span></div>
+          <div class="s-lbl">Version <span id="settings-ver">—</span></div>
           <div class="s-sub">Chromium ${esc(chromiumVer||'—')} · Electron ${esc(electronVer||'—')}</div>
           <div class="s-sub">Press ? for keyboard shortcuts</div>
         </div>
       </div>`;
     renderSiteExceptions();
     eAPI.appVersion().then(v => { const el = $('settings-ver'); if (el) el.textContent = v; }).catch(() => {});
+    refreshSettingsUpdateStatus();
   }
 
   let filterRuleCount = 0;
@@ -3606,55 +3664,268 @@ const B = (() => {
   }
 
   let pendingUpdate = null;
+  let updateBusy = false;
+  let updateReady = false;
 
-  async function checkForUpdate() {
+  function formatBytes(n) {
+    const v = Number(n) || 0;
+    if (v < 1024) return `${v} B`;
+    if (v < 1024 * 1024) return `${(v / 1024).toFixed(v < 10240 ? 1 : 0)} KB`;
+    return `${(v / (1024 * 1024)).toFixed(v < 10485760 ? 1 : 0)} MB`;
+  }
+
+  function formatEta(seconds) {
+    const s = Math.max(0, Math.round(Number(seconds) || 0));
+    if (!s) return '';
+    if (s < 60) return `${s}s left`;
+    return `${Math.floor(s / 60)}m ${s % 60}s left`;
+  }
+
+  function formatUpdateProgress(p) {
+    const parts = [];
+    if (p.bytesPerSecond > 0) parts.push(formatBytes(p.bytesPerSecond) + '/s');
+    const eta = formatEta(p.etaSeconds);
+    if (eta) parts.push(eta);
+    return parts.join(' · ');
+  }
+
+  function smartScreenHint() {
+    return navigator.platform.includes('Win')
+      ? ' Windows may show SmartScreen — choose More info → Run anyway.'
+      : '';
+  }
+
+  function applyPendingUpdate(info, { toastOnNew = false, forceBanner = false } = {}) {
+    if (!info?.available) return { shown: false, info };
+    if (!forceBanner && settings.dismissedUpdateVersion === info.latestVersion && !updateReady) return { shown: false, info };
+    pendingUpdate = info;
+    if (info.ready) updateReady = true;
+    $('update-ver').textContent = info.latestVersion;
+    const notes = $('update-notes');
+    if (notes) {
+      notes.textContent = info.releaseNotes || '';
+      $('update-banner')?.classList.toggle('show-notes', !!info.releaseNotes);
+    }
+    if (updateReady) {
+      showUpdateReadyState(info.latestVersion);
+    } else {
+      $('update-msg').innerHTML = `⬆ Update available — Enigma <strong id="update-ver">${esc(info.latestVersion)}</strong> is ready.`;
+      $('update-banner')?.classList.remove('update-ready', 'update-failed', 'update-busy');
+      $('update-actions')?.classList.remove('show');
+      $('update-btn').style.display = '';
+      $('update-retry-btn').style.display = 'none';
+    }
+    $('update-banner').classList.add('show');
+    if (toastOnNew) toast(`Update available — Enigma ${info.latestVersion}. Click Update now.`);
+    refreshSettingsUpdateStatus();
+    return { shown: true, info };
+  }
+
+  function showUpdateReadyState(version) {
+    $('update-banner')?.classList.add('update-ready');
+    $('update-banner')?.classList.remove('update-busy', 'update-failed');
+    $('update-btn').style.display = 'none';
+    $('update-retry-btn').style.display = 'none';
+    $('update-dismiss').style.display = '';
+    $('update-progress-wrap')?.classList.remove('show');
+    $('update-actions')?.classList.add('show');
+    $('update-msg').innerHTML = `Enigma <strong>${esc(version)}</strong> is ready to install.${esc(smartScreenHint())}`;
+  }
+
+  function showUpdateInstallingState(version) {
+    updateBusy = true;
+    $('update-banner')?.classList.add('update-busy');
+    $('update-banner')?.classList.remove('update-ready', 'update-failed');
+    $('update-actions')?.classList.remove('show');
+    $('update-progress-wrap')?.classList.add('show');
+    $('update-pbar').style.width = '100%';
+    $('update-pct').textContent = '100%';
+    $('update-detail').textContent = '';
+    $('update-msg').innerHTML = `Installing Enigma <strong>${esc(version)}</strong>… Restarting.${esc(smartScreenHint())}`;
+  }
+
+  async function refreshSettingsUpdateStatus() {
+    const el = $('settings-update-status');
+    const installBtn = $('settings-install-update');
+    if (!el) return;
+    try {
+      const [info, status, current] = await Promise.all([
+        pendingUpdate || eAPI.checkForUpdate(),
+        eAPI.updateStatus(),
+        eAPI.appVersion(),
+      ]);
+      if (status?.ready || info?.ready || updateReady) {
+        el.textContent = `Enigma ${status?.version || info?.latestVersion || pendingUpdate?.latestVersion || 'update'} downloaded — restart to finish installing.`;
+        if (installBtn) installBtn.style.display = '';
+      } else if (info?.available) {
+        el.textContent = `Update available — Enigma ${info.latestVersion} (you have ${current}).`;
+        if (installBtn) installBtn.style.display = 'none';
+      } else {
+        el.textContent = `You're up to date — Enigma ${current}.`;
+        if (installBtn) installBtn.style.display = 'none';
+      }
+    } catch {
+      el.textContent = 'Could not check for updates.';
+      if (installBtn) installBtn.style.display = 'none';
+    }
+  }
+
+  async function checkForUpdate({ silent = false } = {}) {
+    if (settings.checkUpdates === false && silent) return null;
     try {
       const info = await eAPI.checkForUpdate();
-      if (!info?.available) return;
-      if (settings.dismissedUpdateVersion === info.latestVersion) return;
+      if (!info?.available && !info?.ready) {
+        if (!silent) refreshSettingsUpdateStatus();
+        return info;
+      }
+      return applyPendingUpdate(info, { toastOnNew: !silent, forceBanner: !silent }).info;
+    } catch (e) {
+      if (!silent) console.warn('[update]', e);
+      return null;
+    }
+  }
+
+  async function checkForUpdateFromSettings() {
+    const btn = $('settings-check-update');
+    if (btn) btn.disabled = true;
+    try {
+      const info = await eAPI.checkForUpdate();
       pendingUpdate = info;
-      $('update-ver').textContent = info.latestVersion;
-      $('update-banner').classList.add('show');
-      toast(`Update available — Enigma ${info.latestVersion}. Click Update now.`);
-    } catch (e) { console.warn('[update]', e); }
+      if (info?.available || info?.ready) {
+        applyPendingUpdate(info, { toastOnNew: true, forceBanner: true });
+        toast(info.ready
+          ? `Enigma ${info.latestVersion} is ready — restart to install.`
+          : `Update available — Enigma ${info.latestVersion}.`);
+      } else {
+        toast(`You're up to date — Enigma ${info?.currentVersion || ''}.`);
+      }
+      await refreshSettingsUpdateStatus();
+    } catch (e) {
+      toast('Could not check for updates.');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   }
 
   async function downloadUpdate() {
     if (updateBusy) return;
+    if (updateReady) {
+      await promptInstallUpdate(pendingUpdate?.latestVersion || '');
+      return;
+    }
     updateBusy = true;
+    $('update-banner')?.classList.remove('update-failed', 'update-ready');
     $('update-banner')?.classList.add('update-busy');
     $('update-progress-wrap')?.classList.add('show');
+    $('update-actions')?.classList.remove('show');
+    $('update-btn').style.display = 'none';
+    $('update-retry-btn').style.display = 'none';
     $('update-pbar').style.width = '0%';
     $('update-pct').textContent = '0%';
+    $('update-detail').textContent = '';
     $('update-msg').textContent = 'Downloading update…';
     try {
-      await eAPI.downloadUpdate();
+      const res = await eAPI.downloadUpdate();
+      if (res?.ready) {
+        updateReady = true;
+        updateBusy = false;
+        showUpdateReadyState(pendingUpdate?.latestVersion || '');
+        if (settings.autoInstallUpdates) await promptInstallUpdate(pendingUpdate?.latestVersion || '');
+      }
     } catch (e) {
       updateBusy = false;
       $('update-banner')?.classList.remove('update-busy');
+      $('update-banner')?.classList.add('update-failed');
+      $('update-btn').style.display = 'none';
+      $('update-retry-btn').style.display = '';
       toast('Update failed — ' + (e?.message || 'try again'));
+      refreshSettingsUpdateStatus();
     }
   }
 
-  let updateBusy = false;
+  async function promptInstallUpdate(version) {
+    if (await eAPI.hasActiveDownloads()) {
+      if (!confirm('Downloads are still in progress. Restart now to install the update?')) {
+        showUpdateReadyState(version || pendingUpdate?.latestVersion || '');
+        return;
+      }
+    }
+    await installUpdateNow(version);
+  }
+
+  async function installUpdateNow(version) {
+    const ver = version || pendingUpdate?.latestVersion || '';
+    showUpdateInstallingState(ver);
+    try {
+      let res = await eAPI.installUpdate();
+      if (res?.reason === 'downloads-active') {
+        if (!confirm('Downloads are still in progress. Restart now to install the update?')) {
+          updateBusy = false;
+          showUpdateReadyState(ver);
+          return;
+        }
+        res = await eAPI.installUpdate({ force: true });
+      }
+      if (res?.ok === false && res?.reason === 'not-ready') {
+        updateBusy = false;
+        toast('No downloaded update is ready yet.');
+        showUpdateAvailableState();
+      }
+    } catch (e) {
+      updateBusy = false;
+      $('update-banner')?.classList.remove('update-busy');
+      $('update-banner')?.classList.add('update-failed');
+      $('update-retry-btn').style.display = '';
+      toast('Install failed — ' + (e?.message || 'try again'));
+      refreshSettingsUpdateStatus();
+    }
+  }
+
+  function showUpdateAvailableState() {
+    if (!pendingUpdate) return;
+    $('update-banner')?.classList.remove('update-ready', 'update-busy', 'update-failed');
+    $('update-actions')?.classList.remove('show');
+    $('update-btn').style.display = '';
+    $('update-retry-btn').style.display = 'none';
+    $('update-msg').innerHTML = `⬆ Update available — Enigma <strong id="update-ver">${esc(pendingUpdate.latestVersion)}</strong> is ready.`;
+  }
+
+  function deferUpdateRestart() {
+    updateBusy = false;
+    $('update-banner')?.classList.remove('update-busy');
+    showUpdateReadyState(pendingUpdate?.latestVersion || '');
+    toast('Update ready — restart from the banner or Settings when you are ready.');
+    refreshSettingsUpdateStatus();
+  }
+
+  function retryUpdate() {
+    $('update-banner')?.classList.remove('update-failed');
+    $('update-retry-btn').style.display = 'none';
+    $('update-btn').style.display = '';
+    void downloadUpdate();
+  }
 
   function resetUpdateBanner() {
     updateBusy = false;
-    $('update-banner')?.classList.remove('update-busy');
+    $('update-banner')?.classList.remove('update-busy', 'update-failed');
     $('update-progress-wrap')?.classList.remove('show');
+    $('update-actions')?.classList.remove('show');
     $('update-btn').style.display = '';
+    $('update-retry-btn').style.display = 'none';
     $('update-dismiss').style.display = '';
     $('update-pbar').style.width = '0%';
     $('update-pct').textContent = '0%';
+    $('update-detail').textContent = '';
   }
 
   function dismissUpdate() {
     resetUpdateBanner();
-    $('update-banner').classList.remove('show');
-    if (pendingUpdate?.latestVersion) {
+    $('update-banner').classList.remove('show', 'show-notes', 'update-ready');
+    if (pendingUpdate?.latestVersion && !updateReady) {
       settings.dismissedUpdateVersion = pendingUpdate.latestVersion;
       eAPI.settingsSave(settings);
     }
+    refreshSettingsUpdateStatus();
   }
 
   // ── INIT ─────────────────────────────────────────────────────────────────
@@ -3672,7 +3943,7 @@ const B = (() => {
   async function continueInit() {
     mainUserPartition = await eAPI.userMainPartition();
     renderUserStrip();
-    const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false};
+    const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,checkUpdates:true,autoInstallUpdates:false};
     try {
       [bookmarks, history, settings, chromiumVer, electronVer, blockedCount, privacyDoc, sessionTemplates, fpScript] = await Promise.all([
         eAPI.bmLoad().catch(() => []),
@@ -3719,7 +3990,7 @@ const B = (() => {
     await renderAll();
     removeBootShell();
     window.addEventListener('beforeunload', saveSessionState);
-    checkForUpdate();
+    checkForUpdate({ silent: false });
   }
 
   bindNewTabEvents();
@@ -3734,7 +4005,8 @@ const B = (() => {
     addSiteException, removeSiteException, exportVault, importVault,
     switchUser, removeUser, openUserModal, closeUserModal, createUser, _scUser,
     showOnboarding, showOnboardingMain, showOnboardingSignIn, finishOnboardingGuest, finishOnboardingAccount, _scOb,
-    checkForUpdate, downloadUpdate, dismissUpdate,
+    checkForUpdate, checkForUpdateFromSettings, downloadUpdate, dismissUpdate,
+    installUpdateNow, deferUpdateRestart, retryUpdate,
     restorePreviousPages, dismissRestore,
     navigate:(url)=>navigate(url),
     goBack, goFwd, reload, hardReload, goHome, focusUrl, viewSource,

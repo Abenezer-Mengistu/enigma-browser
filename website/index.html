@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enigma — Download the Browser</title>
+  <meta name="description" content="Download Enigma, a fast multi-session desktop browser for Windows, macOS, Linux, and Unix.">
+  <link rel="icon" href="assets/icons/icon_32.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #06080f;
+      --surface: rgba(255, 255, 255, 0.03);
+      --surface-hover: rgba(255, 255, 255, 0.06);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(34, 211, 238, 0.35);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --cyan: #22d3ee;
+      --cyan-bright: #67e8f9;
+      --purple: #a78bfa;
+      --purple-deep: #7c3aed;
+      --radius: 16px;
+      --radius-lg: 24px;
+      --font: "Inter", system-ui, sans-serif;
+      --display: "Outfit", system-ui, sans-serif;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      --glow-cyan: 0 0 60px rgba(34, 211, 238, 0.25);
+      --glow-purple: 0 0 80px rgba(124, 58, 237, 0.2);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Ambient background ── */
+    .ambient {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .ambient::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124, 58, 237, 0.22), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 20%, rgba(34, 211, 238, 0.12), transparent 50%),
+        radial-gradient(ellipse 50% 40% at 0% 80%, rgba(124, 58, 237, 0.1), transparent 50%);
+    }
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent);
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: float 12s ease-in-out infinite;
+    }
+    .orb-1 { width: 420px; height: 420px; background: rgba(124, 58, 237, 0.18); top: -8%; right: 10%; }
+    .orb-2 { width: 320px; height: 320px; background: rgba(34, 211, 238, 0.14); bottom: 20%; left: -5%; animation-delay: -4s; }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(20px, -24px) scale(1.05); }
+    }
+
+    .page { position: relative; z-index: 1; }
+
+    /* ── Nav ── */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px) saturate(1.4);
+      background: rgba(6, 8, 15, 0.72);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      box-shadow: var(--glow-purple);
+    }
+    .brand-name {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 1.2rem;
+      letter-spacing: -0.03em;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 999px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--surface); }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--purple-deep), #6d28d9) !important;
+      color: #fff !important;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.35);
+    }
+    .nav-cta:hover { filter: brightness(1.08); background: linear-gradient(135deg, var(--purple-deep), #6d28d9) !important; }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 72px 0 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px 6px 8px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 24px;
+      animation: fadeUp 0.7s ease both;
+    }
+    .hero-badge .pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 12px #34d399;
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .hero h1 {
+      font-family: var(--display);
+      font-size: clamp(2.5rem, 5.5vw, 3.75rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      margin-bottom: 20px;
+      animation: fadeUp 0.7s 0.05s ease both;
+    }
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--cyan-bright) 0%, var(--purple) 55%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-desc {
+      font-size: 1.125rem;
+      color: var(--muted);
+      max-width: 480px;
+      margin-bottom: 32px;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+    .detected {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: rgba(34, 211, 238, 0.06);
+      border: 1px solid rgba(34, 211, 238, 0.2);
+      font-size: 0.875rem;
+      color: var(--cyan-bright);
+      margin-bottom: 24px;
+      animation: fadeUp 0.7s 0.15s ease both;
+    }
+    .detected svg { flex-shrink: 0; opacity: 0.9; }
+    .cta-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px 28px;
+      border-radius: 14px;
+      font-family: var(--font);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: linear-gradient(135deg, #0891b2, #06b6d4 40%, #22d3ee);
+      color: #042f3a;
+      box-shadow: var(--glow-cyan), 0 8px 32px rgba(6, 182, 212, 0.35);
+    }
+    .btn-primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .btn-primary.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      filter: grayscale(0.3);
+    }
+    .btn-ghost {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--surface-hover); border-color: rgba(255,255,255,0.14); }
+    .version-line {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      animation: fadeUp 0.7s 0.25s ease both;
+    }
+    .version-line strong { color: var(--text); font-weight: 600; }
+
+    /* Browser mockup */
+    .hero-visual {
+      position: relative;
+      animation: fadeUp 0.9s 0.15s ease both;
+    }
+    .mockup-glow {
+      position: absolute;
+      inset: -20%;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.25), transparent 65%);
+      pointer-events: none;
+    }
+    .mockup {
+      position: relative;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      backdrop-filter: blur(24px);
+      box-shadow: var(--shadow), var(--glow-purple);
+      overflow: hidden;
+      transform: perspective(1200px) rotateY(-6deg) rotateX(4deg);
+      transition: transform 0.5s ease;
+    }
+    .hero-visual:hover .mockup {
+      transform: perspective(1200px) rotateY(-2deg) rotateX(2deg);
+    }
+    .mockup-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px;
+      background: rgba(0,0,0,0.35);
+      border-bottom: 1px solid var(--border);
+    }
+    .mockup-dots { display: flex; gap: 6px; }
+    .mockup-dots span {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+    }
+    .mockup-dots span:nth-child(1) { background: #ff5f57; opacity: 0.85; }
+    .mockup-dots span:nth-child(2) { background: #febc2e; opacity: 0.85; }
+    .mockup-dots span:nth-child(3) { background: #28c840; opacity: 0.85; }
+    .mockup-url {
+      flex: 1;
+      margin-left: 8px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.3);
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    .mockup-body {
+      padding: 28px 24px 32px;
+      min-height: 280px;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34, 211, 238, 0.08), transparent),
+        linear-gradient(180deg, rgba(12, 74, 110, 0.35), rgba(6, 8, 15, 0.9));
+    }
+    .mockup-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+    .mockup-tab {
+      padding: 6px 14px;
+      border-radius: 8px 8px 0 0;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+    }
+    .mockup-tab.active {
+      background: rgba(34, 211, 238, 0.12);
+      color: var(--cyan-bright);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+      border-bottom: none;
+    }
+    .mockup-content h3 {
+      font-family: var(--display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .mockup-content p {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      max-width: 280px;
+      line-height: 1.5;
+    }
+    .mockup-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .mockup-pill {
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      background: rgba(124, 58, 237, 0.2);
+      color: #c4b5fd;
+      border: 1px solid rgba(167, 139, 250, 0.25);
+    }
+
+    /* ── Stats strip ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin: 16px 0 80px;
+      border: 1px solid var(--border);
+    }
+    .stat {
+      padding: 20px 24px;
+      background: var(--surface);
+      text-align: center;
+    }
+    .stat-value {
+      font-family: var(--display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+    .stat-value.loading {
+      opacity: 0.45;
+      animation: pulse 1.5s ease infinite;
+    }
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+
+    /* ── Sections ── */
+    .section {
+      padding: 64px 0;
+    }
+    .section-head {
+      text-align: center;
+      max-width: 560px;
+      margin: 0 auto 48px;
+    }
+    .section-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--cyan);
+      margin-bottom: 12px;
+    }
+    .section-head h2 {
+      font-family: var(--display);
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+    .section-head p {
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    /* ── Platform cards ── */
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .platform-card {
+      position: relative;
+      padding: 24px;
+      border-radius: var(--radius);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .platform-card:hover {
+      border-color: rgba(255,255,255,0.12);
+      transform: translateY(-2px);
+    }
+    .platform-card.recommended {
+      border-color: var(--border-accent);
+      background: linear-gradient(145deg, rgba(34, 211, 238, 0.06), var(--surface));
+      box-shadow: var(--glow-cyan);
+    }
+    .platform-card.recommended::before {
+      content: "Recommended";
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(34, 211, 238, 0.15);
+      color: var(--cyan-bright);
+    }
+    .platform-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .platform-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .platform-icon svg { width: 22px; height: 22px; }
+    .platform-info h3 {
+      font-family: var(--display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+    .platform-info .meta {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .badge {
+      display: inline-flex;
+      margin-top: 8px;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .badge-live { background: rgba(52, 211, 153, 0.12); color: #6ee7b7; }
+    .badge-soon { background: rgba(148, 163, 184, 0.1); color: var(--muted); }
+    .dl-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .dl-list a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid transparent;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .dl-list a:hover {
+      background: rgba(34, 211, 238, 0.08);
+      border-color: rgba(34, 211, 238, 0.2);
+    }
+    .dl-list a .dl-arrow {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(34, 211, 238, 0.12);
+      color: var(--cyan);
+      flex-shrink: 0;
+    }
+    .dl-empty {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.2);
+      font-size: 0.875rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* ── Install ── */
+    .install-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(145deg, rgba(124, 58, 237, 0.08), var(--surface));
+      border: 1px solid var(--border);
+    }
+    .install-wrap h3 {
+      font-family: var(--display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .install-steps {
+      list-style: none;
+      counter-reset: step;
+    }
+    .install-steps li {
+      counter-increment: step;
+      position: relative;
+      padding-left: 48px;
+      padding-bottom: 24px;
+      font-size: 0.9375rem;
+      color: var(--muted);
+    }
+    .install-steps li:last-child { padding-bottom: 0; }
+    .install-steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--purple-deep), var(--purple));
+      color: #fff;
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+    }
+    .install-steps li:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: 15px;
+      top: 36px;
+      bottom: 4px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(124, 58, 237, 0.4), transparent);
+    }
+
+    /* ── Features bento ── */
+    .bento {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+    .bento-item {
+      padding: 28px;
+      border-radius: var(--radius);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .bento-item:hover {
+      border-color: rgba(255,255,255,0.12);
+      transform: translateY(-2px);
+    }
+    .bento-item.span-6 { grid-column: span 6; }
+    .bento-item.span-4 { grid-column: span 4; }
+    .bento-item.span-8 { grid-column: span 8; }
+    .bento-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      font-size: 1.25rem;
+    }
+    .bento-item:nth-child(1) .bento-icon { background: rgba(124, 58, 237, 0.15); }
+    .bento-item:nth-child(2) .bento-icon { background: rgba(34, 211, 238, 0.12); }
+    .bento-item:nth-child(3) .bento-icon { background: rgba(52, 211, 153, 0.12); }
+    .bento-item:nth-child(4) .bento-icon { background: rgba(251, 146, 60, 0.12); }
+    .bento-item h4 {
+      font-family: var(--display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .bento-item p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .bento-highlight {
+      grid-column: span 12;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 32px 36px;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(34, 211, 238, 0.08));
+      border-color: rgba(124, 58, 237, 0.25);
+    }
+    .bento-highlight h4 {
+      font-family: var(--display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .bento-highlight p { font-size: 0.9rem; color: var(--muted); max-width: 480px; }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 40px;
+      padding: 40px 0 48px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    footer .brand { justify-content: center; margin-bottom: 16px; }
+    footer p {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    footer a {
+      color: var(--cyan);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    footer a:hover { text-decoration: underline; }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 48px; }
+      .hero-visual { order: -1; max-width: 420px; margin: 0 auto; }
+      .mockup { transform: none !important; }
+      .bento-item.span-6, .bento-item.span-4, .bento-item.span-8 { grid-column: span 12; }
+      .bento-highlight { flex-direction: column; text-align: center; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .nav-links a:not(.nav-cta) { display: none; }
+      .platform-card.recommended::before { position: static; align-self: flex-start; margin-bottom: -8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true">
+    <div class="grid-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+
+  <div class="page">
+    <nav class="nav">
+      <div class="nav-inner">
+        <a class="brand" href="#">
+          <img src="assets/icons/icon_64.png" alt="" width="36" height="36">
+          <span class="brand-name">Enigma</span>
+        </a>
+        <div class="nav-links">
+          <a href="#download">Download</a>
+          <a href="#install">Install</a>
+          <a href="#features">Features</a>
+          <a href="https://github.com/Abenezer-Mengistu/enigma-browser" target="_blank" rel="noopener">GitHub</a>
+          <a class="nav-cta" href="#download">Get Enigma</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="hero-badge">
+            <span class="pulse"></span>
+            <span id="hero-badge-text">Desktop browser · Free & open source</span>
+          </div>
+          <h1>Privacy built in.<br><span class="gradient">Browsing refined.</span></h1>
+          <p class="hero-desc">Enigma is a fast, modern desktop browser with isolated sessions, multi-user profiles, and the privacy controls you actually need.</p>
+
+          <div class="detected" id="detected-os">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            <span id="detected-label">Detecting your system…</span>
+          </div>
+
+          <div class="cta-group">
+            <a class="btn btn-primary" id="hero-download" href="#">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span id="hero-download-label">Download for your system</span>
+            </a>
+            <a class="btn btn-ghost" href="#download">All platforms</a>
+          </div>
+          <p class="version-line" id="version-line">Loading version…</p>
+        </div>
+
+        <div class="hero-visual">
+          <div class="mockup-glow"></div>
+          <div class="mockup">
+            <div class="mockup-bar">
+              <div class="mockup-dots"><span></span><span></span><span></span></div>
+              <div class="mockup-url">enigma://session/work</div>
+            </div>
+            <div class="mockup-body">
+              <div class="mockup-tabs">
+                <div class="mockup-tab active">Session A</div>
+                <div class="mockup-tab">Session B</div>
+                <div class="mockup-tab">+ New</div>
+              </div>
+              <div class="mockup-content">
+                <h3>Isolated by design</h3>
+                <p>Each session keeps its own cookies, storage, and history — completely separate.</p>
+                <div class="mockup-pills">
+                  <span class="mockup-pill">Multi-user</span>
+                  <span class="mockup-pill">Private sessions</span>
+                  <span class="mockup-pill">Fast</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value" id="stat-version">—</div>
+          <div class="stat-label">Latest version</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">5+</div>
+          <div class="stat-label">Platforms supported</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value loading" id="stat-downloads">…</div>
+          <div class="stat-label">Total downloads</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">100%</div>
+          <div class="stat-label">Open source</div>
+        </div>
+      </div>
+
+      <section class="section" id="download">
+        <div class="section-head">
+          <span class="section-tag">Download</span>
+          <h2>Get Enigma for your device</h2>
+          <p>Native installers for every major desktop platform. Pick the build that matches your system.</p>
+        </div>
+        <div class="platform-grid" id="platform-grid"></div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="section-head">
+          <span class="section-tag">Setup</span>
+          <h2>Install in minutes</h2>
+          <p>Follow these steps for your detected platform — no technical knowledge required.</p>
+        </div>
+        <div class="install-wrap">
+          <h3>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            <span id="install-title">Installation guide</span>
+          </h3>
+          <ol class="install-steps" id="install-steps"></ol>
+        </div>
+      </section>
+
+      <section class="section" id="features">
+        <div class="section-head">
+          <span class="section-tag">Features</span>
+          <h2>Built for how you browse</h2>
+          <p>Everything you need for focused, private, multi-session browsing on desktop.</p>
+        </div>
+        <div class="bento">
+          <div class="bento-item bento-highlight">
+            <div>
+              <h4>Your browser. Your rules.</h4>
+              <p>Enigma puts you in control with per-user profiles, session isolation, and transparent open-source code.</p>
+            </div>
+            <a class="btn btn-primary" href="#download">Download now</a>
+          </div>
+          <div class="bento-item span-6">
+            <div class="bento-icon">👤</div>
+            <h4>Multi-user profiles</h4>
+            <p>Separate users with independent settings, bookmarks, and browsing history — perfect for shared machines.</p>
+          </div>
+          <div class="bento-item span-6">
+            <div class="bento-icon">🔒</div>
+            <h4>Isolated sessions</h4>
+            <p>Each session keeps cookies and storage completely apart. Like incognito, but persistent and organized.</p>
+          </div>
+          <div class="bento-item span-4">
+            <div class="bento-icon">🌐</div>
+            <h4>Cross-platform</h4>
+            <p>Windows, macOS, Linux, and Unix — one browser everywhere you work.</p>
+          </div>
+          <div class="bento-item span-4">
+            <div class="bento-icon">⚡</div>
+            <h4>Fast & lightweight</h4>
+            <p>Built on Electron with a clean UI that stays out of your way.</p>
+          </div>
+          <div class="bento-item span-4">
+            <div class="bento-icon">📖</div>
+            <h4>Open source</h4>
+            <p>Inspect the code, report issues, and contribute on GitHub.</p>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <a class="brand" href="#">
+          <img src="assets/icons/icon_64.png" alt="" width="32" height="32">
+          <span class="brand-name">Enigma</span>
+        </a>
+        <p>Desktop browser for Windows, macOS, Linux &amp; Unix · iOS &amp; Android coming soon</p>
+        <div class="footer-links">
+          <a href="https://github.com/Abenezer-Mengistu/enigma-browser/releases" id="release-link">Releases</a>
+          <a href="https://github.com/Abenezer-Mengistu/enigma-browser">Source code</a>
+          <a href="#download">Download</a>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const ORDER = ['windows', 'macos', 'linux', 'freebsd', 'ios', 'android'];
+
+      const ICONS = {
+        windows: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5L10.5 4.2v7.1H3V5.5zm0 8.4h7.5v7.3L3 19.5V13.9zm9.2-9.7L21 2.5v7.6h-8.8V4.2zm0 17.3V13.9H21v7.6l-8.8-1.5z"/></svg>',
+        macos: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>',
+        linux: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 0 0-.11.135c-.26.268-.45.6-.663.866-.206.258-.426.492-.574.816-.164.362-.212.773-.235 1.176-.023.394-.015.794.038 1.177.104.779.324 1.551.585 2.25.127.348.27.686.444 1.012.174.325.378.636.62.922.484.572 1.092 1.058 1.794 1.392.702.334 1.49.515 2.302.515.812 0 1.6-.181 2.302-.515.702-.334 1.31-.82 1.794-1.392.242-.286.446-.597.62-.922.174-.326.317-.664.444-1.012.261-.699.481-1.471.585-2.25.053-.383.061-.783.038-1.177-.023-.403-.071-.814-.235-1.176-.148-.324-.368-.558-.574-.816-.213-.266-.403-.598-.663-.866a.424.424 0 0 0-.11-.135c.123-.805-.009-1.657-.287-2.489-.589-1.771-1.831-3.47-2.716-4.521-.75-1.067-.974-1.928-1.05-3.02-.065-1.491 1.056-5.965-3.17-6.298-.165-.013-.325-.021-.48-.021z"/></svg>',
+        freebsd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>',
+        ios: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>',
+        android: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 11.48v3.84a1.08 1.08 0 0 1-1.08 1.08H7.48a1.08 1.08 0 0 1-1.08-1.08v-3.84A4.52 4.52 0 0 1 2 7.04V6.4a.72.72 0 0 1 .72-.72h1.44a.72.72 0 0 1 .72.72v.64a4.52 4.52 0 0 1 9.04 0V6.4a.72.72 0 0 1 .72-.72h1.44a.72.72 0 0 1 .72.72v.64a4.52 4.52 0 0 1-4.4 4.44zM8.8 5.12a.96.96 0 1 0 0-1.92.96.96 0 0 0 0 1.92zm6.4 0a.96.96 0 1 0 0-1.92.96.96 0 0 0 0 1.92z"/></svg>'
+      };
+
+      function detectPlatform() {
+        const ua = navigator.userAgent || '';
+        const plat = (navigator.platform || '').toLowerCase();
+        if (/win/i.test(ua) || plat.includes('win')) return 'windows';
+        if (/iphone|ipad|ipod/i.test(ua)) return 'ios';
+        if (/android/i.test(ua)) return 'android';
+        if (/mac/i.test(ua) || plat.includes('mac')) {
+          if (navigator.maxTouchPoints > 1) return 'ios';
+          return 'macos';
+        }
+        if (/linux/i.test(ua) || plat.includes('linux')) return 'linux';
+        if (/freebsd/i.test(ua)) return 'freebsd';
+        return 'windows';
+      }
+
+      function isArmMac() {
+        const ua = navigator.userAgent || '';
+        if (/arm64|aarch64/i.test(ua)) return true;
+        if (navigator.userAgentData && navigator.userAgentData.platform === 'macOS') {
+          return navigator.userAgentData.architecture === 'arm';
+        }
+        return false;
+      }
+
+      function primaryUrl(platform) {
+        if (!platform || platform.status === 'coming_soon') return null;
+        if (platform.primary) return platform.primary.url;
+        if (platform.variants && platform.variants.length) {
+          if (platform.id === 'macos') {
+            const arch = isArmMac() ? 'arm64' : 'x64';
+            const v = platform.variants.find(x => x.arch === arch) || platform.variants[0];
+            return v.url;
+          }
+          return platform.variants[0].url;
+        }
+        return null;
+      }
+
+      function primaryLabel(platform) {
+        if (!platform) return 'Download';
+        if (platform.primary) return platform.primary.label;
+        if (platform.variants && platform.variants.length) {
+          if (platform.id === 'macos') {
+            const arch = isArmMac() ? 'arm64' : 'x64';
+            const v = platform.variants.find(x => x.arch === arch) || platform.variants[0];
+            return v.label;
+          }
+          return platform.variants[0].label;
+        }
+        return platform.label;
+      }
+
+      function dlLink(label, url) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = url;
+        a.innerHTML =
+          '<span>' + label + '</span>' +
+          '<span class="dl-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>';
+        li.appendChild(a);
+        return li;
+      }
+
+      function renderCard(key, p, recommended) {
+        const card = document.createElement('article');
+        card.className = 'platform-card' + (recommended ? ' recommended' : '');
+        card.dataset.platform = key;
+
+        const top = document.createElement('div');
+        top.className = 'platform-top';
+        top.innerHTML =
+          '<div class="platform-icon">' + (ICONS[key] || ICONS.linux) + '</div>' +
+          '<div class="platform-info">' +
+            '<h3>' + p.label + '</h3>' +
+            (p.minVersion ? '<p class="meta">' + p.minVersion + '</p>' : '') +
+            (p.note ? '<p class="meta">' + p.note + '</p>' : '') +
+            '<span class="badge ' + (p.status === 'available' ? 'badge-live' : 'badge-soon') + '">' +
+              (p.status === 'available' ? 'Available now' : 'Coming soon') +
+            '</span>' +
+          '</div>';
+        card.appendChild(top);
+
+        const list = document.createElement('ul');
+        list.className = 'dl-list';
+
+        if (p.status === 'coming_soon') {
+          const empty = document.createElement('div');
+          empty.className = 'dl-empty';
+          empty.textContent = 'Mobile apps are on the roadmap';
+          list.appendChild(empty);
+        } else {
+          if (p.primary) list.appendChild(dlLink(p.primary.label, p.primary.url));
+          if (p.alternate) list.appendChild(dlLink(p.alternate.label, p.alternate.url));
+          (p.variants || []).forEach(function (v) {
+            list.appendChild(dlLink(v.label, v.url));
+          });
+        }
+        card.appendChild(list);
+        return card;
+      }
+
+      const REPO = 'Abenezer-Mengistu/enigma-browser';
+
+      function formatDownloads(n) {
+        if (n == null || isNaN(n)) return '—';
+        return new Intl.NumberFormat('en', {
+          notation: n >= 10000 ? 'compact' : 'standard',
+          maximumFractionDigits: n >= 10000 ? 1 : 0
+        }).format(n);
+      }
+
+      function sumReleaseDownloads(releases) {
+        var total = 0;
+        (releases || []).forEach(function (rel) {
+          (rel.assets || []).forEach(function (asset) {
+            var name = asset.name || '';
+            if (/\.(json|blockmap)$/i.test(name)) return;
+            total += asset.download_count || 0;
+          });
+        });
+        return total;
+      }
+
+      function setDownloadStat(count) {
+        var el = document.getElementById('stat-downloads');
+        el.textContent = formatDownloads(count);
+        el.classList.remove('loading');
+      }
+
+      function loadDownloadCount(fallback) {
+        fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=100')
+          .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+          .then(function (releases) { setDownloadStat(sumReleaseDownloads(releases)); })
+          .catch(function () {
+            if (typeof fallback === 'number') setDownloadStat(fallback);
+            else setDownloadStat(null);
+          });
+      }
+
+      function applyManifest(data) {
+        const detected = detectPlatform();
+        const platforms = data.platforms;
+        const current = platforms[detected] || platforms.windows;
+
+        document.getElementById('detected-label').textContent =
+          'Optimized for ' + current.label;
+
+        const heroBtn = document.getElementById('hero-download');
+        const heroLabel = document.getElementById('hero-download-label');
+        const url = primaryUrl(current);
+        if (url) {
+          heroBtn.href = url;
+          heroLabel.textContent = 'Download ' + primaryLabel(current);
+          heroBtn.classList.remove('disabled');
+        } else {
+          heroBtn.href = '#download';
+          heroLabel.textContent = current.label + ' — coming soon';
+          heroBtn.classList.add('disabled');
+        }
+
+        document.getElementById('version-line').innerHTML =
+          'Version <strong>' + data.version + '</strong> · Updated ' + data.updated;
+        document.getElementById('stat-version').textContent = 'v' + data.version;
+        document.getElementById('release-link').href = data.releasePage;
+
+        const grid = document.getElementById('platform-grid');
+        grid.innerHTML = '';
+        ORDER.forEach(function (key) {
+          const p = platforms[key];
+          if (p) grid.appendChild(renderCard(key, p, key === detected));
+        });
+
+        document.getElementById('install-title').textContent =
+          'Install on ' + current.label;
+        const stepsEl = document.getElementById('install-steps');
+        stepsEl.innerHTML = '';
+        (current.install || ['Select your platform above and download the installer.']).forEach(function (s) {
+          const li = document.createElement('li');
+          li.textContent = s;
+          stepsEl.appendChild(li);
+        });
+
+        loadDownloadCount(typeof data.downloadCount === 'number' ? data.downloadCount : null);
+      }
+
+      fetch('downloads.json')
+        .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+        .then(applyManifest)
+        .catch(function () {
+          document.getElementById('detected-label').textContent = 'Use GitHub Releases';
+          document.getElementById('version-line').textContent = '';
+          document.getElementById('stat-version').textContent = '—';
+          var btn = document.getElementById('hero-download');
+          btn.href = 'https://github.com/Abenezer-Mengistu/enigma-browser/releases';
+          document.getElementById('hero-download-label').textContent = 'View GitHub Releases';
+          loadDownloadCount(null);
+        });
+    })();
+  </script>
+</body>
+</html>

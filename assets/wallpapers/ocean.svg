@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="depth" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c4a6e"/>
+      <stop offset="28%" stop-color="#0e7490"/>
+      <stop offset="55%" stop-color="#0a6b84"/>
+      <stop offset="78%" stop-color="#065a70"/>
+      <stop offset="100%" stop-color="#042f3a"/>
+    </linearGradient>
+    <radialGradient id="glow-t" cx="72%" cy="12%" r="38%">
+      <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#67e8f9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow-m" cx="22%" cy="42%" r="42%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow-b" cx="50%" cy="88%" r="55%">
+      <stop offset="0%" stop-color="#0369a1" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#0369a1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="moon" cx="82%" cy="14%" r="10%">
+      <stop offset="0%" stop-color="#e0f2fe"/>
+      <stop offset="100%" stop-color="#e0f2fe" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#depth)"/>
+  <rect width="1920" height="1080" fill="url(#glow-t)"/>
+  <rect width="1920" height="1080" fill="url(#glow-m)"/>
+  <rect width="1920" height="1080" fill="url(#glow-b)"/>
+  <circle cx="1580" cy="150" r="44" fill="#bae6fd" opacity="0.8"/>
+  <rect width="1920" height="1080" fill="url(#moon)"/>
+  <ellipse cx="400" cy="920" rx="280" ry="18" fill="#67e8f9" opacity="0.08"/>
+  <ellipse cx="1400" cy="960" rx="360" ry="22" fill="#67e8f9" opacity="0.06"/>
+</svg>

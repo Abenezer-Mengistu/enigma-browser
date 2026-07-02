@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#831843"/>
+      <stop offset="40%" stop-color="#9d174d"/>
+      <stop offset="100%" stop-color="#12080f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="30%" r="55%">
+      <stop offset="0%" stop-color="#f472b6" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#f472b6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="petal" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbcfe8"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+  <ellipse cx="960" cy="320" rx="500" ry="80" fill="#f472b6" opacity="0.15"/>
+  <g opacity="0.55">
+    <circle cx="320" cy="420" r="28" fill="url(#petal)"/>
+    <circle cx="360" cy="400" r="22" fill="#fce7f3" opacity="0.8"/>
+    <circle cx="1520" cy="380" r="32" fill="url(#petal)"/>
+    <circle cx="1560" cy="360" r="24" fill="#fce7f3" opacity="0.75"/>
+    <circle cx="880" cy="480" r="20" fill="#f9a8d4" opacity="0.6"/>
+    <circle cx="1100" cy="440" r="26" fill="url(#petal)" opacity="0.7"/>
+  </g>
+  <path d="M0 780 Q640 720 960 760 T1920 790 L1920 1080 L0 1080 Z" fill="#1a0c16" opacity="0.85"/>
+  <path d="M0 860 Q480 820 960 850 T1920 870 L1920 1080 L0 1080 Z" fill="#23101d"/>
+</svg>

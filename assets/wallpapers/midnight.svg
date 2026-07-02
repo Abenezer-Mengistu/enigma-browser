@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="space" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#0a0820"/>
+      <stop offset="100%" stop-color="#000003"/>
+    </radialGradient>
+    <radialGradient id="nebula" cx="55%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#312e81" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#space)"/>
+  <rect width="1920" height="1080" fill="url(#nebula)"/>
+  <ellipse cx="960" cy="400" rx="600" ry="200" fill="#4338ca" opacity="0.08"/>
+  <ellipse cx="720" cy="350" rx="400" ry="120" fill="#6366f1" opacity="0.06"/>
+  <g fill="#fff" opacity="0.7">
+    <circle cx="180" cy="120" r="1.2"/><circle cx="420" cy="80" r="1"/><circle cx="680" cy="160" r="1.5"/>
+    <circle cx="920" cy="60" r="1"/><circle cx="1100" cy="140" r="1.2"/><circle cx="1380" cy="90" r="1"/>
+    <circle cx="1620" cy="180" r="1.5"/><circle cx="300" cy="280" r="1"/><circle cx="560" cy="240" r="1.2"/>
+    <circle cx="840" cy="200" r="1"/><circle cx="1240" cy="260" r="1.5"/><circle cx="1500" cy="220" r="1"/>
+    <circle cx="100" cy="400" r="1"/><circle cx="760" cy="380" r="1.2"/><circle cx="1040" cy="340" r="1"/>
+    <circle cx="1720" cy="320" r="1.5"/><circle cx="480" cy="480" r="1"/><circle cx="1320" cy="420" r="1"/>
+  </g>
+  <path d="M0 900 Q960 820 1920 880 L1920 1080 L0 1080 Z" fill="#030208" opacity="0.9"/>
+</svg>

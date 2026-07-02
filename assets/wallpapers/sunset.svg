@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7c2d12"/>
+      <stop offset="35%" stop-color="#c2410c"/>
+      <stop offset="65%" stop-color="#ea580c"/>
+      <stop offset="100%" stop-color="#120c08"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="75%" r="35%">
+      <stop offset="0%" stop-color="#fde68a" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#fb923c" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#fb923c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="dune" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#292018"/>
+      <stop offset="100%" stop-color="#120c08"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <rect width="1920" height="1080" fill="url(#sun)"/>
+  <circle cx="960" cy="820" r="120" fill="#fcd34d" opacity="0.85"/>
+  <ellipse cx="960" cy="830" rx="200" ry="40" fill="#fb923c" opacity="0.3"/>
+  <path d="M0 780 Q320 720 640 760 T1280 740 T1920 770 L1920 1080 L0 1080 Z" fill="url(#dune)"/>
+  <path d="M0 860 Q480 800 960 840 T1920 820 L1920 1080 L0 1080 Z" fill="#1a120c" opacity="0.9"/>
+</svg>

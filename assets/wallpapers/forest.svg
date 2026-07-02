@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="50%" stop-color="#0f2e24"/>
+      <stop offset="100%" stop-color="#071210"/>
+    </linearGradient>
+    <linearGradient id="mist" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="tree" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#065f46"/>
+      <stop offset="100%" stop-color="#042f24"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <rect width="1920" height="600" y="480" fill="url(#mist)"/>
+  <path d="M0 680 L120 680 L160 420 L200 680 L0 680 Z" fill="url(#tree)" opacity="0.7"/>
+  <path d="M280 680 L400 680 L340 380 L460 680 Z" fill="url(#tree)" opacity="0.85"/>
+  <path d="M520 680 L660 680 L590 340 L730 680 Z" fill="#047857" opacity="0.75"/>
+  <path d="M800 680 L920 680 L860 400 L980 680 Z" fill="url(#tree)" opacity="0.8"/>
+  <path d="M1080 680 L1220 680 L1150 360 L1290 680 Z" fill="#065f46" opacity="0.9"/>
+  <path d="M1360 680 L1500 680 L1430 390 L1570 680 Z" fill="url(#tree)" opacity="0.75"/>
+  <path d="M1640 680 L1780 680 L1710 420 L1850 680 Z" fill="url(#tree)" opacity="0.7"/>
+  <path d="M0 780 Q960 720 1920 760 L1920 1080 L0 1080 Z" fill="#0b1a16"/>
+  <ellipse cx="960" cy="720" rx="800" ry="60" fill="#34d399" opacity="0.08"/>
+</svg>

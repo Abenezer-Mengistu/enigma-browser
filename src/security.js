@@ -48,6 +48,8 @@ const ALLOWED_PERMISSIONS = new Set([
 
 const PROMPT_PERMISSIONS = new Set(['geolocation', 'notifications', 'media']);
 
+const { sharedEngine } = require('./filter-engine');
+
 function parseUrl(raw) {
   try { return new URL(raw); } catch { return null; }
 }
@@ -74,7 +76,18 @@ function upgradeToHttps(url) {
   return u.toString();
 }
 
-function hardenSession(ses, getSettings, onPermissionDenied, onTrackerBlocked, onPermissionPrompt) {
+function shouldBlockRequest(url, getEffectiveSettings) {
+  const settings = getEffectiveSettings();
+  if (settings.blockTrackers === false && !settings.filterLists) return false;
+  if (sharedEngine.shouldBlock(url, {
+    siteExceptions: settings.siteExceptions,
+    blockTrackers: settings.blockTrackers !== false,
+    filterLists: settings.filterLists !== false,
+  })) return true;
+  return false;
+}
+
+function hardenSession(ses, getEffectiveSettings, onPermissionDenied, onTrackerBlocked, onPermissionPrompt) {
   if (ses.__enigmaHardened) return;
   ses.__enigmaHardened = true;
 
@@ -101,33 +114,70 @@ function hardenSession(ses, getSettings, onPermissionDenied, onTrackerBlocked, o
     return true;
   });
 
-  ses.webRequest.onBeforeRequest({ urls: TRACKER_PATTERNS }, (_, cb) => {
-    const settings = getSettings();
-    if (settings.blockTrackers !== false) {
+  ses.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, cb) => {
+    const settings = getEffectiveSettings();
+    if (details.resourceType === 'mainFrame') {
+      if (settings.httpsOnly && details.url.startsWith('http://')) {
+        const upgraded = upgradeToHttps(details.url);
+        if (upgraded !== details.url) return cb({ redirectURL: upgraded });
+      }
+      return cb({});
+    }
+
+    if (settings.mixedContentBlock && details.url.startsWith('http://')) {
+      const initiator = details.initiator || details.documentUrl || '';
+      if (initiator.startsWith('https://')) {
+        onTrackerBlocked?.();
+        return cb({ cancel: true });
+      }
+    }
+
+    if (shouldBlockRequest(details.url, getEffectiveSettings)) {
       onTrackerBlocked?.();
       return cb({ cancel: true });
     }
+
+    if (TRACKER_PATTERNS.some(() => false)) { /* patterns handled via filter engine */ }
+
     cb({});
   });
 
-  ses.webRequest.onBeforeRequest({ urls: ['http://*/*'] }, (details, cb) => {
-    const settings = getSettings();
-    if (!settings.httpsOnly) return cb({});
-    const upgraded = upgradeToHttps(details.url);
-    cb(upgraded !== details.url ? { redirectURL: upgraded } : {});
-  });
-
   ses.webRequest.onBeforeSendHeaders((details, cb) => {
-    const settings = getSettings();
+    const settings = getEffectiveSettings();
     if (settings.doNotTrack === false) return cb({});
     cb({ requestHeaders: { ...details.requestHeaders, DNT: '1' } });
   });
 }
 
+const FINGERPRINT_INJECT = `(function(){
+  if(window.__enigmaFp)return;
+  window.__enigmaFp=true;
+  try{
+    const noise=()=>(Math.random()*0.0001).toString(36).slice(2,4);
+    const orig=HTMLCanvasElement.prototype.toDataURL;
+    HTMLCanvasElement.prototype.toDataURL=function(){
+      try{const c=this.getContext&&this.getContext('2d');if(c){c.fillStyle='rgba(0,0,0,0.003)';c.fillRect(0,0,1,1);}}catch(e){}
+      return orig.apply(this,arguments);
+    };
+    if(window.RTCPeerConnection){
+      const Orig=window.RTCPeerConnection;
+      window.RTCPeerConnection=function(cfg){
+        if(cfg&&cfg.iceServers)cfg.iceServers=[];
+        return new Orig(cfg);
+      };
+      window.RTCPeerConnection.prototype=Orig.prototype;
+    }
+    Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>4});
+    Object.defineProperty(navigator,'deviceMemory',{get:()=>8});
+  }catch(e){}
+})();`;
+
 module.exports = {
   TRACKER_PATTERNS,
+  FINGERPRINT_INJECT,
   isSafeExternalUrl,
   isNavigableUrl,
   upgradeToHttps,
   hardenSession,
+  shouldBlockRequest,
 };

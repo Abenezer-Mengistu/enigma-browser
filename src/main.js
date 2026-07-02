@@ -5,7 +5,11 @@ const path = require('path');
 const fs   = require('fs');
 const os   = require('os');
 const crypto = require('crypto');
-const { isSafeExternalUrl, isNavigableUrl, hardenSession } = require('./security');
+const { isSafeExternalUrl, isNavigableUrl, hardenSession, FINGERPRINT_INJECT } = require('./security');
+const { listTemplates } = require('./session-templates');
+const { DEFAULT_PRIVACY, effectiveSettings } = require('./privacy-store');
+const { encryptVault, decryptVault } = require('./sync-crypto');
+const { sharedEngine } = require('./filter-engine');
 
 app.setName('Enigma');
 if (process.platform === 'win32') app.setAppUserModelId('app.enigmabrowser');
@@ -24,6 +28,7 @@ app.setPath('userData', resolveUserDataRoot());
 
 app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer');
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
+app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
 
 const DATA = app.getPath('userData');
 const USERS_ROOT = path.join(DATA, 'users');
@@ -198,7 +203,56 @@ const DEFAULT_SETTINGS = {
   doNotTrack: true,
   blockPopups: true,
   restoreSession: false,
+  filterLists: true,
+  fingerprintProtection: true,
+  webrtcProtection: true,
+  mixedContentBlock: false,
 };
+
+const sessionConfigs = new Map();
+const sessionBlockedCounts = new Map();
+
+function sessionKey(userId, sessionId) {
+  return `${userId}:${sessionId}`;
+}
+
+function privacyPath(userId = activeUserId) {
+  return path.join(userDir(userId), 'privacy.json');
+}
+
+function getPrivacyDoc(userId = activeUserId) {
+  return { ...DEFAULT_PRIVACY, ...read(privacyPath(userId), {}) };
+}
+
+function savePrivacyDoc(doc, userId = activeUserId) {
+  write(privacyPath(userId), { ...DEFAULT_PRIVACY, ...doc });
+}
+
+function getSessionConfig(userId, sessionId) {
+  return sessionConfigs.get(sessionKey(userId, sessionId)) || {};
+}
+
+function parseProxy(proxyStr) {
+  if (!proxyStr || !String(proxyStr).trim()) return null;
+  const s = String(proxyStr).trim();
+  if (s === 'direct') return { mode: 'direct' };
+  try {
+    const u = new URL(s.includes('://') ? s : `http://${s}`);
+    const scheme = u.protocol.replace(':', '');
+    if (scheme === 'socks5' || scheme === 'socks4') {
+      return { proxyRules: `${scheme}=${u.hostname}:${u.port || 1080}` };
+    }
+    const port = u.port || (scheme === 'https' ? 443 : 80);
+    return { proxyRules: `http=${u.hostname}:${port};https=${u.hostname}:${port}` };
+  } catch {
+    return { proxyRules: s };
+  }
+}
+
+async function applyProxy(ses, proxyStr) {
+  const cfg = parseProxy(proxyStr);
+  if (cfg) await ses.setProxy(cfg);
+}
 
 const read  = (p, fb) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return fb; } };
 const write = (p, d)  => { try { fs.writeFileSync(p, JSON.stringify(d, null, 2)); } catch (e) { console.error(e); } };
@@ -283,18 +337,38 @@ function syncNativeTheme(theme) {
   else nativeTheme.themeSource = 'dark';
 }
 
-function applySessionPolicy(ses) {
+function buildEffectiveSettings(sessionId = null) {
+  const global = getSettings();
+  const privacy = getPrivacyDoc();
+  const sessCfg = sessionId ? getSessionConfig(activeUserId, sessionId) : {};
+  return effectiveSettings(global, privacy, sessCfg.privacy || {});
+}
+
+function applySessionPolicy(ses, sessionId = null, ephemeral = false) {
+  const onBlocked = () => {
+    blockedTrackerCount++;
+    if (sessionId) {
+      const key = sessionKey(activeUserId, sessionId);
+      sessionBlockedCounts.set(key, (sessionBlockedCounts.get(key) || 0) + 1);
+      mainWin?.webContents.send('session-blocked', {
+        sessionId,
+        count: sessionBlockedCounts.get(key),
+      });
+    }
+    mainWin?.webContents.send('tracker-blocked', blockedTrackerCount);
+  };
   hardenSession(
     ses,
-    getSettings,
+    () => buildEffectiveSettings(sessionId),
     notifyPermissionBlocked,
-    () => {
-      blockedTrackerCount++;
-      mainWin?.webContents.send('tracker-blocked', blockedTrackerCount);
-    },
+    onBlocked,
     promptPermission,
   );
   hookDownloads(ses);
+  if (sessionId) {
+    const cfg = getSessionConfig(activeUserId, sessionId);
+    if (cfg.proxy) void applyProxy(ses, cfg.proxy);
+  }
 }
 
 function createSplash() {
@@ -477,9 +551,24 @@ ipcMain.handle('users-remove', async (_, userId) => {
 ipcMain.handle('user-main-partition', () => mainPartition());
 
 // ── IPC: sessions (scoped to active user) ─────────────────────────────────────
-ipcMain.handle('session-create', (_, id, ephemeral) => {
+ipcMain.handle('session-register', async (_, id, config) => {
+  const cfg = config || {};
+  sessionConfigs.set(sessionKey(activeUserId, id), cfg);
+  const ephemeral = !!cfg.ephemeral;
+  const ses = session.fromPartition(sessionPartition(activeUserId, id, ephemeral));
+  applySessionPolicy(ses, id, ephemeral);
+  if (cfg.proxy) await applyProxy(ses, cfg.proxy);
+  return true;
+});
+
+ipcMain.handle('session-create', async (_, id, config) => {
+  const cfg = typeof config === 'boolean' ? { ephemeral: config } : (config || {});
+  const ephemeral = !!cfg.ephemeral;
+  sessionConfigs.set(sessionKey(activeUserId, id), cfg);
   const partition = sessionPartition(activeUserId, id, ephemeral);
-  applySessionPolicy(session.fromPartition(partition));
+  const ses = session.fromPartition(partition);
+  applySessionPolicy(ses, id, ephemeral);
+  if (cfg.proxy) await applyProxy(ses, cfg.proxy);
   return partition;
 });
 
@@ -493,9 +582,123 @@ ipcMain.handle('session-clear', async (_, id, ephemeral) => {
   return true;
 });
 
+ipcMain.handle('session-burn', async (_, id, ephemeral) => {
+  const key = sessionKey(activeUserId, id);
+  try {
+    const ses = session.fromPartition(sessionPartition(activeUserId, id, ephemeral));
+    await ses.clearStorageData();
+    await ses.clearCache();
+    await ses.clearAuthCache();
+    await ses.clearCodeCaches?.();
+  } catch {}
+  sessionBlockedCounts.set(key, 0);
+  blockedTrackerCount = 0;
+  return true;
+});
+
+ipcMain.handle('session-stats', async (_, id, ephemeral) => {
+  const ses = session.fromPartition(sessionPartition(activeUserId, id, ephemeral));
+  let cookies = [];
+  let cacheBytes = 0;
+  try { cookies = await ses.cookies.get({}); } catch {}
+  try { cacheBytes = await ses.getCacheSize(); } catch {}
+  const origins = [...new Set(cookies.map(c => String(c.domain || '').replace(/^\./, '')))].filter(Boolean).slice(0, 40);
+  const key = sessionKey(activeUserId, id);
+  return {
+    cookies: cookies.length,
+    origins,
+    cacheBytes,
+    blocked: sessionBlockedCounts.get(key) || 0,
+    filterRules: sharedEngine.domainRules.size,
+  };
+});
+
+ipcMain.handle('session-blocked-count', (_, id) => sessionBlockedCounts.get(sessionKey(activeUserId, id)) || 0);
+
+ipcMain.handle('session-templates', () => listTemplates());
+
+ipcMain.handle('fingerprint-script', () => FINGERPRINT_INJECT);
+
 ipcMain.handle('session-apply-settings', () => {
   appSettings = getSettings();
+  applySessionPolicy(session.fromPartition(mainPartition()));
+  for (const [key, cfg] of sessionConfigs.entries()) {
+    if (!key.startsWith(`${activeUserId}:`)) continue;
+    const sessionId = key.slice(activeUserId.length + 1);
+    const ses = session.fromPartition(sessionPartition(activeUserId, sessionId, !!cfg.ephemeral));
+    applySessionPolicy(ses, sessionId, !!cfg.ephemeral);
+  }
   return true;
+});
+
+ipcMain.handle('privacy-load', () => getPrivacyDoc());
+ipcMain.handle('privacy-save', (_, doc) => { savePrivacyDoc(doc); return true; });
+ipcMain.handle('site-exception-set', (_, host, action) => {
+  const doc = getPrivacyDoc();
+  const h = String(host || '').toLowerCase().replace(/^\./, '');
+  if (!h) return doc;
+  if (!action) delete doc.siteExceptions[h];
+  else doc.siteExceptions[h] = action;
+  savePrivacyDoc(doc);
+  return doc;
+});
+
+ipcMain.handle('sync-export', (_, passphrase) => {
+  if (!passphrase || String(passphrase).length < 8) throw new Error('Passphrase must be at least 8 characters');
+  return encryptVault(passphrase, {
+    bookmarks: read(userPaths().bookmarks, []),
+    settings: getSettings(),
+    privacy: getPrivacyDoc(),
+    sessions: read(userPaths().session, null),
+  });
+});
+
+ipcMain.handle('sync-import', (_, passphrase, vault) => {
+  const data = decryptVault(passphrase, vault);
+  if (data.bookmarks) write(userPaths().bookmarks, data.bookmarks);
+  if (data.settings) {
+    appSettings = { ...DEFAULT_SETTINGS, ...data.settings };
+    write(userPaths().settings, appSettings);
+  }
+  if (data.privacy) savePrivacyDoc(data.privacy);
+  if (data.sessions) write(userPaths().session, data.sessions);
+  return data;
+});
+
+ipcMain.handle('sync-export-file', async (_, passphrase) => {
+  const vault = encryptVault(passphrase, {
+    bookmarks: read(userPaths().bookmarks, []),
+    settings: getSettings(),
+    privacy: getPrivacyDoc(),
+    sessions: read(userPaths().session, null),
+  });
+  const r = await dialog.showSaveDialog(mainWin, {
+    title: 'Export encrypted vault',
+    defaultPath: 'enigma-vault.json',
+    filters: [{ name: 'Enigma Vault', extensions: ['json'] }],
+  });
+  if (r.canceled || !r.filePath) return null;
+  fs.writeFileSync(r.filePath, JSON.stringify(vault, null, 2));
+  return r.filePath;
+});
+
+ipcMain.handle('sync-import-file', async (_, passphrase) => {
+  const r = await dialog.showOpenDialog(mainWin, {
+    title: 'Import encrypted vault',
+    filters: [{ name: 'Enigma Vault', extensions: ['json'] }],
+    properties: ['openFile'],
+  });
+  if (r.canceled || !r.filePaths?.[0]) return null;
+  const vault = JSON.parse(fs.readFileSync(r.filePaths[0], 'utf8'));
+  const data = decryptVault(passphrase, vault);
+  if (data.bookmarks) write(userPaths().bookmarks, data.bookmarks);
+  if (data.settings) {
+    appSettings = { ...DEFAULT_SETTINGS, ...data.settings };
+    write(userPaths().settings, appSettings);
+  }
+  if (data.privacy) savePrivacyDoc(data.privacy);
+  if (data.sessions) write(userPaths().session, data.sessions);
+  return data;
 });
 
 ipcMain.handle('validate-url', (_, url) => isNavigableUrl(url));

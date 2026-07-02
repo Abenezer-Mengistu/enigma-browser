@@ -449,6 +449,41 @@ html.compact-tabs .navbar{gap:4px;padding:3px 8px 4px}
 .restore-banner .rbtn:hover{filter:brightness(1.08)}
 .restore-banner .rbtn-ghost{background:rgba(255,255,255,.06);color:var(--t2);border:1px solid var(--bdr);font-weight:600}
 .restore-banner .rbtn-x{background:none;border:none;color:var(--t3);cursor:pointer;padding:4px 8px;font-size:14px;line-height:1}
+
+/* ═══ V2 SESSION CONTAINERS ═══ */
+.tpl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:6px}
+.tpl-card{
+  padding:10px 12px;border-radius:12px;border:1px solid var(--b1);cursor:pointer;
+  background:rgba(255,255,255,.03);transition:all .15s;text-align:left;
+}
+.tpl-card:hover{border-color:var(--b2);background:var(--s2)}
+.tpl-card.sel{border-color:var(--acc);background:rgba(124,58,237,.14);box-shadow:0 0 0 1px rgba(124,58,237,.25)}
+.tpl-ic{font-size:18px;margin-bottom:4px}
+.tpl-name{font-size:12px;font-weight:700;color:var(--t1)}
+.tpl-desc{font-size:10px;color:var(--t3);margin-top:3px;line-height:1.35}
+.sess-dash{
+  position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;
+  background:rgba(4,3,12,.55);backdrop-filter:blur(6px);padding:20px;
+}
+.sess-dash.show{display:flex}
+.sess-dash-card{
+  width:min(480px,100%);max-height:min(86vh,640px);overflow:auto;
+  background:var(--glass);border:1px solid var(--b2);border-radius:var(--r-xl);
+  padding:24px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:14px;
+}
+.sd-title{font-size:18px;font-weight:700;letter-spacing:-.03em}
+.sd-sub{font-size:12px;color:var(--t3);margin-top:-6px}
+.sd-stat{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;background:var(--s2);border:1px solid var(--b1);font-size:12px}
+.sd-stat b{color:var(--acc3);font-weight:700}
+.sd-origins{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.sd-tag{font-size:10px;padding:3px 8px;border-radius:999px;background:var(--s3);border:1px solid var(--b1);color:var(--t2)}
+.sd-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.exc-row{display:flex;gap:6px;align-items:center;margin-top:6px}
+.exc-row input{flex:1}
+.exc-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.exc-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;background:var(--s2);font-size:11px}
+.sp-dash{margin-left:2px;font-size:9px;opacity:.7;padding:1px 4px;border-radius:4px}
+.sp-dash:hover{opacity:1;background:rgba(255,255,255,.08)}
 .dlbar.open{transform:translateY(0)}
 .dli{display:flex;align-items:center;gap:8px;background:var(--s3);border-radius:var(--r);padding:7px 10px;min-width:200px;max-width:260px;flex-shrink:0;position:relative;overflow:hidden}
 .dli-prog{position:absolute;left:0;top:0;bottom:0;background:rgba(144,97,249,.1);transition:width .3s;pointer-events:none}
@@ -1016,8 +1051,12 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
 <div class="overlay" id="modal" style="display:none" onclick="if(event.target===this)B.closeModal()">
   <div class="modal">
     <div class="m-header">
-      <div class="m-title">New Session</div>
-      <div class="m-sub">Isolated cookies and storage for this user — great for work, shopping, or private browsing.</div>
+      <div class="m-title">New Container</div>
+      <div class="m-sub">v2 session containers — isolated cookies, optional proxy, and per-container privacy rules.</div>
+    </div>
+    <div>
+      <div class="m-label">Container template</div>
+      <div class="tpl-grid" id="tpl-grid"></div>
     </div>
     <div>
       <div class="m-label">Session name</div>
@@ -1027,6 +1066,11 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
     <div>
       <div class="m-label">Session color</div>
       <div class="swatches" id="swatches"></div>
+    </div>
+    <div>
+      <div class="m-label">Proxy (optional)</div>
+      <input class="m-inp" id="m-proxy" placeholder="socks5://host:port or http://proxy:8080" maxlength="120"/>
+      <div class="m-sub" style="margin-top:4px">Route this session through a SOCKS5 or HTTP proxy</div>
     </div>
     <div class="tgl-row">
       <div class="m-header" style="gap:4px">
@@ -1038,6 +1082,31 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
     <div class="m-row">
       <button class="btn btn-g" onclick="B.closeModal()">Cancel</button>
       <button class="btn btn-p" onclick="B.createProfile()">Create session</button>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION DASHBOARD (v2) -->
+<div class="sess-dash" id="sess-dash" onclick="if(event.target===this)B.closeSessionDashboard()">
+  <div class="sess-dash-card">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+      <div>
+        <div class="sd-title" id="sd-title">Session</div>
+        <div class="sd-sub" id="sd-sub">Container privacy dashboard</div>
+      </div>
+      <button class="ph-x" onclick="B.closeSessionDashboard()">✕</button>
+    </div>
+    <div class="sd-stat"><span>Trackers blocked</span><b id="sd-blocked">0</b></div>
+    <div class="sd-stat"><span>Cookies stored</span><b id="sd-cookies">0</b></div>
+    <div class="sd-stat"><span>Cache size</span><b id="sd-cache">—</b></div>
+    <div class="sd-stat"><span>Filter rules active</span><b id="sd-rules">0</b></div>
+    <div>
+      <div class="m-label">Sites with cookies</div>
+      <div class="sd-origins" id="sd-origins"><span class="sd-tag">None yet</span></div>
+    </div>
+    <div class="sd-actions">
+      <button class="btn btn-r" onclick="B.burnSession()">🔥 Burn session</button>
+      <button class="btn btn-g" onclick="B.closeSessionDashboard()">Close</button>
     </div>
   </div>
 </div>
@@ -1173,7 +1242,13 @@ const B = (() => {
   let newtabs   = {};
   let bookmarks = [];
   let history   = [];
-  let settings  = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false};
+  let settings  = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false};
+  let privacyDoc = { filterLists: true, fingerprintProtection: true, webrtcProtection: true, mixedContentBlock: false, siteExceptions: {} };
+  let sessionTemplates = [];
+  let selectedTemplateId = 'custom';
+  let sessionBlockedByPid = {};
+  let dashboardPid = null;
+  let fpScript = '';
   let pendingRestoreSession = null;
   let zoom      = 1.0;
   let ephem     = false;
@@ -1246,6 +1321,10 @@ const B = (() => {
     map[cmd]?.();
   });
   eAPI.on('tracker-blocked', n => { blockedCount = n; updateShield(); });
+  eAPI.on('session-blocked', ({ sessionId, count }) => {
+    sessionBlockedByPid[sessionId] = count;
+    if (dashboardPid === sessionId) $('sd-blocked').textContent = String(count);
+  });
   eAPI.on('open-link', url => openUrlInSession(null, url));
   eAPI.on('open-link-incog', url => openLinkIncognito(url));
   eAPI.on('permission-blocked', ({ permission, url }) => {
@@ -1261,7 +1340,7 @@ const B = (() => {
   document.addEventListener('keydown', e => {
     if (e.key==='?' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA') showShortcuts();
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase()==='o') { e.preventDefault(); togglePanel('notes'); }
-    if (e.key==='Escape') { hideShortcuts(); closeFind(); closeSuggest(); closeModal(); closeUserModal(); closeSiteInfo(); hideError(); }
+    if (e.key==='Escape') { hideShortcuts(); closeFind(); closeSuggest(); closeModal(); closeUserModal(); closeSiteInfo(); hideError(); closeSessionDashboard(); }
     if (e.altKey && e.key==='ArrowLeft')  { e.preventDefault(); goBack(); }
     if (e.altKey && e.key==='ArrowRight') { e.preventDefault(); goFwd(); }
   });
@@ -1285,7 +1364,9 @@ const B = (() => {
     if (/^(file|ftp|javascript|data|about):/.test(raw)) return '';
     if (/^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)\d/.test(raw)) return 'http://'+raw;
     if (/^[\w.-]+\.\w{2,}(\/|$|\?)/.test(raw) && !raw.includes(' ')) return 'https://'+raw;
-    return (ENGINES[settings.searchEngine]||ENGINES.google)(raw);
+    const p = prof();
+    const engineKey = p?.searchEngine || settings.searchEngine;
+    return (ENGINES[engineKey]||ENGINES.google)(raw);
   }
 
   function fav(url) { try{return 'https://www.google.com/s2/favicons?domain='+new URL(url).hostname+'&sz=32';}catch{return null;} }
@@ -1574,8 +1655,17 @@ const B = (() => {
       p.partition = mainUserPartition;
       return;
     }
-    if (p.partition) return;
-    p.partition = await eAPI.sessionCreate(p.id, !!(p.isIncognito && p.ephemeral));
+    const config = {
+      ephemeral: !!(p.isIncognito && p.ephemeral),
+      templateId: p.templateId || 'custom',
+      proxy: p.proxy || '',
+      privacy: p.privacy || {},
+    };
+    if (p.partition) {
+      await eAPI.sessionRegister(p.id, config);
+      return;
+    }
+    p.partition = await eAPI.sessionCreate(p.id, config);
   }
 
   function withContentLock(fn) {
@@ -1784,6 +1874,11 @@ const B = (() => {
         const rd = $('btn-read');
         const isArticle = t.url && !t.url.startsWith('about:') && !t.url.includes('google.com');
         rd.style.display = isArticle ? 'inline' : 'none';
+      }
+      const sessPrivacy = prof(pid)?.privacy || {};
+      const fpOn = sessPrivacy.fingerprintProtection ?? settings.fingerprintProtection ?? privacyDoc.fingerprintProtection;
+      if (fpOn && fpScript && t.url && !t.url.startsWith('about:')) {
+        try { wv.executeJavaScript(fpScript, false); } catch {}
       }
       scheduleSessionSave();
     });
@@ -2139,7 +2234,57 @@ const B = (() => {
   }
 
   function showPrivacyStats() {
-    toast(`🛡 ${blockedCount} tracker request${blockedCount === 1 ? '' : 's'} blocked this session`);
+    openSessionDashboard(activePid);
+  }
+
+  function formatBytes(n) {
+    if (!n) return '0 B';
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(1) + ' MB';
+  }
+
+  async function openSessionDashboard(pid) {
+    const p = prof(pid || activePid);
+    if (!p) return;
+    dashboardPid = p.id;
+    $('sd-title').textContent = (p.isIncognito ? '🕵️ ' : '') + p.name;
+    $('sd-sub').textContent = p.templateId && p.templateId !== 'custom'
+      ? `${p.templateId} container · isolated storage`
+      : 'Session container · isolated storage';
+    $('sess-dash').classList.add('show');
+    const stats = await eAPI.sessionStats(p.id, !!p.ephemeral).catch(() => ({}));
+    const blocked = stats.blocked ?? sessionBlockedByPid[p.id] ?? 0;
+    $('sd-blocked').textContent = String(blocked);
+    $('sd-cookies').textContent = String(stats.cookies ?? 0);
+    $('sd-cache').textContent = formatBytes(stats.cacheBytes || 0);
+    $('sd-rules').textContent = String(stats.filterRules ?? 0);
+    const origins = stats.origins || [];
+    $('sd-origins').innerHTML = origins.length
+      ? origins.map(o => `<span class="sd-tag">${esc(o)}</span>`).join('')
+      : '<span class="sd-tag">None yet</span>';
+  }
+
+  function closeSessionDashboard() {
+    $('sess-dash')?.classList.remove('show');
+    dashboardPid = null;
+  }
+
+  async function burnSession() {
+    const pid = dashboardPid || activePid;
+    const p = prof(pid);
+    if (!p || p.id === 'default') { toast('Cannot burn the Main session'); return; }
+    if (!confirm(`Burn "${p.name}"? All cookies, cache, and storage for this container will be permanently deleted.`)) return;
+    tabs(pid).forEach(t => destroyWV(t.id, pid));
+    tabsByPid[pid] = [];
+    activeTid[pid] = null;
+    await eAPI.sessionBurn(pid, !!p.ephemeral);
+    sessionBlockedByPid[pid] = 0;
+    ensureSessionTabs(pid);
+    if (activePid === pid) await renderAll();
+    else { renderSessionBar(); scheduleSessionSave(); }
+    closeSessionDashboard();
+    toast('🔥 Session burned — all container data wiped');
   }
 
   function scheduleSessionSave() {
@@ -2176,7 +2321,10 @@ const B = (() => {
       if (activeTid[pid]) savedActiveTid[pid] = activeTid[pid];
     }
     eAPI.sessionSave({
-      profiles: profiles.map(p => ({ id: p.id, name: p.name, color: p.color, isIncognito: p.isIncognito, ephemeral: p.ephemeral, partition: p.partition })),
+      profiles: profiles.map(p => ({
+        id: p.id, name: p.name, color: p.color, isIncognito: p.isIncognito, ephemeral: p.ephemeral,
+        partition: p.partition, templateId: p.templateId, proxy: p.proxy, searchEngine: p.searchEngine, privacy: p.privacy,
+      })),
       activePid, tabsByPid: snap, activeTid: savedActiveTid,
     });
   }
@@ -2561,6 +2709,12 @@ const B = (() => {
 
   function bindChromeClicks() {
     $('sstrip')?.addEventListener('click', e => {
+      const dashBtn = e.target.closest('[data-action="session-dash"]');
+      if (dashBtn) {
+        e.stopPropagation();
+        openSessionDashboard(dashBtn.dataset.pid);
+        return;
+      }
       const closeBtn = e.target.closest('[data-action="close-session"]');
       if (closeBtn) {
         e.stopPropagation();
@@ -2573,6 +2727,10 @@ const B = (() => {
       }
       const chip = e.target.closest('.sess-chip[data-pid]');
       if (chip?.dataset.pid) switchProfile(chip.dataset.pid);
+    });
+    $('sstrip')?.addEventListener('dblclick', e => {
+      const chip = e.target.closest('.sess-chip[data-pid]');
+      if (chip?.dataset.pid) openSessionDashboard(chip.dataset.pid);
     });
     $('tabbar')?.addEventListener('click', e => {
       if (e.target.closest('[data-action="new-page"]')) {
@@ -2698,8 +2856,9 @@ const B = (() => {
           <div class="s-row">
             <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
               <div style="width:9px;height:9px;border-radius:50%;background:${p.color};flex-shrink:0"></div>
-              <div class="s-lbl">${esc(p.name)}<div class="s-sub">${tabs(p.id).length} tab${tabs(p.id).length===1?'':'s'}${p.ephemeral?' · Ephemeral':''}</div></div>
+              <div class="s-lbl">${esc(p.name)}<div class="s-sub">${tabs(p.id).length} tab${tabs(p.id).length===1?'':'s'}${p.ephemeral?' · Ephemeral':''}${p.templateId&&p.templateId!=='custom'?' · '+esc(p.templateId):''}</div></div>
             </div>
+            <button class="btn btn-g" style="padding:4px 10px;font-size:11px" onclick="B.openSessionDashboard('${p.id}')">Dashboard</button>
             <button class="btn btn-r" style="padding:4px 10px;font-size:11px" onclick="B.removeProfile('${p.id}')">Close</button>
           </div>`).join('')}
       </div>
@@ -2720,6 +2879,45 @@ const B = (() => {
         <div class="s-row">
           <div class="s-lbl">Block pop-up windows<div class="s-sub">Open pop-ups in new tabs instead</div></div>
           <button class="tgl${settings.blockPopups!==false?' on':''}" onclick="B.toggleSetting('blockPopups',this)"></button>
+        </div>
+        <div class="s-row">
+          <div class="s-lbl">Filter lists<div class="s-sub">EasyList-style domain blocking (${sharedFilterCount()} rules)</div></div>
+          <button class="tgl${settings.filterLists!==false?' on':''}" onclick="B.toggleSetting('filterLists',this)"></button>
+        </div>
+        <div class="s-row">
+          <div class="s-lbl">Fingerprint protection<div class="s-sub">Reduce canvas &amp; device fingerprinting</div></div>
+          <button class="tgl${settings.fingerprintProtection!==false?' on':''}" onclick="B.toggleSetting('fingerprintProtection',this)"></button>
+        </div>
+        <div class="s-row">
+          <div class="s-lbl">WebRTC leak protection<div class="s-sub">Restrict local IP exposure via WebRTC</div></div>
+          <button class="tgl${settings.webrtcProtection!==false?' on':''}" onclick="B.toggleSetting('webrtcProtection',this)"></button>
+        </div>
+        <div class="s-row">
+          <div class="s-lbl">Block mixed content<div class="s-sub">Block HTTP resources on HTTPS pages</div></div>
+          <button class="tgl${settings.mixedContentBlock?' on':''}" onclick="B.toggleSetting('mixedContentBlock',this)"></button>
+        </div>
+        <div class="s-row" style="flex-direction:column;align-items:stretch;gap:8px">
+          <div class="s-lbl">Per-site exceptions<div class="s-sub">Allow or force-block trackers on specific sites</div></div>
+          <div class="exc-row">
+            <input class="s-inp" id="exc-host" placeholder="example.com"/>
+            <select class="s-sel" id="exc-action" style="width:100px">
+              <option value="allow">Allow</option>
+              <option value="block">Block</option>
+            </select>
+            <button class="btn btn-p" style="padding:5px 10px;font-size:11px" onclick="B.addSiteException()">Add</button>
+          </div>
+          <div class="exc-list" id="exc-list"></div>
+        </div>
+      </div>
+      <div class="s-sec">
+        <div class="s-sec-title">Encrypted sync (optional)</div>
+        <div class="s-row" style="flex-direction:column;align-items:stretch;gap:8px">
+          <div class="s-lbl">End-to-end encrypted vault<div class="s-sub">Export or import bookmarks, settings &amp; sessions with a passphrase</div></div>
+          <input class="s-inp" id="sync-pass" type="password" placeholder="Passphrase (8+ characters)" autocomplete="off"/>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-g" style="padding:5px 12px;font-size:11px" onclick="B.exportVault()">Export vault</button>
+            <button class="btn btn-g" style="padding:5px 12px;font-size:11px" onclick="B.importVault()">Import vault</button>
+          </div>
         </div>
       </div>
       <div class="s-sec">
@@ -2748,11 +2946,73 @@ const B = (() => {
       <div class="s-sec">
         <div class="s-sec-title">About Enigma</div>
         <div class="s-row" style="flex-direction:column;align-items:flex-start;gap:4px">
-          <div class="s-lbl">Version 1.1.0</div>
+          <div class="s-lbl">Version <span id="settings-ver">2.0.0</span></div>
           <div class="s-sub">Chromium ${esc(chromiumVer||'—')} · Electron ${esc(electronVer||'—')}</div>
           <div class="s-sub">Press ? for keyboard shortcuts</div>
         </div>
       </div>`;
+    renderSiteExceptions();
+    eAPI.appVersion().then(v => { const el = $('settings-ver'); if (el) el.textContent = v; }).catch(() => {});
+  }
+
+  let filterRuleCount = 0;
+  function sharedFilterCount() { return filterRuleCount || '100+'; }
+
+  function renderSiteExceptions() {
+    const list = $('exc-list');
+    if (!list) return;
+    const exc = privacyDoc.siteExceptions || {};
+    const entries = Object.entries(exc);
+    list.innerHTML = entries.length
+      ? entries.map(([host, action]) => `
+          <div class="exc-item">
+            <span>${esc(host)} · <b>${action === 'allow' ? 'allowed' : 'blocked'}</b></span>
+            <button class="btn btn-r" style="padding:2px 8px;font-size:10px" onclick="B.removeSiteException(${JSON.stringify(host)})">Remove</button>
+          </div>`).join('')
+      : '<div class="s-sub">No site exceptions yet</div>';
+  }
+
+  async function addSiteException() {
+    const host = ($('exc-host')?.value || '').trim().toLowerCase();
+    const action = $('exc-action')?.value || 'allow';
+    if (!host) { toast('Enter a hostname'); return; }
+    privacyDoc = await eAPI.siteExceptionSet(host, action);
+    $('exc-host').value = '';
+    eAPI.sessionApplySettings();
+    renderSiteExceptions();
+    toast(`Site exception saved for ${host}`);
+  }
+
+  async function removeSiteException(host) {
+    privacyDoc = await eAPI.siteExceptionSet(host, null);
+    eAPI.sessionApplySettings();
+    renderSiteExceptions();
+  }
+
+  async function exportVault() {
+    const pass = $('sync-pass')?.value || '';
+    if (pass.length < 8) { toast('Passphrase must be at least 8 characters'); return; }
+    const path = await eAPI.syncExportFile(pass);
+    if (path) toast('✅ Vault exported');
+  }
+
+  async function importVault() {
+    const pass = $('sync-pass')?.value || '';
+    if (pass.length < 8) { toast('Passphrase must be at least 8 characters'); return; }
+    if (!confirm('Import vault? This will merge bookmarks, settings, privacy rules, and session definitions.')) return;
+    try {
+      await eAPI.syncImportFile(pass);
+      privacyDoc = await eAPI.privacyLoad();
+      settings = await eAPI.settingsLoad();
+      bookmarks = await eAPI.bmLoad();
+      await initSessionOnStartup();
+      for (const p of profiles) { if (!p.partition) await ensurePartition(p); }
+      await renderAll();
+      renderSettings();
+      toast('✅ Vault imported — reload recommended for full effect');
+    } catch {
+      toast('❌ Import failed — check passphrase');
+    }
   }
 
   let electronVer = '';
@@ -2767,7 +3027,7 @@ const B = (() => {
     settings[key]=!settings[key];
     btn.className='tgl'+(settings[key]?' on':'');
     eAPI.settingsSave(settings);
-    if (['blockTrackers','httpsOnly','doNotTrack','blockPopups'].includes(key)) {
+    if (['blockTrackers','httpsOnly','doNotTrack','blockPopups','filterLists','fingerprintProtection','webrtcProtection','mixedContentBlock'].includes(key)) {
       eAPI.sessionApplySettings();
       toast(key==='httpsOnly'&&settings.httpsOnly?'🔒 HTTPS-Only enabled':'Settings updated');
     }
@@ -2798,10 +3058,11 @@ const B = (() => {
       return `<div class="sp sess-chip${act ? ' act' : ''}"
         data-pid="${esc(p.id)}"
         style="--sess-accent:${p.color}"
-        title="${esc(p.name)} — ${pageCount} page${pageCount === 1 ? '' : 's'}">
+        title="${esc(p.name)} — ${pageCount} page${pageCount === 1 ? '' : 's'} (double-click for dashboard)">
         ${dot}
         <span>${esc(p.name)}</span>
         <span class="sp-meta">${pageCount}</span>
+        <span class="sp-dash" data-action="session-dash" data-pid="${esc(p.id)}" title="Session dashboard">📊</span>
         ${p.id !== 'default' ? `<span class="sp-x" data-action="close-session" data-pid="${esc(p.id)}">✕</span>` : ''}
       </div>`;
     }).join('') +
@@ -2935,18 +3196,60 @@ const B = (() => {
     closePanel('settings'); renderAll(); toast('Session closed & data cleared');
   }
 
-  function openProfileModal() { closeMenu(); ephem=false; selColor=COLORS[Math.floor(Math.random()*COLORS.length)]; $('m-name').value=''; renderSwatches(); updateEphemTgl(); $('modal').style.display='flex'; setTimeout(()=>$('m-name').focus(),60); }
+  function openProfileModal() {
+    closeMenu();
+    ephem = false;
+    selectedTemplateId = 'custom';
+    selColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+    $('m-name').value = '';
+    $('m-proxy').value = '';
+    renderSwatches();
+    renderTemplateGrid();
+    updateEphemTgl();
+    $('modal').style.display = 'flex';
+    setTimeout(() => $('m-name').focus(), 60);
+  }
+  function renderTemplateGrid() {
+    const grid = $('tpl-grid');
+    if (!grid) return;
+    grid.innerHTML = (sessionTemplates.length ? sessionTemplates : [{ id: 'custom', name: 'Custom', icon: '⚙️', description: 'Configure yourself', color: null }])
+      .map(t => `
+        <button type="button" class="tpl-card${selectedTemplateId === t.id ? ' sel' : ''}" onclick="B.selectTemplate('${t.id}')">
+          <div class="tpl-ic">${t.icon || '📦'}</div>
+          <div class="tpl-name">${esc(t.name)}</div>
+          <div class="tpl-desc">${esc(t.description || '')}</div>
+        </button>`).join('');
+  }
+  function selectTemplate(id) {
+    selectedTemplateId = id;
+    const tpl = sessionTemplates.find(t => t.id === id);
+    if (tpl?.color) selColor = tpl.color;
+    if (tpl && tpl.id !== 'custom' && !$('m-name').value.trim()) $('m-name').value = tpl.name;
+    renderTemplateGrid();
+    renderSwatches();
+  }
   function closeModal() { $('modal').style.display='none'; }
   function renderSwatches() { $('swatches').innerHTML=COLORS.map(c=>`<div class="sw${c===selColor?' sel':''}" style="background:${c}" onclick="B._sc('${c}')"></div>`).join(''); }
   function _sc(c){ selColor=c; renderSwatches(); }
   function toggleEphem(){ ephem=!ephem; updateEphemTgl(); }
   function updateEphemTgl(){ $('ephem-tgl').className='tgl'+(ephem?' on':''); }
   async function createProfile() {
-    const name=$('m-name').value.trim()||'Session';
-    const id='p_'+Date.now();
-    const p={id,name,color:selColor,isIncognito:true,ephemeral:ephem,partition:null};
-    profiles.push(p); await ensurePartition(p);
-    closeModal(); switchProfile(id); toast('🕵️ '+name+' session created');
+    const name = $('m-name').value.trim() || 'Session';
+    const id = 'p_' + Date.now();
+    const tpl = sessionTemplates.find(t => t.id === selectedTemplateId) || { defaults: {} };
+    const proxy = ($('m-proxy').value || '').trim();
+    const p = {
+      id, name, color: selColor, isIncognito: true, ephemeral: ephem, partition: null,
+      templateId: selectedTemplateId,
+      proxy,
+      searchEngine: tpl.defaults?.searchEngine,
+      privacy: { ...tpl.defaults },
+    };
+    profiles.push(p);
+    await ensurePartition(p);
+    closeModal();
+    switchProfile(id);
+    toast('🕵️ ' + name + ' container created');
   }
 
   // ── MENU ─────────────────────────────────────────────────────────────────
@@ -3291,22 +3594,32 @@ const B = (() => {
   async function continueInit() {
     mainUserPartition = await eAPI.userMainPartition();
     renderUserStrip();
-    const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false};
+    const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false};
     try {
-      [bookmarks, history, settings, chromiumVer, electronVer, blockedCount] = await Promise.all([
+      [bookmarks, history, settings, chromiumVer, electronVer, blockedCount, privacyDoc, sessionTemplates, fpScript] = await Promise.all([
         eAPI.bmLoad().catch(() => []),
         eAPI.historyLoad().catch(() => []),
         eAPI.settingsLoad().catch(() => ({})),
         eAPI.chromiumVersion().catch(() => ''),
         eAPI.electronVersion().catch(() => ''),
         eAPI.blockedCount().catch(() => 0),
+        eAPI.privacyLoad().catch(() => ({})),
+        eAPI.sessionTemplates().catch(() => []),
+        eAPI.fingerprintScript().catch(() => ''),
       ]);
     } catch (e) {
       console.error('[init] load failed', e);
     }
+    if (sessionTemplates?.length) {
+      try {
+        const stats = await eAPI.sessionStats('default', false);
+        filterRuleCount = stats?.filterRules || 0;
+      } catch {}
+    }
     bookmarks = Array.isArray(bookmarks) ? bookmarks : [];
     history = Array.isArray(history) ? history : [];
     settings = { ...defaults, ...(settings && typeof settings === 'object' ? settings : {}) };
+    privacyDoc = { filterLists: true, fingerprintProtection: true, webrtcProtection: true, mixedContentBlock: false, siteExceptions: {}, ...(privacyDoc || {}) };
     $('tb-logo-img').src = APP_ICON_SVG;
     applyTheme(settings.theme||'dark');
     applyCompactTabs();
@@ -3339,7 +3652,9 @@ const B = (() => {
   return {
     addTab:(pid,url)=>{addTab(pid||activePid,url);},
     closeTab, switchTab, dupeTab, togglePin, toggleMute, _pinTab, _muteTab, reopenClosed,
-    switchProfile, removeProfile, openProfileModal, closeModal, createProfile, _sc, toggleEphem,
+    switchProfile, removeProfile, openProfileModal, closeModal, createProfile, _sc, toggleEphem, selectTemplate,
+    openSessionDashboard, closeSessionDashboard, burnSession,
+    addSiteException, removeSiteException, exportVault, importVault,
     switchUser, removeUser, openUserModal, closeUserModal, createUser, _scUser,
     showOnboarding, showOnboardingMain, showOnboardingSignIn, finishOnboardingGuest, finishOnboardingAccount, _scOb,
     checkForUpdate, downloadUpdate, dismissUpdate,

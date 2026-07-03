@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Enigma Analytics</title>
+  <link rel="icon" href="assets/icons/icon_32.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #06080f;
+      --surface: rgba(255,255,255,0.04);
+      --surface2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.1);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --cyan: #22d3ee;
+      --purple: #a78bfa;
+      --green: #34d399;
+      --red: #f87171;
+      --font: "Inter", system-ui, sans-serif;
+      --display: "Outfit", system-ui, sans-serif;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 50% -20%, rgba(124,58,237,0.2), transparent),
+        radial-gradient(ellipse 50% 40% at 100% 50%, rgba(34,211,238,0.08), transparent);
+      pointer-events: none;
+    }
+    .wrap { position: relative; max-width: 1180px; margin: 0 auto; padding: 24px; }
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px;
+      backdrop-filter: blur(12px);
+    }
+    .login-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: block;
+      margin: 0 auto 16px;
+    }
+    .login-card h1 {
+      font-family: var(--display);
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 6px;
+    }
+    .login-sub {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.875rem;
+      margin-bottom: 28px;
+    }
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      height: 44px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(0,0,0,0.25);
+      color: var(--text);
+      padding: 0 14px;
+      font-size: 0.9375rem;
+      outline: none;
+      margin-bottom: 16px;
+    }
+    input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(167,139,250,0.15); }
+    .btn {
+      width: 100%;
+      height: 44px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      cursor: pointer;
+    }
+    .btn:hover { filter: brightness(1.08); }
+    .err {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(248,113,113,0.12);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: #fca5a5;
+      font-size: 0.8125rem;
+      text-align: center;
+    }
+    .err.show { display: block; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .topbar h1 {
+      font-family: var(--display);
+      font-size: 1.625rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar h1 img { width: 40px; height: 40px; border-radius: 10px; }
+    .topbar-actions { display: flex; gap: 8px; align-items: center; }
+    .btn-sm {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.8125rem;
+      cursor: pointer;
+    }
+    .btn-sm:hover { background: var(--surface2); }
+    .meta { color: var(--muted); font-size: 0.8125rem; }
+    .notice {
+      background: rgba(34,211,238,0.08);
+      border: 1px solid rgba(34,211,238,0.25);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 0.875rem;
+      color: #a5f3fc;
+      margin-bottom: 24px;
+      line-height: 1.55;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+    .card-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .card-value {
+      font-family: var(--display);
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .card-sub { font-size: 0.75rem; color: var(--muted); margin-top: 6px; }
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .section h2 {
+      font-family: var(--display);
+      font-size: 1.125rem;
+      margin-bottom: 16px;
+    }
+    .bars { display: flex; flex-direction: column; gap: 12px; }
+    .bar-row { display: grid; grid-template-columns: 140px 1fr 56px; gap: 12px; align-items: center; font-size: 0.8125rem; }
+    .bar-track {
+      height: 10px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
+    }
+    .bar-pct { text-align: right; color: var(--muted); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      color: var(--muted);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(167,139,250,0.15);
+      color: var(--purple);
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+    .loading, .hidden { display: none !important; }
+    #dashboard.loading { display: block; opacity: 0.5; pointer-events: none; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 800px) {
+      .two-col { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 1fr; gap: 4px; }
+      .bar-pct { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <div id="login-view" class="login-wrap">
+    <div class="login-card">
+      <img class="login-logo" src="assets/icons/icon_64.png" alt="">
+      <h1>Enigma Analytics</h1>
+      <p class="login-sub">Admin access only</p>
+      <form id="login-form">
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" required>
+        <label for="password">Passcode</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button class="btn" type="submit">Sign in</button>
+        <div class="err" id="login-err">Invalid username or passcode.</div>
+      </form>
+    </div>
+  </div>
+
+  <div id="dashboard" class="wrap hidden">
+    <div class="topbar">
+      <h1><img src="assets/icons/icon_64.png" alt=""> Download Analytics</h1>
+      <div class="topbar-actions">
+        <span class="meta" id="updated-at">—</span>
+        <button class="btn-sm" type="button" id="refresh-btn">Refresh</button>
+        <button class="btn-sm" type="button" id="logout-btn">Sign out</button>
+      </div>
+    </div>
+
+    <div class="notice" id="privacy-note"></div>
+
+    <div class="grid" id="stat-grid"></div>
+
+    <div class="two-col">
+      <div class="section">
+        <h2>Downloads by platform</h2>
+        <div class="bars" id="platform-bars"></div>
+      </div>
+      <div class="section">
+        <h2>GitHub traffic (last 14 days)</h2>
+        <div class="bars" id="traffic-bars"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Top downloaded files</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Version</th>
+              <th>Platform</th>
+              <th class="num">Downloads</th>
+            </tr>
+          </thead>
+          <tbody id="top-assets"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>All releases</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Version</th>
+              <th>Published</th>
+              <th class="num">Total downloads</th>
+              <th>Top asset</th>
+            </tr>
+          </thead>
+          <tbody id="releases-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Release detail — latest</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Asset</th>
+              <th>Platform</th>
+              <th class="num">Downloads</th>
+              <th class="num">Size</th>
+            </tr>
+          </thead>
+          <tbody id="latest-assets"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const AUTH_KEY = 'enigma_analytics_session';
+    const USER_HASH = '87d958d1541958930f5c0e965336a2ea240feb7ac0e8de96a6eb68b69cf0459c';
+    const PASS_HASH = 'cf08d59fc1227391cdc5f8f1a822de92bc5d31d1fdde0fc1eba4a2812254ca16';
+
+    async function sha256(text) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function fmt(n) {
+      return Number(n || 0).toLocaleString();
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    function fmtBytes(n) {
+      n = Number(n || 0);
+      if (n >= 1073741824) return (n / 1073741824).toFixed(2) + ' GB';
+      if (n >= 1048576) return (n / 1048576).toFixed(1) + ' MB';
+      if (n >= 1024) return (n / 1024).toFixed(1) + ' KB';
+      return n + ' B';
+    }
+
+    function isAuthed() {
+      try {
+        const s = JSON.parse(sessionStorage.getItem(AUTH_KEY) || 'null');
+        return s && s.ok && s.exp > Date.now();
+      } catch { return false; }
+    }
+
+    function setAuthed() {
+      sessionStorage.setItem(AUTH_KEY, JSON.stringify({ ok: true, exp: Date.now() + 86400000 }));
+    }
+
+    function clearAuth() {
+      sessionStorage.removeItem(AUTH_KEY);
+    }
+
+    function showLogin() {
+      document.getElementById('login-view').classList.remove('hidden');
+      document.getElementById('dashboard').classList.add('hidden');
+    }
+
+    function showDashboard() {
+      document.getElementById('login-view').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+    }
+
+    function renderBarRow(label, count, max) {
+      const pct = max ? Math.round((count / max) * 100) : 0;
+      return `<div class="bar-row">
+        <span>${label}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <span class="bar-pct">${fmt(count)}</span>
+      </div>`;
+    }
+
+    function renderDashboard(data) {
+      const s = data.summary || {};
+      const r = data.repository || {};
+
+      document.getElementById('updated-at').textContent = 'Updated ' + fmtDate(data.generatedAt);
+      document.getElementById('privacy-note').textContent = data.privacyNote || '';
+
+      document.getElementById('stat-grid').innerHTML = [
+        ['Total downloads', s.totalDownloads, 'All release assets on GitHub'],
+        ['Current version', 'v' + (s.currentVersion || '—'), fmt(s.latestVersionDownloads) + ' downloads'],
+        ['Releases', s.releaseCount, 'Published versions'],
+        ['GitHub stars', s.stars, fmt(r.forks) + ' forks'],
+        ['Repo clones (14d)', s.trafficCloneTotal14d, 'Unique cloners: ' + fmt(data.traffic?.cloneCount || 0)],
+        ['Repo views (14d)', s.trafficViewTotal14d, 'Unique viewers: ' + fmt(data.traffic?.viewCount || 0)],
+      ].map(([label, val, sub]) => `
+        <div class="card">
+          <div class="card-label">${label}</div>
+          <div class="card-value">${typeof val === 'number' ? fmt(val) : val}</div>
+          <div class="card-sub">${sub}</div>
+        </div>`).join('');
+
+      const platforms = data.platformBreakdown || [];
+      const maxPlatform = platforms[0]?.count || 1;
+      document.getElementById('platform-bars').innerHTML = platforms.length
+        ? platforms.map(p => renderBarRow(p.label, p.count, maxPlatform)).join('')
+        : '<p class="meta">No download data yet.</p>';
+
+      const clones = (data.traffic?.clones || []).slice(-14);
+      const views = (data.traffic?.views || []).slice(-14);
+      const trafficRows = [
+        ['Clone events', clones.reduce((n, d) => n + (d.count || 0), 0)],
+        ['View events', views.reduce((n, d) => n + (d.count || 0), 0)],
+      ];
+      const maxTraffic = Math.max(...trafficRows.map(r => r[1]), 1);
+      document.getElementById('traffic-bars').innerHTML = trafficRows.length
+        ? trafficRows.map(([label, count]) => renderBarRow(label, count, maxTraffic)).join('')
+        : '<p class="meta">Traffic stats require CI token — may be empty locally.</p>';
+
+      document.getElementById('top-assets').innerHTML = (data.topAssets || []).map(a => `
+        <tr>
+          <td>${a.name}</td>
+          <td><span class="tag">${a.version}</span></td>
+          <td>${a.label}</td>
+          <td class="num">${fmt(a.downloadCount)}</td>
+        </tr>`).join('') || '<tr><td colspan="4">No assets</td></tr>';
+
+      document.getElementById('releases-table').innerHTML = (data.releases || []).map(rel => {
+        const top = (rel.assets || []).filter(a => a.group !== 'metadata').sort((a, b) => b.downloadCount - a.downloadCount)[0];
+        return `<tr>
+          <td><strong>${rel.tag}</strong>${rel.isPrerelease ? ' <span class="tag">pre</span>' : ''}</td>
+          <td>${fmtDate(rel.publishedAt)}</td>
+          <td class="num">${fmt(rel.totalDownloads)}</td>
+          <td>${top ? top.name + ' (' + fmt(top.downloadCount) + ')' : '—'}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="4">No releases</td></tr>';
+
+      const latest = (data.releases || []).find(r => r.version === s.currentVersion) || data.releases?.[0];
+      document.getElementById('latest-assets').innerHTML = (latest?.assets || [])
+        .filter(a => a.group !== 'metadata')
+        .map(a => `<tr>
+          <td>${a.name}</td>
+          <td>${a.label}</td>
+          <td class="num">${fmt(a.downloadCount)}</td>
+          <td class="num">${fmtBytes(a.size)}</td>
+        </tr>`).join('') || '<tr><td colspan="4">No assets for latest release</td></tr>';
+    }
+
+    async function loadData() {
+      const dash = document.getElementById('dashboard');
+      dash.classList.add('loading');
+      try {
+        const res = await fetch('analytics-data.json?_=' + Date.now());
+        if (!res.ok) throw new Error('Failed to load analytics');
+        const data = await res.json();
+        renderDashboard(data);
+      } catch (e) {
+        document.getElementById('privacy-note').textContent = 'Could not load analytics-data.json. Deploy the site or run: node scripts/generate-analytics-data.mjs';
+      } finally {
+        dash.classList.remove('loading');
+      }
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value;
+      const err = document.getElementById('login-err');
+      err.classList.remove('show');
+
+      const [uh, ph] = await Promise.all([sha256(user), sha256(pass)]);
+      if (uh === USER_HASH && ph === PASS_HASH) {
+        setAuthed();
+        showDashboard();
+        loadData();
+      } else {
+        err.classList.add('show');
+      }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      clearAuth();
+      showLogin();
+      document.getElementById('password').value = '';
+    });
+
+    document.getElementById('refresh-btn').addEventListener('click', loadData);
+
+    if (isAuthed()) {
+      showDashboard();
+      loadData();
+    } else {
+      showLogin();
+    }
+  </script>
+</body>
+</html>

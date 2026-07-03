@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Admin analytics — not for indexing
+Disallow: /analytics.html
+Disallow: /analytics-data.json

@@ -21,7 +21,8 @@
     "build:portable": "electron-builder --win portable --x64",
     "build:manifest": "node scripts/generate-downloads-manifest.mjs",
     "website:manifest": "node scripts/generate-downloads-manifest.mjs",
-    "website:build": "node scripts/generate-downloads-manifest.mjs",
+    "website:analytics": "node scripts/generate-analytics-data.mjs",
+    "website:build": "node scripts/generate-downloads-manifest.mjs && node scripts/generate-analytics-data.mjs",
     "shortcut": "powershell -ExecutionPolicy Bypass -File scripts/create-shortcut.ps1",
     "setup": "npm run build:dir && npm run shortcut && node scripts/patch-exe-icon.mjs"
   },

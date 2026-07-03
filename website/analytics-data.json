@@ -1,0 +1,2133 @@
+{
+  "generatedAt": "2026-07-03T01:54:18.992Z",
+  "repository": {
+    "name": "Abenezer-Mengistu/enigma-browser",
+    "url": "https://github.com/Abenezer-Mengistu/enigma-browser",
+    "description": "Enigma Browser - Multi-session incognito browser built on Electron",
+    "stars": 0,
+    "forks": 0,
+    "watchers": 0,
+    "openIssues": 0,
+    "defaultBranch": "main",
+    "createdAt": "2026-06-30T09:37:58Z",
+    "pushedAt": "2026-07-03T01:45:13Z"
+  },
+  "summary": {
+    "currentVersion": "2.1.7",
+    "releaseCount": 16,
+    "totalDownloads": 31,
+    "latestVersionDownloads": 1,
+    "uniqueAssetTypes": 7,
+    "stars": 0,
+    "forks": 0,
+    "trafficCloneTotal14d": 0,
+    "trafficViewTotal14d": 0
+  },
+  "privacyNote": "GitHub does not expose individual downloader names, emails, or IP addresses. Counts reflect anonymous downloads from GitHub Releases (includes website download links).",
+  "traffic": {
+    "clones": [],
+    "views": [],
+    "cloneCount": 0,
+    "viewCount": 0
+  },
+  "platformBreakdown": [
+    {
+      "id": "windows-setup",
+      "label": "Windows Installer",
+      "count": 23,
+      "percent": 74.2
+    },
+    {
+      "id": "macos-arm64",
+      "label": "macOS Apple Silicon",
+      "count": 2,
+      "percent": 6.5
+    },
+    {
+      "id": "macos-x64",
+      "label": "macOS Intel",
+      "count": 2,
+      "percent": 6.5
+    },
+    {
+      "id": "linux-deb",
+      "label": "Linux .deb",
+      "count": 1,
+      "percent": 3.2
+    },
+    {
+      "id": "linux-appimage",
+      "label": "Linux AppImage",
+      "count": 1,
+      "percent": 3.2
+    },
+    {
+      "id": "linux-rpm",
+      "label": "Linux .rpm",
+      "count": 1,
+      "percent": 3.2
+    },
+    {
+      "id": "windows-portable",
+      "label": "Windows Portable",
+      "count": 1,
+      "percent": 3.2
+    }
+  ],
+  "topAssets": [
+    {
+      "name": "Enigma-Setup-2.1.5.exe",
+      "downloadCount": 4,
+      "size": 89103226,
+      "contentType": "application/x-msdos-program",
+      "updatedAt": "2026-07-02T23:56:31Z",
+      "group": "windows-setup",
+      "label": "Windows Installer",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-Setup-2.1.5.exe",
+      "version": "2.1.5",
+      "tag": "v2.1.5"
+    },
+    {
+      "name": "Enigma-Setup-2.1.4.exe",
+      "downloadCount": 3,
+      "size": 89102905,
+      "contentType": "application/x-msdos-program",
+      "updatedAt": "2026-07-02T23:42:56Z",
+      "group": "windows-setup",
+      "label": "Windows Installer",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-Setup-2.1.4.exe",
+      "version": "2.1.4",
+      "tag": "v2.1.4"
+    },
+    {
+      "name": "Enigma-Setup-2.0.4.exe",
+      "downloadCount": 3,
+      "size": 88775403,
+      "contentType": "application/x-msdos-program",
+      "updatedAt": "2026-07-02T22:23:39Z",
+      "group": "windows-setup",
+      "label": "Windows Installer",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.4/Enigma-Setup-2.0.4.exe",
+      "version": "2.0.4",
+      "tag": "v2.0.4"
+    },
+    {
+      "name": "Enigma-Setup-2.1.5.exe.blockmap",
+      "downloadCount": 2,
+      "size": 93406,
+      "contentType": "application/octet-stream",
+      "updatedAt": "2026-07-02T23:51:51Z",
+      "group": "windows-setup",
+      "label": "Windows Installer",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-Setup-2.1.5.exe.blockmap",
+      "version": "2.1.5",
+      "tag": "v2.1.5"
+    },
+    {
+      "name": "Enigma-Setup-2.1.0.exe.blockmap",
+      "downloadCount": 2,
+      "size": 93253,
+      "contentType": "application/octet-stream",
+      "updatedAt": "2026-07-02T22:39:14Z",
+      "group": "windows-setup",
+      "label": "Windows Installer",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-Setup-2.1.0.exe.blockmap",
+      "version": "2.1.0",
+      "tag": "v2.1.0"
+    },
+    {
+      "name": "Enigma-Setup-2.1.7.exe",
+      "downloadCount": 1,
+      "size": 89103540,
+      "contentType": "application/x-msdos-program",
+      "updatedAt": "2026-07-03T01:36:56Z",
+      "group": "windows-setup",
+      "label": "Windows Installer",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.7/Enigma-Setup-2.1.7.exe",
+      "version": "2.1.7",
+      "tag": "v2.1.7"
+    },
+    {
+      "name": "Enigma-Setup-2.1.6.exe",
+      "downloadCount": 1,
+      "size": 89103155,
+      "contentType": "application/x-msdos-program",
+      "updatedAt": "2026-07-03T00:39:59Z",
+      "group": "windows-setup",
+      "label": "Windows Installer",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/Enigma-Setup-2.1.6.exe",
+      "version": "2.1.6",
+      "tag": "v2.1.6"
+    },
+    {
+      "name": "Enigma-Setup-2.1.6.exe.blockmap",
+      "downloadCount": 1,
+      "size": 93375,
+      "contentType": "application/octet-stream",
+      "updatedAt": "2026-07-03T00:39:53Z",
+      "group": "windows-setup",
+      "label": "Windows Installer",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/Enigma-Setup-2.1.6.exe.blockmap",
+      "version": "2.1.6",
+      "tag": "v2.1.6"
+    },
+    {
+      "name": "Enigma-Setup-2.1.4.exe.blockmap",
+      "downloadCount": 1,
+      "size": 93235,
+      "contentType": "application/octet-stream",
+      "updatedAt": "2026-07-02T23:38:26Z",
+      "group": "windows-setup",
+      "label": "Windows Installer",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-Setup-2.1.4.exe.blockmap",
+      "version": "2.1.4",
+      "tag": "v2.1.4"
+    },
+    {
+      "name": "Enigma-Setup-2.1.3.exe.blockmap",
+      "downloadCount": 1,
+      "size": 93412,
+      "contentType": "application/octet-stream",
+      "updatedAt": "2026-07-02T23:28:20Z",
+      "group": "windows-setup",
+      "label": "Windows Installer",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.3/Enigma-Setup-2.1.3.exe.blockmap",
+      "version": "2.1.3",
+      "tag": "v2.1.3"
+    },
+    {
+      "name": "Enigma-Setup-2.1.1.exe.blockmap",
+      "downloadCount": 1,
+      "size": 93335,
+      "contentType": "application/octet-stream",
+      "updatedAt": "2026-07-02T23:00:57Z",
+      "group": "windows-setup",
+      "label": "Windows Installer",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/Enigma-Setup-2.1.1.exe.blockmap",
+      "version": "2.1.1",
+      "tag": "v2.1.1"
+    },
+    {
+      "name": "Enigma-2.1.0-linux-amd64.deb",
+      "downloadCount": 1,
+      "size": 80134502,
+      "contentType": "application/x-debian-package",
+      "updatedAt": "2026-07-02T22:44:14Z",
+      "group": "linux-deb",
+      "label": "Linux .deb",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-2.1.0-linux-amd64.deb",
+      "version": "2.1.0",
+      "tag": "v2.1.0"
+    },
+    {
+      "name": "Enigma-2.1.0-linux-x86_64.AppImage",
+      "downloadCount": 1,
+      "size": 115534392,
+      "contentType": "application/octet-stream",
+      "updatedAt": "2026-07-02T22:44:16Z",
+      "group": "linux-appimage",
+      "label": "Linux AppImage",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-2.1.0-linux-x86_64.AppImage",
+      "version": "2.1.0",
+      "tag": "v2.1.0"
+    },
+    {
+      "name": "Enigma-2.1.0-linux-x86_64.rpm",
+      "downloadCount": 1,
+      "size": 80042909,
+      "contentType": "application/x-redhat-package-manager",
+      "updatedAt": "2026-07-02T22:44:14Z",
+      "group": "linux-rpm",
+      "label": "Linux .rpm",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-2.1.0-linux-x86_64.rpm",
+      "version": "2.1.0",
+      "tag": "v2.1.0"
+    },
+    {
+      "name": "Enigma-2.1.0-mac-arm64.dmg",
+      "downloadCount": 1,
+      "size": 110451265,
+      "contentType": "application/x-apple-diskimage",
+      "updatedAt": "2026-07-02T22:44:16Z",
+      "group": "macos-arm64",
+      "label": "macOS Apple Silicon",
+      "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-2.1.0-mac-arm64.dmg",
+      "version": "2.1.0",
+      "tag": "v2.1.0"
+    }
+  ],
+  "releases": [
+    {
+      "tag": "v2.1.7",
+      "version": "2.1.7",
+      "name": "v2.1.7",
+      "publishedAt": "2026-07-03T01:36:57Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 1,
+      "assets": [
+        {
+          "name": "Enigma-Setup-2.1.7.exe",
+          "downloadCount": 1,
+          "size": 89103540,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-03T01:36:56Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.7/Enigma-Setup-2.1.7.exe"
+        },
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5309,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-03T01:36:50Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.7/downloads.json"
+        },
+        {
+          "name": "Enigma-2.1.7-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 80133766,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-03T01:36:55Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.7/Enigma-2.1.7-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.1.7-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115542632,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-03T01:36:57Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.7/Enigma-2.1.7-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.1.7-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 80054433,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-03T01:36:55Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.7/Enigma-2.1.7-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.1.7-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 105046338,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-03T01:36:56Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.7/Enigma-2.1.7-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.1.7-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 109445943,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-03T01:36:56Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.7/Enigma-2.1.7-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.1.7.exe",
+          "downloadCount": 0,
+          "size": 88666770,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-03T01:36:56Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.7/Enigma-Portable-2.1.7.exe"
+        },
+        {
+          "name": "Enigma-Setup-2.1.7.exe.blockmap",
+          "downloadCount": 0,
+          "size": 93353,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-03T01:36:50Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.7/Enigma-Setup-2.1.7.exe.blockmap"
+        },
+        {
+          "name": "latest.yml",
+          "downloadCount": 0,
+          "size": 340,
+          "contentType": "text/yaml",
+          "updatedAt": "2026-07-03T01:36:50Z",
+          "group": "metadata",
+          "label": "Update metadata",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.7/latest.yml"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.1.7"
+    },
+    {
+      "tag": "v2.1.6",
+      "version": "2.1.6",
+      "name": "v2.1.6",
+      "publishedAt": "2026-07-03T00:40:01Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 2,
+      "assets": [
+        {
+          "name": "latest.yml",
+          "downloadCount": 2,
+          "size": 340,
+          "contentType": "text/yaml",
+          "updatedAt": "2026-07-03T00:39:53Z",
+          "group": "metadata",
+          "label": "Update metadata",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/latest.yml"
+        },
+        {
+          "name": "Enigma-Setup-2.1.6.exe",
+          "downloadCount": 1,
+          "size": 89103155,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-03T00:39:59Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/Enigma-Setup-2.1.6.exe"
+        },
+        {
+          "name": "Enigma-Setup-2.1.6.exe.blockmap",
+          "downloadCount": 1,
+          "size": 93375,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-03T00:39:53Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/Enigma-Setup-2.1.6.exe.blockmap"
+        },
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5309,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-03T00:39:53Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/downloads.json"
+        },
+        {
+          "name": "Enigma-2.1.6-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 80123182,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-03T00:39:58Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/Enigma-2.1.6-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.1.6-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115538499,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-03T00:40:00Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/Enigma-2.1.6-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.1.6-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 80054021,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-03T00:39:59Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/Enigma-2.1.6-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.1.6-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 105045681,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-03T00:40:00Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/Enigma-2.1.6-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.1.6-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 109445286,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-03T00:40:00Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/Enigma-2.1.6-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.1.6.exe",
+          "downloadCount": 0,
+          "size": 88666338,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-03T00:39:59Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.6/Enigma-Portable-2.1.6.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.1.6"
+    },
+    {
+      "tag": "v2.1.5",
+      "version": "2.1.5",
+      "name": "Enigma 2.1.5",
+      "publishedAt": "2026-07-02T23:52:30Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 6,
+      "assets": [
+        {
+          "name": "Enigma-Setup-2.1.5.exe",
+          "downloadCount": 4,
+          "size": 89103226,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T23:56:31Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-Setup-2.1.5.exe"
+        },
+        {
+          "name": "Enigma-Setup-2.1.5.exe.blockmap",
+          "downloadCount": 2,
+          "size": 93406,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:51:51Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-Setup-2.1.5.exe.blockmap"
+        },
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5309,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T23:56:23Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/downloads.json"
+        },
+        {
+          "name": "Enigma-2.1.5-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 80127292,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T23:56:30Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-2.1.5-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.1.5-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115538499,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:56:31Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-2.1.5-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.1.5-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 80046489,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T23:56:29Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-2.1.5-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.1.5-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 110462057,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T23:56:33Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-2.1.5-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-2.1.5-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 105045847,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T23:56:31Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-2.1.5-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.1.5-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 113021070,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T23:56:31Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-2.1.5-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-2.1.5-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 109445452,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T23:56:32Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-2.1.5-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.1.5.exe",
+          "downloadCount": 0,
+          "size": 88666439,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T23:56:31Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/Enigma-Portable-2.1.5.exe"
+        },
+        {
+          "name": "latest.yml",
+          "downloadCount": 0,
+          "size": 340,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-03T00:33:52Z",
+          "group": "metadata",
+          "label": "Update metadata",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.5/latest.yml"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.1.5"
+    },
+    {
+      "tag": "v2.1.4",
+      "version": "2.1.4",
+      "name": "Enigma 2.1.4",
+      "publishedAt": "2026-07-02T23:39:01Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 4,
+      "assets": [
+        {
+          "name": "Enigma-Setup-2.1.4.exe",
+          "downloadCount": 3,
+          "size": 89102905,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T23:42:56Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-Setup-2.1.4.exe"
+        },
+        {
+          "name": "latest.yml",
+          "downloadCount": 2,
+          "size": 340,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:38:25Z",
+          "group": "metadata",
+          "label": "Update metadata",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/latest.yml"
+        },
+        {
+          "name": "Enigma-Setup-2.1.4.exe.blockmap",
+          "downloadCount": 1,
+          "size": 93235,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:38:26Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-Setup-2.1.4.exe.blockmap"
+        },
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5309,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T23:42:48Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/downloads.json"
+        },
+        {
+          "name": "Enigma-2.1.4-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 80133036,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T23:42:54Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-2.1.4-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.1.4-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115538518,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:42:56Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-2.1.4-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.1.4-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 80057781,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T23:42:54Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-2.1.4-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.1.4-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 109515144,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T23:42:56Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-2.1.4-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-2.1.4-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 105045585,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T23:42:56Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-2.1.4-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.1.4-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 113951108,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T23:42:56Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-2.1.4-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-2.1.4-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 109445190,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T23:42:56Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-2.1.4-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.1.4.exe",
+          "downloadCount": 0,
+          "size": 88666131,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T23:42:55Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.4/Enigma-Portable-2.1.4.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.1.4"
+    },
+    {
+      "tag": "v2.1.3",
+      "version": "2.1.3",
+      "name": "Enigma 2.1.3",
+      "publishedAt": "2026-07-02T23:28:58Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 1,
+      "assets": [
+        {
+          "name": "Enigma-Setup-2.1.3.exe.blockmap",
+          "downloadCount": 1,
+          "size": 93412,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:28:20Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.3/Enigma-Setup-2.1.3.exe.blockmap"
+        },
+        {
+          "name": "latest.yml",
+          "downloadCount": 1,
+          "size": 340,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:28:20Z",
+          "group": "metadata",
+          "label": "Update metadata",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.3/latest.yml"
+        },
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5309,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T23:33:20Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.3/downloads.json"
+        },
+        {
+          "name": "Enigma-2.1.3-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 80133126,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T23:33:24Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.3/Enigma-2.1.3-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.1.3-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115538566,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:33:25Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.3/Enigma-2.1.3-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.1.3-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 80059729,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T23:33:24Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.3/Enigma-2.1.3-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-Portable-2.1.3.exe",
+          "downloadCount": 0,
+          "size": 88665284,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T23:33:25Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.3/Enigma-Portable-2.1.3.exe"
+        },
+        {
+          "name": "Enigma-Setup-2.1.3.exe",
+          "downloadCount": 0,
+          "size": 89102065,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T23:33:25Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.3/Enigma-Setup-2.1.3.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.1.3"
+    },
+    {
+      "tag": "v2.1.2",
+      "version": "2.1.2",
+      "name": "Enigma 2.1.2",
+      "publishedAt": "2026-07-02T23:15:49Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 0,
+      "assets": [
+        {
+          "name": "latest.yml",
+          "downloadCount": 1,
+          "size": 340,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:15:09Z",
+          "group": "metadata",
+          "label": "Update metadata",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/latest.yml"
+        },
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5309,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T23:19:53Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/downloads.json"
+        },
+        {
+          "name": "Enigma-2.1.2-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 80117834,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T23:19:58Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/Enigma-2.1.2-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.1.2-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115538530,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:20:00Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/Enigma-2.1.2-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.1.2-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 80062161,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T23:19:59Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/Enigma-2.1.2-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.1.2-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 109510222,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T23:20:00Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/Enigma-2.1.2-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-2.1.2-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 105044555,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T23:20:01Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/Enigma-2.1.2-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.1.2-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 113939273,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T23:20:01Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/Enigma-2.1.2-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-2.1.2-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 109444160,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T23:20:00Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/Enigma-2.1.2-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.1.2.exe",
+          "downloadCount": 0,
+          "size": 88665156,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T23:20:00Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/Enigma-Portable-2.1.2.exe"
+        },
+        {
+          "name": "Enigma-Setup-2.1.2.exe",
+          "downloadCount": 0,
+          "size": 89101965,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T23:19:59Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/Enigma-Setup-2.1.2.exe"
+        },
+        {
+          "name": "Enigma-Setup-2.1.2.exe.blockmap",
+          "downloadCount": 0,
+          "size": 93252,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:15:10Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.2/Enigma-Setup-2.1.2.exe.blockmap"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.1.2"
+    },
+    {
+      "tag": "v2.1.1",
+      "version": "2.1.1",
+      "name": "Enigma 2.1.1",
+      "publishedAt": "2026-07-02T23:01:33Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 1,
+      "assets": [
+        {
+          "name": "latest.yml",
+          "downloadCount": 2,
+          "size": 340,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:00:57Z",
+          "group": "metadata",
+          "label": "Update metadata",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/latest.yml"
+        },
+        {
+          "name": "Enigma-Setup-2.1.1.exe.blockmap",
+          "downloadCount": 1,
+          "size": 93335,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:00:57Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/Enigma-Setup-2.1.1.exe.blockmap"
+        },
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5309,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T23:06:05Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/downloads.json"
+        },
+        {
+          "name": "Enigma-2.1.1-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 80116648,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T23:06:10Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/Enigma-2.1.1-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.1.1-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115538520,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T23:06:12Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/Enigma-2.1.1-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.1.1-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 80052741,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T23:06:10Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/Enigma-2.1.1-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.1.1-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 108593069,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T23:06:12Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/Enigma-2.1.1-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-2.1.1-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 105044221,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T23:06:12Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/Enigma-2.1.1-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.1.1-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 114856574,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T23:06:12Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/Enigma-2.1.1-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-2.1.1-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 109443826,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T23:06:12Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/Enigma-2.1.1-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.1.1.exe",
+          "downloadCount": 0,
+          "size": 88664833,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T23:06:11Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/Enigma-Portable-2.1.1.exe"
+        },
+        {
+          "name": "Enigma-Setup-2.1.1.exe",
+          "downloadCount": 0,
+          "size": 89101593,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T23:06:10Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.1/Enigma-Setup-2.1.1.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.1.1"
+    },
+    {
+      "tag": "v2.1.0",
+      "version": "2.1.0",
+      "name": "Enigma 2.1.0",
+      "publishedAt": "2026-07-02T22:39:50Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 11,
+      "assets": [
+        {
+          "name": "Enigma-Setup-2.1.0.exe.blockmap",
+          "downloadCount": 2,
+          "size": 93253,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T22:39:14Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-Setup-2.1.0.exe.blockmap"
+        },
+        {
+          "name": "latest.yml",
+          "downloadCount": 2,
+          "size": 340,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T22:39:12Z",
+          "group": "metadata",
+          "label": "Update metadata",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/latest.yml"
+        },
+        {
+          "name": "downloads.json",
+          "downloadCount": 1,
+          "size": 5308,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T22:44:09Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/downloads.json"
+        },
+        {
+          "name": "Enigma-2.1.0-linux-amd64.deb",
+          "downloadCount": 1,
+          "size": 80134502,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T22:44:14Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-2.1.0-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.1.0-linux-x86_64.AppImage",
+          "downloadCount": 1,
+          "size": 115534392,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T22:44:16Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-2.1.0-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.1.0-linux-x86_64.rpm",
+          "downloadCount": 1,
+          "size": 80042909,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T22:44:14Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-2.1.0-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.1.0-mac-arm64.dmg",
+          "downloadCount": 1,
+          "size": 110451265,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T22:44:16Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-2.1.0-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-2.1.0-mac-arm64.zip",
+          "downloadCount": 1,
+          "size": 105040771,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T22:44:16Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-2.1.0-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.1.0-mac-x64.dmg",
+          "downloadCount": 1,
+          "size": 113013993,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T22:44:16Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-2.1.0-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-2.1.0-mac-x64.zip",
+          "downloadCount": 1,
+          "size": 109440376,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T22:44:16Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-2.1.0-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.1.0.exe",
+          "downloadCount": 1,
+          "size": 88661927,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T22:44:15Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-Portable-2.1.0.exe"
+        },
+        {
+          "name": "Enigma-Setup-2.1.0.exe",
+          "downloadCount": 1,
+          "size": 89098723,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T22:44:15Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.1.0/Enigma-Setup-2.1.0.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.1.0"
+    },
+    {
+      "tag": "v2.0.4",
+      "version": "2.0.4",
+      "name": "Enigma 2.0.4",
+      "publishedAt": "2026-07-02T22:19:45Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 3,
+      "assets": [
+        {
+          "name": "Enigma-Setup-2.0.4.exe",
+          "downloadCount": 3,
+          "size": 88775403,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T22:23:39Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.4/Enigma-Setup-2.0.4.exe"
+        },
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5308,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T22:23:32Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.4/downloads.json"
+        },
+        {
+          "name": "Enigma-2.0.4-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 79756612,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T22:23:38Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.4/Enigma-2.0.4-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.0.4-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115026143,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T22:23:40Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.4/Enigma-2.0.4-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.0.4-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 79718753,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T22:23:39Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.4/Enigma-2.0.4-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.0.4-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 109065736,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T22:23:39Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.4/Enigma-2.0.4-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-2.0.4-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 104573219,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T22:23:39Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.4/Enigma-2.0.4-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.0.4-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 113436365,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T22:23:40Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.4/Enigma-2.0.4-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-2.0.4-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 108972824,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T22:23:40Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.4/Enigma-2.0.4-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.0.4.exe",
+          "downloadCount": 0,
+          "size": 88338601,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T22:23:38Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.4/Enigma-Portable-2.0.4.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.0.4"
+    },
+    {
+      "tag": "v2.0.3",
+      "version": "2.0.3",
+      "name": "Enigma 2.0.3",
+      "publishedAt": "2026-07-02T21:54:12Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 1,
+      "assets": [
+        {
+          "name": "Enigma-Setup-2.0.3.exe",
+          "downloadCount": 1,
+          "size": 88775086,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T21:58:08Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.3/Enigma-Setup-2.0.3.exe"
+        },
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5308,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T21:58:01Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.3/downloads.json"
+        },
+        {
+          "name": "Enigma-2.0.3-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 79753204,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T21:58:07Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.3/Enigma-2.0.3-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.0.3-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115026231,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T21:58:10Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.3/Enigma-2.0.3-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.0.3-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 79725693,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T21:58:08Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.3/Enigma-2.0.3-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.0.3-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 109049482,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T21:58:09Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.3/Enigma-2.0.3-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-2.0.3-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 104572503,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T21:58:09Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.3/Enigma-2.0.3-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.0.3-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 113446327,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T21:58:09Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.3/Enigma-2.0.3-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-2.0.3-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 108972108,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T21:58:09Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.3/Enigma-2.0.3-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.0.3.exe",
+          "downloadCount": 0,
+          "size": 88338289,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T21:58:08Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.3/Enigma-Portable-2.0.3.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.0.3"
+    },
+    {
+      "tag": "v2.0.2",
+      "version": "2.0.2",
+      "name": "Enigma 2.0.2",
+      "publishedAt": "2026-07-02T21:20:17Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 0,
+      "assets": [
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5308,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T21:24:18Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.2/downloads.json"
+        },
+        {
+          "name": "Enigma-2.0.2-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 79735684,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T21:24:23Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.2/Enigma-2.0.2-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.0.2-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115026161,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T21:24:24Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.2/Enigma-2.0.2-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.0.2-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 79729917,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T21:24:23Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.2/Enigma-2.0.2-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.0.2-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 109039763,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T21:24:24Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.2/Enigma-2.0.2-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-2.0.2-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 104572110,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T21:24:24Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.2/Enigma-2.0.2-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.0.2-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 113437012,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T21:24:25Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.2/Enigma-2.0.2-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-2.0.2-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 108971715,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T21:24:25Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.2/Enigma-2.0.2-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.0.2.exe",
+          "downloadCount": 0,
+          "size": 88337770,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T21:24:23Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.2/Enigma-Portable-2.0.2.exe"
+        },
+        {
+          "name": "Enigma-Setup-2.0.2.exe",
+          "downloadCount": 0,
+          "size": 88774562,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T21:24:25Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.2/Enigma-Setup-2.0.2.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.0.2"
+    },
+    {
+      "tag": "v2.0.1",
+      "version": "2.0.1",
+      "name": "Enigma 2.0.1",
+      "publishedAt": "2026-07-02T11:53:46Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 0,
+      "assets": [
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5308,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T11:58:06Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.1/downloads.json"
+        },
+        {
+          "name": "Enigma-2.0.1-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 79750770,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T11:58:12Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.1/Enigma-2.0.1-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.0.1-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115026177,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T11:58:13Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.1/Enigma-2.0.1-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.0.1-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 79733653,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T11:58:11Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.1/Enigma-2.0.1-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.0.1-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 109033315,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T11:58:12Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.1/Enigma-2.0.1-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-2.0.1-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 104572105,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T11:58:15Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.1/Enigma-2.0.1-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.0.1-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 113436539,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T11:58:12Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.1/Enigma-2.0.1-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-2.0.1-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 108971710,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T11:58:12Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.1/Enigma-2.0.1-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.0.1.exe",
+          "downloadCount": 0,
+          "size": 88337683,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T11:58:11Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.1/Enigma-Portable-2.0.1.exe"
+        },
+        {
+          "name": "Enigma-Setup-2.0.1.exe",
+          "downloadCount": 0,
+          "size": 88774472,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T11:58:11Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.1/Enigma-Setup-2.0.1.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.0.1"
+    },
+    {
+      "tag": "v2.0.0",
+      "version": "2.0.0",
+      "name": "Enigma 2.0",
+      "publishedAt": "2026-07-02T11:40:18Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 0,
+      "assets": [
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5308,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T11:44:31Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.0/downloads.json"
+        },
+        {
+          "name": "Enigma-2.0.0-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 79750402,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T11:44:36Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.0/Enigma-2.0.0-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-2.0.0-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115173654,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T11:44:38Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.0/Enigma-2.0.0-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-2.0.0-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 79722521,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T11:44:36Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.0/Enigma-2.0.0-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-2.0.0-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 109936058,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T11:44:38Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.0/Enigma-2.0.0-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-2.0.0-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 104571037,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T11:44:38Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.0/Enigma-2.0.0-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-2.0.0-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 112534751,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T11:44:39Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.0/Enigma-2.0.0-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-2.0.0-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 108970642,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T11:44:39Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.0/Enigma-2.0.0-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-2.0.0.exe",
+          "downloadCount": 0,
+          "size": 87702684,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T11:44:37Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.0/Enigma-Portable-2.0.0.exe"
+        },
+        {
+          "name": "Enigma-Setup-2.0.0.exe",
+          "downloadCount": 0,
+          "size": 88139477,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T11:44:37Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v2.0.0/Enigma-Setup-2.0.0.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v2.0.0"
+    },
+    {
+      "tag": "v1.1.3",
+      "version": "1.1.3",
+      "name": "Enigma 1.1.3",
+      "publishedAt": "2026-07-02T11:11:00Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 0,
+      "assets": [
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5308,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T11:14:51Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.3/downloads.json"
+        },
+        {
+          "name": "Enigma-1.1.3-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 79723560,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T11:14:56Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.3/Enigma-1.1.3-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-1.1.3-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115165391,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T11:14:57Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.3/Enigma-1.1.3-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-1.1.3-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 79794693,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T11:14:56Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.3/Enigma-1.1.3-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-1.1.3-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 108101022,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T11:14:57Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.3/Enigma-1.1.3-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-1.1.3-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 104562528,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T11:14:57Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.3/Enigma-1.1.3-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-1.1.3-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 114338599,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T11:14:57Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.3/Enigma-1.1.3-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-1.1.3-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 108962133,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T11:14:57Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.3/Enigma-1.1.3-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-1.1.3.exe",
+          "downloadCount": 0,
+          "size": 87695104,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T11:14:56Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.3/Enigma-Portable-1.1.3.exe"
+        },
+        {
+          "name": "Enigma-Setup-1.1.3.exe",
+          "downloadCount": 0,
+          "size": 88131864,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T11:14:56Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.3/Enigma-Setup-1.1.3.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v1.1.3"
+    },
+    {
+      "tag": "v1.1.2",
+      "version": "1.1.2",
+      "name": "Enigma 1.1.2",
+      "publishedAt": "2026-07-02T11:01:24Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 0,
+      "assets": [
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5308,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T11:05:52Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.2/downloads.json"
+        },
+        {
+          "name": "Enigma-1.1.2-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 79744210,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T11:05:58Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.2/Enigma-1.1.2-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-1.1.2-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115165363,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T11:06:00Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.2/Enigma-1.1.2-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-1.1.2-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 79723389,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T11:05:58Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.2/Enigma-1.1.2-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-1.1.2-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 109015831,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T11:05:59Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.2/Enigma-1.1.2-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-1.1.2-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 104561946,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T11:06:00Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.2/Enigma-1.1.2-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-1.1.2-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 113419898,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T11:06:00Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.2/Enigma-1.1.2-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-1.1.2-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 108961551,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T11:05:59Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.2/Enigma-1.1.2-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-1.1.2.exe",
+          "downloadCount": 0,
+          "size": 87694600,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T11:05:59Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.2/Enigma-Portable-1.1.2.exe"
+        },
+        {
+          "name": "Enigma-Setup-1.1.2.exe",
+          "downloadCount": 0,
+          "size": 88131393,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T11:05:58Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.2/Enigma-Setup-1.1.2.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v1.1.2"
+    },
+    {
+      "tag": "v1.1.0",
+      "version": "1.1.0",
+      "name": "Enigma 1.1.0",
+      "publishedAt": "2026-07-01T19:13:47Z",
+      "isPrerelease": false,
+      "isDraft": false,
+      "totalDownloads": 1,
+      "assets": [
+        {
+          "name": "Enigma-Setup-1.1.0.exe",
+          "downloadCount": 1,
+          "size": 87488496,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T10:32:16Z",
+          "group": "windows-setup",
+          "label": "Windows Installer",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.0/Enigma-Setup-1.1.0.exe"
+        },
+        {
+          "name": "downloads.json",
+          "downloadCount": 0,
+          "size": 5311,
+          "contentType": "application/json",
+          "updatedAt": "2026-07-02T10:32:08Z",
+          "group": "metadata",
+          "label": "Manifest",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.0/downloads.json"
+        },
+        {
+          "name": "Enigma-1.1.0-linux-amd64.deb",
+          "downloadCount": 0,
+          "size": 79352038,
+          "contentType": "application/x-debian-package",
+          "updatedAt": "2026-07-02T10:32:14Z",
+          "group": "linux-deb",
+          "label": "Linux .deb",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.0/Enigma-1.1.0-linux-amd64.deb"
+        },
+        {
+          "name": "Enigma-1.1.0-linux-x86_64.AppImage",
+          "downloadCount": 0,
+          "size": 115161281,
+          "contentType": "application/octet-stream",
+          "updatedAt": "2026-07-02T10:32:16Z",
+          "group": "linux-appimage",
+          "label": "Linux AppImage",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.0/Enigma-1.1.0-linux-x86_64.AppImage"
+        },
+        {
+          "name": "Enigma-1.1.0-linux-x86_64.rpm",
+          "downloadCount": 0,
+          "size": 79713957,
+          "contentType": "application/x-redhat-package-manager",
+          "updatedAt": "2026-07-02T10:32:15Z",
+          "group": "linux-rpm",
+          "label": "Linux .rpm",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.0/Enigma-1.1.0-linux-x86_64.rpm"
+        },
+        {
+          "name": "Enigma-1.1.0-mac-arm64.dmg",
+          "downloadCount": 0,
+          "size": 109020582,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T10:32:16Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.0/Enigma-1.1.0-mac-arm64.dmg"
+        },
+        {
+          "name": "Enigma-1.1.0-mac-arm64.zip",
+          "downloadCount": 0,
+          "size": 104558851,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T10:32:16Z",
+          "group": "macos-arm64",
+          "label": "macOS Apple Silicon",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.0/Enigma-1.1.0-mac-arm64.zip"
+        },
+        {
+          "name": "Enigma-1.1.0-mac-x64.dmg",
+          "downloadCount": 0,
+          "size": 113425770,
+          "contentType": "application/x-apple-diskimage",
+          "updatedAt": "2026-07-02T10:32:17Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.0/Enigma-1.1.0-mac-x64.dmg"
+        },
+        {
+          "name": "Enigma-1.1.0-mac-x64.zip",
+          "downloadCount": 0,
+          "size": 108958456,
+          "contentType": "application/zip",
+          "updatedAt": "2026-07-02T10:32:16Z",
+          "group": "macos-x64",
+          "label": "macOS Intel",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.0/Enigma-1.1.0-mac-x64.zip"
+        },
+        {
+          "name": "Enigma-Portable-1.1.0.exe",
+          "downloadCount": 0,
+          "size": 87051726,
+          "contentType": "application/x-msdos-program",
+          "updatedAt": "2026-07-02T10:32:15Z",
+          "group": "windows-portable",
+          "label": "Windows Portable",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v1.1.0/Enigma-Portable-1.1.0.exe"
+        }
+      ],
+      "releaseUrl": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v1.1.0"
+    }
+  ]
+}

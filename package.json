@@ -118,7 +118,7 @@
       "artifactName": "Enigma-${version}-mac-${arch}.${ext}"
     },
     "dmg": {
-      "title": "Enigma ${version}",
+      "title": "Enigma-${version}",
       "artifactName": "Enigma-${version}-mac-${arch}.${ext}"
     },
     "linux": {

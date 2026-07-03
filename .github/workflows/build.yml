@@ -64,6 +64,12 @@ jobs:
         with:
           node-version: 24
 
+      - name: Clean stale DMG mounts
+        run: |
+          for vol in /Volumes/Enigma*; do
+            [ -d "$vol" ] && hdiutil detach "$vol" -force || true
+          done
+
       - name: Install dependencies
         run: npm install
 

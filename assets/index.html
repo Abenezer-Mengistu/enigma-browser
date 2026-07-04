@@ -135,13 +135,15 @@ webview.act{display:flex!important;visibility:visible;pointer-events:auto;width:
 .tl-c{background:#ff5f57}.tl-m{background:#febc2e}.tl-e{background:#28c840}
 .tl-win{display:flex;margin-left:auto;-webkit-app-region:no-drag;flex-shrink:0;align-items:stretch}
 .tl-win-btn{
-  width:40px;height:var(--chrome-title-h);background:none;border:none;cursor:pointer;
-  color:var(--t2);font-size:10px;
+  width:46px;height:var(--chrome-title-h);background:none;border:none;cursor:pointer;
+  color:var(--t2);
   display:flex;align-items:center;justify-content:center;
   transition:background .15s,color .15s;-webkit-app-region:no-drag;
 }
+.tl-win-btn svg{width:10px;height:10px;display:block;flex-shrink:0}
 .tl-win-btn:hover{background:rgba(255,255,255,.08);color:var(--t1)}
 .tl-win-close:hover{background:#e5484d;color:#fff}
+.tl-win-close:hover svg{stroke:#fff}
 .tb-logo-area{display:flex;align-items:center;gap:8px;padding:0 12px;-webkit-app-region:drag;flex:1;justify-content:center;min-width:0}
 .tb-logo{
   width:var(--tb-logo-size);height:var(--tb-logo-size);border-radius:7px;flex-shrink:0;overflow:hidden;
@@ -1016,9 +1018,15 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
 
       <!-- Windows controls -->
       <div class="tl-win" id="tl-win">
-        <button class="tl-win-btn" onclick="eAPI.winMin()"   title="Minimize">&#8212;</button>
-        <button class="tl-win-btn" id="btn-max" onclick="eAPI.winMax()" title="Maximize">&#9633;</button>
-        <button class="tl-win-btn tl-win-close" onclick="eAPI.winClose()" title="Close">&#10005;</button>
+        <button class="tl-win-btn" onclick="eAPI.winMin()" title="Minimize" aria-label="Minimize">
+          <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M1 5h8"/></svg>
+        </button>
+        <button class="tl-win-btn" id="btn-max" onclick="eAPI.winMax()" title="Maximize" aria-label="Maximize" data-state="restored">
+          <svg class="ico-max" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7" rx="0.5"/></svg>
+        </button>
+        <button class="tl-win-btn tl-win-close" onclick="eAPI.winClose()" title="Close" aria-label="Close">
+          <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M2 2l6 6M8 2L2 8"/></svg>
+        </button>
       </div>
     </div>
 
@@ -1486,8 +1494,16 @@ const B = (() => {
     $('tl-win').style.display = 'none';
   }
 
+  const ICO_MAX = '<svg class="ico-max" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7" rx="0.5"/></svg>';
+  const ICO_RESTORE = '<svg class="ico-restore" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><rect x="2.5" y="0.8" width="6" height="6" rx="0.4"/><path d="M1.5 3.2h5.2a.4.4 0 0 1 .4.4v5.2H1.9a.4.4 0 0 1-.4-.4V3.2z"/></svg>';
   eAPI.on('win-state', state => {
-    $('btn-max').innerHTML = state==='maximized' ? '&#10067;&#65039;' : '&#9633;';
+    const btn = $('btn-max');
+    if (!btn) return;
+    const maximized = state === 'maximized';
+    btn.innerHTML = maximized ? ICO_RESTORE : ICO_MAX;
+    btn.title = maximized ? 'Restore' : 'Maximize';
+    btn.setAttribute('aria-label', maximized ? 'Restore' : 'Maximize');
+    btn.dataset.state = maximized ? 'maximized' : 'restored';
   });
 
   // ── keyboard & IPC events ────────────────────────────────────────────────

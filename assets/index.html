@@ -71,6 +71,46 @@
   --grad-acc:linear-gradient(135deg,#f97316 0%,#ef4444 100%);
   --page-bg:#140e08;
 }
+[data-theme="mountains"]{
+  --bg:#0a1018;--s1:#0e1520;--s2:#121c2a;--s3:#182434;--s4:#1e2e42;--s5:#263850;
+  --b1:rgba(148,163,184,.1);--b2:rgba(148,163,184,.18);--b3:rgba(148,163,184,.32);
+  --t1:#f1f5f9;--t2:#94a3b8;--t3:#64748b;--t4:#334155;
+  --acc:#60a5fa;--acc2:#3b82f6;--acc3:#93c5fd;
+  --grad-acc:linear-gradient(135deg,#93c5fd 0%,#3b82f6 50%,#6366f1 100%);
+  --page-bg:#0a1018;
+}
+[data-theme="nature"]{
+  --bg:#0a1208;--s1:#0f1a0c;--s2:#142014;--s3:#1a2a18;--s4:#203520;--s5:#284228;
+  --b1:rgba(132,204,22,.09);--b2:rgba(132,204,22,.17);--b3:rgba(132,204,22,.30);
+  --t1:#ecfccb;--t2:#bef264;--t3:#84cc16;--t4:#3f6212;
+  --acc:#84cc16;--acc2:#65a30d;--acc3:#d9f99d;
+  --grad-acc:linear-gradient(135deg,#a3e635 0%,#65a30d 100%);
+  --page-bg:#0a1208;
+}
+[data-theme="aurora"]{
+  --bg:#050810;--s1:#0a1018;--s2:#0f1824;--s3:#142030;--s4:#1a2840;--s5:#203050;
+  --b1:rgba(52,211,153,.09);--b2:rgba(52,211,153,.17);--b3:rgba(52,211,153,.30);
+  --t1:#ecfdf5;--t2:#6ee7b7;--t3:#34d399;--t4:#065f46;
+  --acc:#34d399;--acc2:#10b981;--acc3:#6ee7b7;
+  --grad-acc:linear-gradient(135deg,#6ee7b7 0%,#8b5cf6 50%,#3b82f6 100%);
+  --page-bg:#050810;
+}
+[data-theme="desert"]{
+  --bg:#1a1008;--s1:#221408;--s2:#2a1a0c;--s3:#342010;--s4:#402818;--s5:#503020;
+  --b1:rgba(251,191,36,.09);--b2:rgba(251,191,36,.17);--b3:rgba(251,191,36,.28);
+  --t1:#fef3c7;--t2:#fcd34d;--t3:#fbbf24;--t4:#92400e;
+  --acc:#fbbf24;--acc2:#d97706;--acc3:#fde68a;
+  --grad-acc:linear-gradient(135deg,#fcd34d 0%,#d97706 100%);
+  --page-bg:#1a1008;
+}
+[data-theme="lake"]{
+  --bg:#081018;--s1:#0c1820;--s2:#102028;--s3:#142830;--s4:#183038;--s5:#1c3844;
+  --b1:rgba(56,189,248,.09);--b2:rgba(56,189,248,.17);--b3:rgba(56,189,248,.30);
+  --t1:#e0f2fe;--t2:#7dd3fc;--t3:#38bdf8;--t4:#0c4a6e;
+  --acc:#38bdf8;--acc2:#0ea5e9;--acc3:#bae6fd;
+  --grad-acc:linear-gradient(135deg,#7dd3fc 0%,#0ea5e9 100%);
+  --page-bg:#081018;
+}
 [data-theme="light"]{
   --bg:#ece9ff;--s1:#faf9ff;--s2:#ffffff;--s3:#f3f0ff;--s4:#e8e2ff;--s5:#d8cffc;
   --b1:rgba(100,70,200,.1);--b2:rgba(100,70,200,.18);--b3:rgba(100,70,200,.32);
@@ -814,7 +854,7 @@ html.compact-tabs .navbar{gap:4px;padding:4px 8px 6px}
 .s-sel:focus{border-color:var(--acc)}
 .s-inp{background:var(--s3);border:1px solid var(--b2);color:var(--t1);padding:6px 12px;border-radius:8px;font-size:11px;outline:none;width:160px}
 .s-inp:focus{border-color:var(--acc)}
-.theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px;margin-top:6px}
 .theme-opt{padding:12px;border-radius:11px;border:2px solid var(--b1);cursor:pointer;text-align:center;font-size:11px;color:var(--t2);transition:all .15s;font-weight:600;background:rgba(255,255,255,.02)}
 .theme-opt:hover{border-color:var(--b2);color:var(--t1);transform:translateY(-1px)}
 .theme-opt.sel{border-color:var(--acc);color:var(--acc3);background:rgba(144,97,249,.1);box-shadow:0 0 20px rgba(124,58,237,.15)}
@@ -924,6 +964,11 @@ html[data-theme-pick="ocean"] .nt-art{background-image:url('wallpapers/ocean.svg
 html[data-theme-pick="rose"] .nt-art{background-image:url('wallpapers/rose.svg')}
 html[data-theme-pick="forest"] .nt-art{background-image:url('wallpapers/forest.svg')}
 html[data-theme-pick="sunset"] .nt-art{background-image:url('wallpapers/sunset.svg')}
+html[data-theme-pick="mountains"] .nt-art{background-image:url('wallpapers/mountains.svg')}
+html[data-theme-pick="nature"] .nt-art{background-image:url('wallpapers/nature.svg')}
+html[data-theme-pick="aurora"] .nt-art{background-image:url('wallpapers/aurora.svg')}
+html[data-theme-pick="desert"] .nt-art{background-image:url('wallpapers/desert.svg')}
+html[data-theme-pick="lake"] .nt-art{background-image:url('wallpapers/lake.svg')}
 html[data-theme-pick="system"][data-theme="light"] .nt-art{background-image:url('wallpapers/light.svg')}
 html[data-theme-pick="system"][data-theme="dark"] .nt-art{background-image:url('wallpapers/dark.svg')}
 html[data-theme-pick="dark"] .nt-bg,html:not([data-theme-pick]) .nt-bg{background-color:#0d0b18}
@@ -932,11 +977,21 @@ html[data-theme-pick="midnight"] .nt-bg{background-color:#080612}
 html[data-theme-pick="forest"] .nt-bg{background-color:#071210}
 html[data-theme-pick="sunset"] .nt-bg{background-color:#1a0a08}
 html[data-theme-pick="rose"] .nt-bg{background-color:#180810}
+html[data-theme-pick="mountains"] .nt-bg{background-color:#0a1018}
+html[data-theme-pick="nature"] .nt-bg{background-color:#0a1208}
+html[data-theme-pick="aurora"] .nt-bg{background-color:#050810}
+html[data-theme-pick="desert"] .nt-bg{background-color:#1a1008}
+html[data-theme-pick="lake"] .nt-bg{background-color:#081018}
 html[data-theme-pick="light"] .nt-bg{background-color:#f4f2ff}
 [data-theme-pick="ocean"] .nt-mesh{background:radial-gradient(ellipse 100% 65% at 70% 12%,rgba(56,189,248,.2),transparent 58%),radial-gradient(ellipse 100% 65% at 25% 88%,rgba(14,165,233,.14),transparent 58%),radial-gradient(ellipse 120% 90% at 50% 50%,rgba(8,145,178,.1),transparent 68%)}
 [data-theme-pick="rose"] .nt-mesh{background:radial-gradient(ellipse 100% 65% at 50% 15%,rgba(244,114,182,.2),transparent 58%),radial-gradient(ellipse 100% 65% at 80% 85%,rgba(236,72,153,.12),transparent 58%),radial-gradient(ellipse 120% 90% at 50% 50%,rgba(236,72,153,.08),transparent 68%)}
 [data-theme-pick="forest"] .nt-mesh{background:radial-gradient(ellipse 100% 65% at 40% 18%,rgba(52,211,153,.16),transparent 58%),radial-gradient(ellipse 100% 65% at 75% 85%,rgba(16,185,129,.12),transparent 58%),radial-gradient(ellipse 120% 90% at 50% 50%,rgba(16,185,129,.08),transparent 68%)}
 [data-theme-pick="sunset"] .nt-mesh{background:radial-gradient(ellipse 100% 65% at 50% 20%,rgba(251,146,60,.22),transparent 58%),radial-gradient(ellipse 100% 65% at 25% 85%,rgba(239,68,68,.12),transparent 58%),radial-gradient(ellipse 120% 90% at 50% 50%,rgba(251,146,60,.08),transparent 68%)}
+[data-theme-pick="mountains"] .nt-mesh{background:radial-gradient(ellipse 100% 65% at 50% 15%,rgba(147,197,253,.18),transparent 58%),radial-gradient(ellipse 100% 65% at 80% 85%,rgba(96,165,250,.12),transparent 58%)}
+[data-theme-pick="nature"] .nt-mesh{background:radial-gradient(ellipse 100% 65% at 40% 20%,rgba(163,230,53,.2),transparent 58%),radial-gradient(ellipse 100% 65% at 70% 80%,rgba(132,204,22,.14),transparent 58%)}
+[data-theme-pick="aurora"] .nt-mesh{background:radial-gradient(ellipse 100% 65% at 30% 18%,rgba(52,211,153,.22),transparent 58%),radial-gradient(ellipse 100% 65% at 70% 25%,rgba(139,92,246,.18),transparent 58%),radial-gradient(ellipse 100% 65% at 50% 85%,rgba(59,130,246,.12),transparent 58%)}
+[data-theme-pick="desert"] .nt-mesh{background:radial-gradient(ellipse 100% 65% at 50% 25%,rgba(251,191,36,.22),transparent 58%),radial-gradient(ellipse 100% 65% at 25% 85%,rgba(217,119,6,.14),transparent 58%)}
+[data-theme-pick="lake"] .nt-mesh{background:radial-gradient(ellipse 100% 65% at 50% 20%,rgba(56,189,248,.18),transparent 58%),radial-gradient(ellipse 100% 65% at 30% 88%,rgba(14,165,233,.14),transparent 58%)}
 [data-theme-pick="light"] .nt-shade{background:linear-gradient(180deg,rgba(255,255,255,.15) 0%,transparent 30%,transparent 70%,rgba(100,70,200,.08) 100%)}
 [data-theme-pick="light"] .nt-mesh{opacity:.35;mix-blend-mode:multiply}
 .nt-body{
@@ -1517,19 +1572,18 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
       <div class="m-label">Accent color</div>
       <div class="swatches" id="u-swatches"></div>
     </div>
-    <div class="m-grid">
-      <div class="m-field">
-        <div class="m-label">Theme</div>
-        <select class="m-sel" id="u-theme"></select>
-      </div>
-      <div class="m-field">
-        <div class="m-label">Search engine</div>
-        <select class="m-sel" id="u-engine"></select>
-      </div>
+    <div class="m-field">
+      <div class="m-label">Theme &amp; wallpaper</div>
+      <div class="theme-grid" id="u-theme-grid" style="margin-top:4px"></div>
+    </div>
+    <div class="m-field">
+      <div class="m-label">Search engine</div>
+      <select class="m-sel" id="u-engine" onchange="B.syncHomepageToEngine(this.value)"></select>
     </div>
     <div class="m-field">
       <div class="m-label">Homepage</div>
       <input class="m-inp" id="u-home" placeholder="https://google.com" maxlength="200"/>
+      <div class="m-hint">Updates automatically when you change the search engine.</div>
     </div>
     <div class="m-field">
       <div class="m-label">Privacy preset</div>
@@ -1705,7 +1759,9 @@ const APP_ICON_SVG = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="htt
 const THEME_LIST = [
   ['dark','Dark','#0d0b18'],['light','Light','#f4f2ff'],['midnight','Midnight','#010108'],
   ['ocean','Ocean','#0a1824'],['rose','Rose','#1a0c16'],['forest','Forest','#0b1a16'],
-  ['sunset','Sunset','#1a120c'],['system','System','linear-gradient(135deg,#f4f2ff,#0d0b18)'],
+  ['sunset','Sunset','#1a120c'],['mountains','Mountains','#0a1018'],['nature','Nature','#0a1208'],
+  ['aurora','Aurora','#050810'],['desert','Desert','#1a1008'],['lake','Lake','#081018'],
+  ['system','System','linear-gradient(135deg,#f4f2ff,#0d0b18)'],
 ];
 const THEME_CYCLE = THEME_LIST.map(t => t[0]);
 const COLORS = ['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4','#84cc16','#6366f1','#f97316'];
@@ -1722,6 +1778,20 @@ const ENGINES = {
   ecosia:     q=>`https://www.ecosia.org/search?q=${encodeURIComponent(q)}`,
   brave:      q=>`https://search.brave.com/search?q=${encodeURIComponent(q)}`,
 };
+const ENGINE_HOMEPAGES = {
+  google: 'https://www.google.com',
+  bing: 'https://www.bing.com',
+  duckduckgo: 'https://duckduckgo.com',
+  ecosia: 'https://www.ecosia.org',
+  brave: 'https://search.brave.com',
+};
+function homepageForEngine(engine) {
+  return ENGINE_HOMEPAGES[engine] || ENGINE_HOMEPAGES.google;
+}
+function syncHomepageToEngine(engine, inputId = 'u-home') {
+  const inp = $(inputId);
+  if (inp) inp.value = homepageForEngine(engine);
+}
 const QUICK = [
   {icon:'🔍',label:'Google',   url:'https://google.com'},
   {icon:'📰',label:'HN',       url:'https://news.ycombinator.com'},
@@ -1874,6 +1944,8 @@ const B = (() => {
   let ephem     = false;
   let selColor  = COLORS[0];
   let selUserAvatar = '👤';
+  let selUserTheme = 'dark';
+  let selUserPrivacy = 'balanced';
   let selUserPrivacy = 'balanced';
   let openPanel = null;
   let downloads = [];
@@ -4370,7 +4442,7 @@ const B = (() => {
         </div>
         <div class="s-row">
           <div class="s-lbl">Search engine</div>
-          <select class="s-sel" onchange="B.saveSetting('searchEngine',this.value)">
+          <select class="s-sel" id="settings-engine" onchange="B.onSearchEngineChange(this.value)">
             ${Object.keys(ENGINES).map(e=>`<option value="${e}"${settings.searchEngine===e?' selected':''}>${e[0].toUpperCase()+e.slice(1)}</option>`).join('')}
           </select>
         </div>
@@ -4687,7 +4759,15 @@ const B = (() => {
     if(key==='compactTabs') applyCompactTabs();
   }
   async function saveSetting(key,val) {
-    settings[key]=val; await eAPI.settingsSave(settings);
+    settings[key]=val;
+    await eAPI.settingsSave(settings);
+  }
+  async function onSearchEngineChange(engine) {
+    settings.searchEngine = engine;
+    settings.homepage = homepageForEngine(engine);
+    await eAPI.settingsSave(settings);
+    const homeInp = document.querySelector('#settings-body input[onchange*="homepage"]');
+    if (homeInp) homeInp.value = settings.homepage;
   }
 
   // ── USERS ────────────────────────────────────────────────────────────────
@@ -4781,13 +4861,14 @@ const B = (() => {
     selColor = COLORS[Math.floor(Math.random() * COLORS.length)];
     selUserAvatar = USER_AVATARS[Math.floor(Math.random() * USER_AVATARS.length)];
     selUserPrivacy = 'balanced';
+    selUserTheme = settings.theme || 'dark';
     $('u-name').value = '';
-    $('u-home').value = settings.homepage || 'https://google.com';
     $('u-clock').classList.toggle('on', settings.showClock !== false);
     $('u-compact').classList.toggle('on', !!settings.compactTabs);
     $('u-restore').classList.toggle('on', !!settings.restoreSession);
     renderUserThemeOptions();
     renderUserEngineOptions();
+    syncHomepageToEngine($('u-engine')?.value || settings.searchEngine || 'google');
     renderUserStarterOptions();
     renderUserAvatars();
     renderUserSwatches();
@@ -4815,12 +4896,18 @@ const B = (() => {
   }
   function _scUserPrivacy(id) { selUserPrivacy = id; renderUserPrivacyChips(); }
   function renderUserThemeOptions() {
-    const el = $('u-theme');
-    if (!el) return;
-    const current = settings.theme || 'dark';
-    el.innerHTML = THEME_LIST.map(([id, label]) =>
-      `<option value="${id}"${id === current ? ' selected' : ''}>${esc(label)}</option>`
+    const grid = $('u-theme-grid');
+    if (!grid) return;
+    const current = selUserTheme || settings.theme || 'dark';
+    grid.innerHTML = THEME_LIST.filter(([id]) => id !== 'system').map(([id, label]) =>
+      `<div class="theme-opt${id === current ? ' sel' : ''}" onclick="B._scUserTheme('${id}')">
+        <div class="theme-swatch" style="background-image:url('wallpapers/${id}.svg')"></div>${esc(label)}
+      </div>`
     ).join('');
+  }
+  function _scUserTheme(id) {
+    selUserTheme = id;
+    renderUserThemeOptions();
   }
   function renderUserEngineOptions() {
     const el = $('u-engine');
@@ -4843,9 +4930,9 @@ const B = (() => {
 
   async function createUser() {
     const name = $('u-name').value.trim() || 'User';
-    const theme = $('u-theme')?.value || 'dark';
+    const theme = selUserTheme || 'dark';
     const searchEngine = $('u-engine')?.value || 'google';
-    let homepage = ($('u-home')?.value || '').trim() || 'https://google.com';
+    let homepage = ($('u-home')?.value || '').trim() || homepageForEngine(searchEngine);
     if (!/^https?:\/\//i.test(homepage)) homepage = 'https://' + homepage;
     const starterId = $('u-starter')?.value || '';
     const starterTpl = starterId
@@ -5826,7 +5913,7 @@ const B = (() => {
     switchProfile, removeProfile, openProfileModal, closeModal, createProfile, _sc, toggleEphem, selectTemplate,
     openSessionDashboard, closeSessionDashboard, burnSession,
     addSiteException, removeSiteException, exportVault, importVault,
-    switchUser, removeUser, openUserModal, closeUserModal, createUser, _scUser, _scUserAvatar, _scUserPrivacy,
+    switchUser, removeUser, openUserModal, closeUserModal, createUser, _scUser, _scUserTheme, _scUserAvatar, _scUserPrivacy,
     showOnboarding, showOnboardingMain, showOnboardingSignIn, obNext, obBack,
     finishOnboardingGuest, finishOnboardingAccount, finishOnboardingStart, importBrowserOnboarding, _scOb,
     setSessionRuleFromSiteInfo, clearSiteData, addSessionRule, removeSessionRule, importFromBrowser,
@@ -5850,7 +5937,7 @@ const B = (() => {
     addExtension, removeExtension, toggleExtension, renderExtensions,
     toggleReading, closeReading,
     togglePanel, closePanel,
-    setTheme, cycleTheme, toggleSetting, saveSetting, renderSettings,
+    setTheme, cycleTheme, toggleSetting, saveSetting, onSearchEngineChange, syncHomepageToEngine, renderSettings,
     openMenu, closeMenu, tabCtx,
     showTabPreview, hideTabPreview,
     showShortcuts, hideShortcuts,

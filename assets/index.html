@@ -123,37 +123,100 @@ webview.act{display:flex!important;visibility:visible;pointer-events:auto;width:
 
 /* Mobile responsive preview — phone frame + narrow viewport */
 .content.site-view-mobile{
-  display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(60,50,100,.25),transparent 70%),var(--page-bg);
-  overflow:auto;
+  display:grid;grid-template-columns:1fr var(--mobile-panel-w,280px);grid-template-rows:1fr;
+  align-items:stretch;
+  background:radial-gradient(ellipse 80% 60% at 40% 40%,rgba(60,50,100,.25),transparent 70%),var(--page-bg);
+  overflow:hidden;
 }
 .mobile-frame{
   display:none;position:absolute;z-index:4;pointer-events:none;
-  top:50%;left:50%;transform:translate(-50%,-50%);
-  width:390px;height:844px;max-height:calc(100% - 28px);
-  border-radius:48px;
+  top:50%;
+  left:calc((100% - var(--mobile-panel-w,280px)) / 2);
+  width:var(--mobile-w,390px);height:var(--mobile-h,844px);
+  max-height:calc((100% - 28px) / var(--mobile-scale,1));
+  transform:translate(-50%,-50%) scale(var(--mobile-scale,1));
+  border-radius:var(--mobile-radius,48px);
   box-shadow:0 0 0 3px #4a4a58,0 0 0 11px #22222c,0 0 0 12px #0a0a10,0 32px 90px rgba(0,0,0,.55);
+  transition:width .2s,height .2s,border-radius .2s,transform .2s,opacity .2s;
 }
 .mobile-frame.show{display:block}
+.mobile-frame.no-chrome{box-shadow:0 24px 60px rgba(0,0,0,.45);background:transparent}
+.mobile-frame.no-chrome .mobile-frame-notch,.mobile-frame.no-chrome .mobile-frame-home{display:none!important}
 .mobile-frame-notch{
   position:absolute;top:12px;left:50%;transform:translateX(-50%);
   width:110px;height:32px;border-radius:20px;background:#000;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);z-index:7;
 }
+.mobile-frame-notch.hidden{display:none!important}
 .mobile-frame-home{
   position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
   width:120px;height:4px;border-radius:4px;background:rgba(255,255,255,.28);z-index:7;
 }
+.mobile-frame-home.hidden{display:none!important}
+.mobile-frame.landscape .mobile-frame-notch{
+  top:50%;left:12px;transform:translateY(-50%);
+  width:32px;height:110px;border-radius:20px;
+}
+.mobile-frame.landscape .mobile-frame-home{
+  top:50%;right:10px;left:auto;bottom:auto;transform:translateY(-50%);
+  width:4px;height:120px;border-radius:4px;
+}
 .content.site-view-mobile webview.act{
   position:absolute!important;
-  width:366px!important;height:calc(min(844px,100% - 28px) - 24px)!important;
-  max-height:calc(100% - 48px)!important;
-  top:50%!important;left:50%!important;right:auto!important;bottom:auto!important;
-  transform:translate(-50%,-50%);
-  border-radius:38px!important;
+  width:var(--mobile-inner-w,366px)!important;
+  height:var(--mobile-inner-h,calc(min(844px,100% - 28px) - 24px))!important;
+  max-height:calc((100% - 48px) / var(--mobile-scale,1))!important;
+  top:50%!important;
+  left:calc((100% - var(--mobile-panel-w,280px)) / 2)!important;
+  right:auto!important;bottom:auto!important;
+  transform:translate(-50%,-50%) scale(var(--mobile-scale,1));
+  border-radius:calc(var(--mobile-radius,48px) - 10px)!important;
   z-index:5!important;
   overflow:hidden!important;
+  transition:width .2s,height .2s,border-radius .2s,transform .2s;
 }
+.mobile-customize{
+  display:none;grid-column:2;grid-row:1;
+  flex-direction:column;gap:14px;
+  padding:16px 14px;
+  border-left:1px solid var(--b1);
+  background:var(--glass);
+  backdrop-filter:blur(var(--chrome-blur));
+  overflow-y:auto;
+  z-index:6;
+}
+.content.site-view-mobile .mobile-customize{display:flex}
+.mc-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
+.mc-title{font-size:13px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
+.mc-close{background:rgba(255,255,255,.06);border:1px solid var(--b1);color:var(--t3);cursor:pointer;width:28px;height:28px;border-radius:8px;font-size:13px;line-height:1}
+.mc-close:hover{background:var(--s3);color:var(--t1)}
+.mc-section{display:flex;flex-direction:column;gap:8px}
+.mc-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em}
+.mc-devices{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mc-device{
+  padding:8px 10px;border-radius:10px;border:1px solid var(--b1);
+  background:rgba(255,255,255,.03);color:var(--t2);font-size:11px;font-weight:600;
+  cursor:pointer;text-align:left;transition:all .12s;line-height:1.3;
+}
+.mc-device:hover{border-color:var(--b2);color:var(--t1);background:rgba(255,255,255,.06)}
+.mc-device.sel{border-color:var(--acc);color:var(--acc3);background:rgba(124,58,237,.12);box-shadow:0 0 0 1px rgba(124,58,237,.25)}
+.mc-device small{display:block;font-size:9px;font-weight:500;color:var(--t3);margin-top:2px}
+.mc-row{display:flex;gap:6px}
+.mc-btn{
+  flex:1;padding:8px 10px;border-radius:10px;border:1px solid var(--b1);
+  background:rgba(255,255,255,.04);color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;
+}
+.mc-btn:hover{background:rgba(255,255,255,.08);color:var(--t1)}
+.mc-btn.sel{border-color:var(--acc);color:var(--acc3);background:rgba(124,58,237,.12)}
+.mc-btn-primary{background:var(--grad-acc);border:none;color:#fff}
+.mc-btn-primary:hover{filter:brightness(1.06)}
+.mc-range{width:100%;accent-color:var(--acc)}
+.mc-check{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--t2);cursor:pointer;user-select:none}
+.mc-check input{accent-color:var(--acc)}
+.mc-meta{font-size:11px;color:var(--t3);font-family:var(--font-mono)}
+.mc-actions{display:flex;flex-direction:column;gap:6px;margin-top:auto;padding-top:8px}
+[data-theme="light"] .mobile-customize{background:rgba(255,255,255,.92)}
+[data-theme="light"] .mc-device{background:rgba(255,255,255,.72)}
 
 /* ═══ TITLEBAR ═══ */
 .titlebar{
@@ -1258,9 +1321,43 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
   <div class="stage" id="stage">
   <div class="content" id="content">
     <div class="mobile-frame" id="mobile-frame" aria-hidden="true">
-      <div class="mobile-frame-notch"></div>
-      <div class="mobile-frame-home"></div>
+      <div class="mobile-frame-notch" id="mobile-frame-notch"></div>
+      <div class="mobile-frame-home" id="mobile-frame-home"></div>
     </div>
+    <aside class="mobile-customize" id="mobile-customize" aria-hidden="true">
+      <div class="mc-head">
+        <span class="mc-title">Mobile preview</span>
+        <button type="button" class="mc-close" onclick="B.exitMobilePreview()" title="Exit mobile preview">✕</button>
+      </div>
+      <div class="mc-section">
+        <div class="mc-label">Device</div>
+        <div class="mc-devices" id="mc-devices"></div>
+      </div>
+      <div class="mc-section">
+        <div class="mc-label">Orientation</div>
+        <div class="mc-row">
+          <button type="button" class="mc-btn" id="mc-portrait" onclick="B.setMobileOrientation('portrait')">Portrait</button>
+          <button type="button" class="mc-btn" id="mc-landscape" onclick="B.setMobileOrientation('landscape')">Landscape</button>
+        </div>
+        <button type="button" class="mc-btn" style="width:100%;margin-top:6px" onclick="B.rotateMobilePreview()">↻ Rotate</button>
+      </div>
+      <div class="mc-section">
+        <div class="mc-label">Zoom <span id="mc-scale-val">100%</span></div>
+        <input type="range" class="mc-range" id="mc-scale" min="50" max="125" step="5" value="100" oninput="B.setMobileScale(this.value)"/>
+      </div>
+      <div class="mc-section">
+        <label class="mc-check"><input type="checkbox" id="mc-show-frame" checked onchange="B.toggleMobileFrame(this.checked)"> Show device frame</label>
+        <label class="mc-check"><input type="checkbox" id="mc-show-notch" checked onchange="B.toggleMobileNotch(this.checked)"> Show notch / home bar</label>
+      </div>
+      <div class="mc-section">
+        <div class="mc-label">Viewport</div>
+        <div class="mc-meta" id="mc-viewport-meta">393 × 852 · iPhone</div>
+      </div>
+      <div class="mc-actions">
+        <button type="button" class="mc-btn mc-btn-primary" onclick="B.reload()">Reload preview</button>
+        <button type="button" class="mc-btn" onclick="B.screenshotPage()">Screenshot</button>
+      </div>
+    </aside>
     <!-- Instant new-tab shell (replaced once JS initializes) -->
     <div id="boot-nt" class="newtab show">
       <div class="nt-bg">
@@ -1600,6 +1697,15 @@ const QUICK = [
 ];
 const DESKTOP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 const MOBILE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+const ANDROID_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36';
+const MOBILE_DEVICES = {
+  'iphone-15': { label: 'iPhone 15', w: 393, h: 852, radius: 48, platform: 'ios', notch: true, home: true },
+  'iphone-se': { label: 'iPhone SE', w: 375, h: 667, radius: 36, platform: 'ios', notch: false, home: true },
+  'pixel-8': { label: 'Pixel 8', w: 412, h: 915, radius: 40, platform: 'android', notch: false, home: false },
+  'galaxy-s24': { label: 'Galaxy S24', w: 360, h: 780, radius: 44, platform: 'android', notch: true, home: false },
+  'iphone-15-pro-max': { label: 'iPhone 15 Pro Max', w: 430, h: 932, radius: 52, platform: 'ios', notch: true, home: true },
+  'ipad-mini': { label: 'iPad Mini', w: 744, h: 1133, radius: 28, platform: 'ios', notch: false, home: false, tablet: true },
+};
 const IFACTS = [
   ['🍪','<strong>No cookies saved</strong> after this session closes'],
   ['📜','<strong>No browsing history</strong> recorded locally'],
@@ -1737,6 +1843,13 @@ const B = (() => {
   let sgIdx     = -1;
   let progT, closeTabHistory = [], saveSessionT, saveNotesT;
   let pinned = new Set(), muted = new Set(), siteViewModes = {};
+  let mobilePreview = {
+    device: 'iphone-15',
+    orientation: 'portrait',
+    scale: 100,
+    showFrame: true,
+    showNotch: true,
+  };
   let suggestTimer = null, suggestReq = 0;
   let navHist = {}; // tabId -> { list: string[], idx: number, internal: boolean }
   let blockedCount = 0;
@@ -2852,12 +2965,111 @@ const B = (() => {
     else document.exitFullscreen().catch(() => {});
   }
 
+  function mobileUAForDevice(deviceId) {
+    const dev = MOBILE_DEVICES[deviceId] || MOBILE_DEVICES['iphone-15'];
+    return dev.platform === 'android' ? ANDROID_UA : MOBILE_UA;
+  }
+  function mobileDeviceSize(deviceId, orientation) {
+    const dev = MOBILE_DEVICES[deviceId] || MOBILE_DEVICES['iphone-15'];
+    let w = dev.w, h = dev.h;
+    if (orientation === 'landscape') [w, h] = [h, w];
+    return { dev, w, h };
+  }
+  function applyMobilePreviewLayout() {
+    const content = $('content');
+    const frame = $('mobile-frame');
+    const notch = $('mobile-frame-notch');
+    const home = $('mobile-frame-home');
+    if (!content) return;
+    const { dev, w, h } = mobileDeviceSize(mobilePreview.device, mobilePreview.orientation);
+    const pad = dev.tablet ? 16 : 12;
+    const innerW = Math.max(1, w - pad * 2);
+    const innerH = Math.max(1, h - pad * 2);
+    const scale = Math.max(0.5, Math.min(1.25, (mobilePreview.scale || 100) / 100));
+    content.style.setProperty('--mobile-w', `${w}px`);
+    content.style.setProperty('--mobile-h', `${h}px`);
+    content.style.setProperty('--mobile-inner-w', `${innerW}px`);
+    content.style.setProperty('--mobile-inner-h', `${innerH}px`);
+    content.style.setProperty('--mobile-radius', `${dev.radius}px`);
+    content.style.setProperty('--mobile-scale', String(scale));
+    if (frame) {
+      frame.classList.toggle('landscape', mobilePreview.orientation === 'landscape');
+      frame.classList.toggle('no-chrome', !mobilePreview.showFrame);
+      frame.style.opacity = mobilePreview.showFrame ? '1' : '0';
+    }
+    const showChrome = mobilePreview.showFrame && mobilePreview.showNotch;
+    notch?.classList.toggle('hidden', !showChrome || !dev.notch);
+    home?.classList.toggle('hidden', !showChrome || !dev.home);
+    const meta = $('mc-viewport-meta');
+    if (meta) {
+      meta.textContent = `${w} × ${h} · ${dev.label} · ${dev.platform === 'android' ? 'Android' : 'iOS'}`;
+    }
+    const scaleVal = $('mc-scale-val');
+    if (scaleVal) scaleVal.textContent = `${Math.round(scale * 100)}%`;
+    const scaleInput = $('mc-scale');
+    if (scaleInput && document.activeElement !== scaleInput) scaleInput.value = String(Math.round(scale * 100));
+    $('mc-portrait')?.classList.toggle('sel', mobilePreview.orientation === 'portrait');
+    $('mc-landscape')?.classList.toggle('sel', mobilePreview.orientation === 'landscape');
+    const frameCb = $('mc-show-frame');
+    const notchCb = $('mc-show-notch');
+    if (frameCb && document.activeElement !== frameCb) frameCb.checked = !!mobilePreview.showFrame;
+    if (notchCb && document.activeElement !== notchCb) notchCb.checked = !!mobilePreview.showNotch;
+    renderMobileDevicePicker();
+  }
+  function renderMobileDevicePicker() {
+    const root = $('mc-devices');
+    if (!root) return;
+    root.innerHTML = Object.entries(MOBILE_DEVICES).map(([id, dev]) => {
+      const { w, h } = mobileDeviceSize(id, mobilePreview.orientation);
+      return `<button type="button" class="mc-device${mobilePreview.device === id ? ' sel' : ''}" onclick="B.setMobileDevice('${id}')">${esc(dev.label)}<small>${w}×${h}</small></button>`;
+    }).join('');
+  }
+  function setMobileDevice(id) {
+    if (!MOBILE_DEVICES[id]) return;
+    mobilePreview.device = id;
+    applyMobilePreviewLayout();
+    const tab = aTab();
+    const wv = tab && getWV(tab.id);
+    if (wv && getSiteViewMode(activePid, tab.id) === 'mobile') {
+      wv.setUserAgent(mobileUAForDevice(id));
+      wv.reload();
+      toast(`${MOBILE_DEVICES[id].label} preview`);
+    }
+  }
+  function setMobileOrientation(orientation) {
+    if (orientation !== 'portrait' && orientation !== 'landscape') return;
+    mobilePreview.orientation = orientation;
+    applyMobilePreviewLayout();
+    toast(orientation === 'landscape' ? 'Landscape' : 'Portrait');
+  }
+  function rotateMobilePreview() {
+    setMobileOrientation(mobilePreview.orientation === 'portrait' ? 'landscape' : 'portrait');
+  }
+  function setMobileScale(val) {
+    mobilePreview.scale = Math.max(50, Math.min(125, Number(val) || 100));
+    applyMobilePreviewLayout();
+  }
+  function toggleMobileFrame(on) {
+    mobilePreview.showFrame = !!on;
+    applyMobilePreviewLayout();
+  }
+  function toggleMobileNotch(on) {
+    mobilePreview.showNotch = !!on;
+    applyMobilePreviewLayout();
+  }
+  function exitMobilePreview() {
+    const tab = aTab();
+    if (!tab?.url) return;
+    const mk = metaKey(activePid, tab.id);
+    if (siteViewModes[mk] === 'mobile') toggleSiteView('mobile');
+  }
+
   function toggleDesktopSite() { toggleSiteView('desktop'); }
   function toggleMobileSite() { toggleSiteView('mobile'); }
 
   function siteViewUA(mode) {
     if (mode === 'desktop') return DESKTOP_UA;
-    if (mode === 'mobile') return MOBILE_UA;
+    if (mode === 'mobile') return mobileUAForDevice(mobilePreview.device);
     return '';
   }
   function getSiteViewMode(pid, tid) {
@@ -2867,16 +3079,19 @@ const B = (() => {
     if (!wv) return;
     const mode = getSiteViewMode(pid, tid);
     if (mode === 'desktop') wv.setUserAgent(DESKTOP_UA);
-    else if (mode === 'mobile') wv.setUserAgent(MOBILE_UA);
+    else if (mode === 'mobile') wv.setUserAgent(mobileUAForDevice(mobilePreview.device));
   }
   function syncSiteViewLayout() {
     const content = $('content');
     const frame = $('mobile-frame');
+    const panel = $('mobile-customize');
     const tab = aTab();
     const mobileOn = !!(tab?.url && !tab.url.startsWith('about:') && getSiteViewMode(activePid, tab.id) === 'mobile');
     content?.classList.toggle('site-view-mobile', mobileOn);
     frame?.classList.toggle('show', mobileOn);
     if (frame) frame.setAttribute('aria-hidden', mobileOn ? 'false' : 'true');
+    panel?.setAttribute('aria-hidden', mobileOn ? 'false' : 'true');
+    if (mobileOn) applyMobilePreviewLayout();
   }
   function updateSiteViewBtns() {
     const tab = aTab();
@@ -5208,7 +5423,9 @@ const B = (() => {
     restorePreviousPages, dismissRestore,
     navigate:(url)=>navigate(url),
     goBack, goFwd, reload, hardReload, goHome, focusUrl, viewSource,
-    copyPageUrl, copyPageTitle, toggleFullscreen, toggleDesktopSite, toggleMobileSite, screenshotPage, muteAllTabs,
+    copyPageUrl, copyPageTitle, toggleFullscreen, toggleDesktopSite, toggleMobileSite,
+    setMobileDevice, setMobileOrientation, rotateMobilePreview, setMobileScale, toggleMobileFrame, toggleMobileNotch, exitMobilePreview,
+    screenshotPage, muteAllTabs,
     closeOtherTabs, closeTabsToRight, updateShield, showPrivacyStats,
     exportBookmarks, importBookmarks, clearBrowsingData, saveNotes,
     urlKey, urlInput, urlFocus, urlBlur, _sg, closeSuggest,

@@ -132,6 +132,86 @@ const platformBreakdown = Object.entries(byPlatform)
   }))
   .sort((a, b) => b.count - a.count);
 
+function groupPlatform(id) {
+  if (id.startsWith('windows')) return 'Windows';
+  if (id.startsWith('macos')) return 'macOS';
+  if (id.startsWith('linux')) return 'Linux';
+  return 'Other';
+}
+
+const osBreakdown = {};
+for (const p of platformBreakdown) {
+  const os = groupPlatform(p.id);
+  osBreakdown[os] = (osBreakdown[os] || 0) + p.count;
+}
+const osChart = Object.entries(osBreakdown)
+  .map(([label, count]) => ({
+    label,
+    count,
+    percent: totalDownloads ? Math.round((count / totalDownloads) * 1000) / 10 : 0,
+  }))
+  .sort((a, b) => b.count - a.count);
+
+const releasesChron = [...releases]
+  .filter(r => !r.isPrerelease)
+  .sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt));
+
+const downloadsByVersion = releasesChron.slice(-24).map(r => ({
+  version: r.version,
+  tag: r.tag,
+  count: r.totalDownloads,
+  publishedAt: r.publishedAt,
+}));
+
+const topReleases = [...releases]
+  .filter(r => !r.isPrerelease)
+  .sort((a, b) => b.totalDownloads - a.totalDownloads)
+  .slice(0, 12)
+  .map(r => ({ version: r.version, count: r.totalDownloads, publishedAt: r.publishedAt }));
+
+const latestRelease = releases.find(r => r.version === pkg.version) || releases[0];
+const prevRelease = releasesChron.length > 1
+  ? releasesChron[releasesChron.findIndex(r => r.version === latestRelease?.version) - 1]
+  : null;
+const latestVsPrev = prevRelease && latestRelease
+  ? latestRelease.totalDownloads - prevRelease.totalDownloads
+  : null;
+
+const avgDownloadsPerRelease = releases.length
+  ? Math.round(totalDownloads / releases.length)
+  : 0;
+
+function mergeDailyTraffic(clones, views) {
+  const map = new Map();
+  for (const row of clones || []) {
+    const k = row.timestamp?.slice(0, 10) || row.date;
+    if (!k) continue;
+    const cur = map.get(k) || { date: k, clones: 0, views: 0 };
+    cur.clones += row.count || 0;
+    map.set(k, cur);
+  }
+  for (const row of views || []) {
+    const k = row.timestamp?.slice(0, 10) || row.date;
+    if (!k) continue;
+    const cur = map.get(k) || { date: k, clones: 0, views: 0 };
+    cur.views += row.count || 0;
+    map.set(k, cur);
+  }
+  return [...map.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-14);
+}
+
+const dailyTraffic = mergeDailyTraffic(trafficClones?.clones, trafficViews?.views);
+
+const installerVsPortable = {
+  installer: (byPlatform['windows-setup'] || 0),
+  portable: (byPlatform['windows-portable'] || 0),
+};
+
+const firstRelease = releasesChron[0];
+const daysSinceFirstRelease = firstRelease?.publishedAt
+  ? Math.max(1, Math.round((Date.now() - new Date(firstRelease.publishedAt)) / 86400000))
+  : null;
+
 const cloneTotal = (trafficClones?.clones || []).reduce((n, d) => n + (d.count || 0), 0);
 const viewTotal = (trafficViews?.views || []).reduce((n, d) => n + (d.count || 0), 0);
 
@@ -157,8 +237,16 @@ const data = {
     uniqueAssetTypes: platformBreakdown.length,
     stars: repoMeta.stargazers_count || 0,
     forks: repoMeta.forks_count || 0,
+    watchers: repoMeta.subscribers_count || 0,
+    openIssues: repoMeta.open_issues_count || 0,
     trafficCloneTotal14d: cloneTotal,
     trafficViewTotal14d: viewTotal,
+    avgDownloadsPerRelease,
+    latestVsPrevDownloads: latestVsPrev,
+    daysSinceFirstRelease,
+    downloadsPerDay: daysSinceFirstRelease ? Math.round(totalDownloads / daysSinceFirstRelease * 10) / 10 : 0,
+    windowsInstallerDownloads: installerVsPortable.installer,
+    windowsPortableDownloads: installerVsPortable.portable,
   },
   privacyNote:
     'GitHub does not expose individual downloader names, emails, or IP addresses. ' +
@@ -170,6 +258,11 @@ const data = {
     viewCount: trafficViews?.count || 0,
   },
   platformBreakdown,
+  osBreakdown: osChart,
+  downloadsByVersion,
+  topReleases,
+  dailyTraffic,
+  installerVsPortable,
   topAssets,
   releases,
 };

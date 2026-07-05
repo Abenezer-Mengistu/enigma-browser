@@ -222,7 +222,6 @@ function seedUserFiles(userId, opts = {}) {
         partition: null,
         templateId: starterSession.id,
         privacy: starterSession.defaults || {},
-        searchEngine: starterSession.defaults?.searchEngine || settingsOverride.searchEngine || DEFAULT_SETTINGS.searchEngine,
       });
       session.tabsByPid[sid] = [];
       session.activeTid[sid] = null;

@@ -134,7 +134,6 @@ function starterSessionsSeed(accent = '#8b5cf6') {
         partition: null,
         templateId: 'work',
         privacy: { ...workTpl.defaults },
-        searchEngine: workTpl.defaults.searchEngine,
       },
       {
         id: personalId,
@@ -145,7 +144,6 @@ function starterSessionsSeed(accent = '#8b5cf6') {
         partition: null,
         templateId: 'research',
         privacy: { ...personalTpl.defaults },
-        searchEngine: personalTpl.defaults.searchEngine,
       },
     ],
     activePid: 'default',

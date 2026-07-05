@@ -2174,6 +2174,10 @@ const B = (() => {
     return !!h && (h.includes('.') || isLocalHost(h));
   }
 
+  function searchEngineFn(engine = settings.searchEngine) {
+    return ENGINES[engine] || ENGINES.google;
+  }
+
   function normUrl(raw) {
     raw=(raw||'').trim();
     if (!raw) return '';
@@ -2185,9 +2189,7 @@ const B = (() => {
         try {
           const u = new URL(raw);
           if (!isValidHttpHost(u.hostname)) {
-            const p = prof();
-            const engineKey = p?.searchEngine || settings.searchEngine;
-            return (ENGINES[engineKey]||ENGINES.google)(raw.replace(/^https?:\/\//, ''));
+            return searchEngineFn()(raw.replace(/^https?:\/\//, ''));
           }
         } catch { return ''; }
       }
@@ -2196,9 +2198,7 @@ const B = (() => {
     if (/^(file|ftp|javascript|data|about):/.test(raw)) return '';
     if (/^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)\d/.test(raw)) return 'http://'+raw;
     if (/^[\w.-]+\.\w{2,}(\/|$|\?)/.test(raw) && !raw.includes(' ')) return 'https://'+raw;
-    const p = prof();
-    const engineKey = p?.searchEngine || settings.searchEngine;
-    return (ENGINES[engineKey]||ENGINES.google)(raw);
+    return searchEngineFn()(raw);
   }
 
   function fav(url) { try{return 'https://www.google.com/s2/favicons?domain='+new URL(url).hostname+'&sz=32';}catch{return null;} }
@@ -3724,7 +3724,7 @@ const B = (() => {
     eAPI.sessionSave({
       profiles: profiles.map(p => ({
         id: p.id, name: p.name, color: p.color, isIncognito: p.isIncognito, ephemeral: p.ephemeral,
-        partition: p.partition, templateId: p.templateId, proxy: p.proxy, searchEngine: p.searchEngine, privacy: p.privacy,
+        partition: p.partition, templateId: p.templateId, proxy: p.proxy, privacy: p.privacy,
       })),
       activePid, tabsByPid: snap, activeTid: savedActiveTid, sessionMeta,
     });
@@ -3790,7 +3790,11 @@ const B = (() => {
     pendingRestoreSession = null;
 
     if (Array.isArray(s?.profiles) && s.profiles.length) {
-      profiles = s.profiles.map(p => ({ ...p }));
+      profiles = s.profiles.map(p => {
+        const copy = { ...p };
+        delete copy.searchEngine;
+        return copy;
+      });
       sessionMeta = s.sessionMeta && typeof s.sessionMeta === 'object' ? { ...s.sessionMeta } : {};
       for (const p of profiles) {
         if (!p.partition) await ensurePartition(p);
@@ -3934,7 +3938,7 @@ const B = (() => {
     items.push({
       type: 'search', icon: '🔍',
       text: `Search for "<strong>${esc(q)}</strong>"`,
-      sub: esc((ENGINES[settings.searchEngine] || ENGINES.google)(q)),
+      sub: esc(searchEngineFn()(q)),
       url: null, q,
     });
     return items;
@@ -4765,6 +4769,11 @@ const B = (() => {
     settings.searchEngine = engine;
     settings.homepage = homepageForEngine(engine);
     await eAPI.settingsSave(settings);
+    let clearedProfiles = false;
+    for (const p of profiles) {
+      if (p.searchEngine) { delete p.searchEngine; clearedProfiles = true; }
+    }
+    if (clearedProfiles) scheduleSessionSave();
     const homeInp = document.querySelector('#settings-body input[onchange*="homepage"]');
     if (homeInp) homeInp.value = settings.homepage;
   }
@@ -5053,7 +5062,6 @@ const B = (() => {
       id, name, color: selColor, isIncognito: true, ephemeral: ephem, partition: null,
       templateId: selectedTemplateId,
       proxy,
-      searchEngine: tpl.defaults?.searchEngine,
       privacy: { ...tpl.defaults },
     };
     profiles.push(p);

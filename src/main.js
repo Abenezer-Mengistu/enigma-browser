@@ -404,6 +404,16 @@ let splashWin = null;
 const browserWindows = new Set();
 const windowSessions = new Map();
 const pendingBoots = new Map();
+const tabBarBounds = new Map();
+
+function pointInRect(p, r) {
+  return p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
+}
+
+function sendWin(win, channel, payload) {
+  if (!win || win.isDestroyed()) return;
+  try { win.webContents.send(channel, payload); } catch { /* window closing */ }
+}
 
 function getMainWin() {
   if (mainWin && !mainWin.isDestroyed()) return mainWin;
@@ -683,7 +693,10 @@ function createBrowserWindow(opts = {}) {
   browserWindows.add(win);
   if (isPrimary || !mainWin || mainWin.isDestroyed()) mainWin = win;
 
-  if (boot) pendingBoots.set(win.webContents.id, boot);
+  const winId = win.id;
+  const wcId = win.webContents.id;
+
+  if (boot) pendingBoots.set(wcId, boot);
 
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   if (process.platform === 'win32' && !APP_ICON.isEmpty()) win.setIcon(APP_ICON);
@@ -706,16 +719,16 @@ function createBrowserWindow(opts = {}) {
   }
 
   attachWindowShortcuts(win);
-  win.on('maximize', () => win.webContents.send('win-state', 'maximized'));
-  win.on('unmaximize', () => win.webContents.send('win-state', 'normal'));
+  win.on('maximize', () => sendWin(win, 'win-state', 'maximized'));
+  win.on('unmaximize', () => sendWin(win, 'win-state', 'normal'));
   win.on('closed', () => {
     browserWindows.delete(win);
-    windowSessions.delete(win.id);
-    pendingBoots.delete(win.webContents.id);
+    windowSessions.delete(winId);
+    pendingBoots.delete(wcId);
+    tabBarBounds.delete(winId);
     persistMergedSessions();
-    if (mainWin === win) {
-      mainWin = getMainWin();
-    }
+    if (mainWin === win) mainWin = getMainWin();
+    broadcastToWindows('tab-merge-highlight', { active: false });
   });
 
   if (isPrimary) {
@@ -769,6 +782,39 @@ ipcMain.handle('open-detached-window', (_, payload = {}) => {
   const wx = Math.max(display.workArea.x, point.x - 140);
   const wy = Math.max(display.workArea.y, point.y - 48);
   createBrowserWindow({ x: wx, y: wy, boot: payload, isPrimary: false });
+  return true;
+});
+ipcMain.handle('register-tabbar-bounds', (e, bounds) => {
+  const win = winFromEvent(e);
+  if (!win || !bounds) return false;
+  tabBarBounds.set(win.id, bounds);
+  return true;
+});
+ipcMain.handle('find-merge-target', (e, point) => {
+  const self = winFromEvent(e);
+  let found = null;
+  if (point && typeof point.x === 'number' && typeof point.y === 'number') {
+    for (const [id, bounds] of tabBarBounds) {
+      if (self && id === self.id) continue;
+      if (pointInRect(point, bounds)) found = id;
+    }
+  }
+  for (const w of browserWindows) {
+    sendWin(w, 'tab-merge-highlight', { active: w.id === found });
+  }
+  return found;
+});
+ipcMain.handle('clear-merge-highlight', () => {
+  broadcastToWindows('tab-merge-highlight', { active: false });
+  return true;
+});
+ipcMain.on('tab-drag-start', () => {
+  broadcastToWindows('report-tabbar-bounds');
+});
+ipcMain.handle('merge-tab-to-window', (e, { targetWinId, payload }) => {
+  const targetWin = BrowserWindow.fromId(Number(targetWinId));
+  if (!targetWin || targetWin.isDestroyed()) return false;
+  sendWin(targetWin, 'tab-merge-in', payload);
   return true;
 });
 

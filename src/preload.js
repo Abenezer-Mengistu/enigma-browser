@@ -87,6 +87,11 @@ contextBridge.exposeInMainWorld('eAPI', {
   openDevTools: () => ipcRenderer.invoke('open-devtools'),
   getWindowBoot: () => ipcRenderer.invoke('get-window-boot'),
   openDetachedWindow: (payload) => ipcRenderer.invoke('open-detached-window', payload),
+  registerTabbarBounds: (bounds) => ipcRenderer.invoke('register-tabbar-bounds', bounds),
+  findMergeTarget: (point) => ipcRenderer.invoke('find-merge-target', point),
+  clearMergeHighlight: () => ipcRenderer.invoke('clear-merge-highlight'),
+  mergeTabToWindow: (targetWinId, payload) => ipcRenderer.invoke('merge-tab-to-window', { targetWinId, payload }),
+  notifyTabDragStart: () => ipcRenderer.send('tab-drag-start'),
   on: (ch, fn) => ipcRenderer.on(ch, (_, ...a) => fn(...a)),
   off: (ch, fn) => ipcRenderer.off(ch, fn),
 });

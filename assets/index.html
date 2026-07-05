@@ -344,6 +344,11 @@ html.compact-tabs .userrow{max-width:42%}
   display:flex;align-items:flex-end;padding:0;gap:var(--tab-gap);
   overflow-x:auto;flex-shrink:1;scroll-behavior:smooth;
   scrollbar-width:thin;
+  transition:outline-color .15s,background .15s;
+}
+.tabbar.tab-drop-target{
+  outline:2px dashed var(--acc3);outline-offset:2px;
+  background:rgba(144,97,249,.1);border-radius:8px;
 }
 .tab{
   display:flex;align-items:center;gap:var(--tab-gap);padding:0 var(--tab-pad-x);
@@ -2540,6 +2545,128 @@ const B = (() => {
   const TAB_DRAG_THRESHOLD = 8;
   let tabDrag = null;
   let suppressTabClick = false;
+  let mergeTargetWinId = null;
+  let mergeTargetTimer = 0;
+
+  function tabbarScreenBounds() {
+    const bar = $('tabbar');
+    if (!bar) return null;
+    const r = bar.getBoundingClientRect();
+    return {
+      left: window.screenX + r.left,
+      top: window.screenY + r.top,
+      right: window.screenX + r.right,
+      bottom: window.screenY + r.bottom,
+    };
+  }
+
+  function reportTabbarBounds() {
+    const bounds = tabbarScreenBounds();
+    if (bounds) eAPI.registerTabbarBounds(bounds).catch(() => {});
+  }
+
+  function countRealTabs() {
+    let n = 0;
+    for (const list of Object.values(tabsByPid)) {
+      if (!Array.isArray(list)) continue;
+      n += list.filter(t => t.url).length;
+    }
+    return n;
+  }
+
+  function buildTabTransferPayload(tabId, pid) {
+    const p2 = pid || activePid;
+    const tab = tabRef(tabId, p2);
+    if (!tab) return null;
+    const mk = metaKey(p2, tabId);
+    return {
+      pid: p2,
+      tab: {
+        id: tab.id,
+        title: tab.title,
+        url: tab.url,
+        favicon: tab.favicon,
+        audible: tab.audible,
+      },
+      muted: muted.has(mk),
+      navHist: navHist[mk] ? { list: [...navHist[mk].list], idx: navHist[mk].idx } : null,
+    };
+  }
+
+  function removeTabLocal(tabId, pid) {
+    const p2 = pid || activePid;
+    const ts = tabs(p2);
+    const idx = ts.findIndex(t => t.id === tabId);
+    const tab = ts.find(t => t.id === tabId);
+    if (!tab) return false;
+    const mk = metaKey(p2, tabId);
+    destroyWV(tabId, p2);
+    tabsByPid[p2] = ts.filter(t => t.id !== tabId);
+    muted.delete(mk);
+    delete navHist[mk];
+    delete siteViewModes[mk];
+    if (!tabsByPid[p2].length) ensureSessionTabs(p2);
+    if (activeTid[p2] === tabId) {
+      const rem = tabsByPid[p2];
+      activeTid[p2] = rem[Math.min(idx, rem.length - 1)]?.id;
+    }
+    return true;
+  }
+
+  async function acceptTabMerge(payload) {
+    if (!payload?.tab?.id || !payload?.pid) return;
+    const { pid, tab } = payload;
+    if (!profiles.find(p => p.id === pid)) return;
+    if (pid !== activePid) await switchProfile(pid);
+    if (!tabsByPid[pid]) tabsByPid[pid] = [];
+    if (!tabsByPid[pid].find(t => t.id === tab.id)) {
+      tabsByPid[pid].push({
+        id: tab.id,
+        title: tab.title || 'New tab',
+        url: tab.url || '',
+        favicon: tab.favicon || null,
+        loading: false,
+        audible: !!tab.audible,
+      });
+    }
+    activeTid[pid] = tab.id;
+    activePid = pid;
+    const mk = metaKey(pid, tab.id);
+    if (payload.muted) muted.add(mk);
+    else muted.delete(mk);
+    if (payload.navHist?.list?.length) {
+      navHist[mk] = {
+        list: [...payload.navHist.list],
+        idx: Math.min(payload.navHist.idx ?? payload.navHist.list.length - 1, payload.navHist.list.length - 1),
+        internal: false,
+      };
+    }
+    await renderAll();
+    scheduleSessionSave();
+    toast('Tab merged into this window');
+  }
+
+  async function mergeTabToOtherWindow(tabId, targetWinId) {
+    const payload = buildTabTransferPayload(tabId, activePid);
+    if (!payload) return;
+    if (pinned.has(metaKey(activePid, tabId))) {
+      toast('📌 Unpin the tab first to move it');
+      return;
+    }
+    const ok = await eAPI.mergeTabToWindow(targetWinId, payload);
+    if (!ok) {
+      toast('Could not merge tab');
+      return;
+    }
+    const hadOnlyThisTab = countRealTabs() <= 1 && !!tabRef(tabId, activePid)?.url;
+    removeTabLocal(tabId, activePid);
+    scheduleSessionSave();
+    if (hadOnlyThisTab) {
+      setTimeout(() => eAPI.winClose(), 60);
+      return;
+    }
+    await renderAll();
+  }
 
   function createTabDragGhost(tabEl) {
     const ghost = document.createElement('div');
@@ -2562,6 +2689,10 @@ const B = (() => {
     if (tabDrag?.ghost) tabDrag.ghost.remove();
     if (tabDrag?.tabEl) tabDrag.tabEl.classList.remove('tab-detaching');
     tabDrag = null;
+    mergeTargetWinId = null;
+    clearTimeout(mergeTargetTimer);
+    eAPI.clearMergeHighlight().catch(() => {});
+    $('tabbar')?.classList.remove('tab-drop-target');
   }
 
   function isOutsideTabBar(clientX, clientY) {
@@ -2572,49 +2703,24 @@ const B = (() => {
   }
 
   async function detachTabToWindow(tabId, pid, screenX, screenY) {
-    const p2 = pid || activePid;
-    const ts = tabs(p2);
-    const idx = ts.findIndex(t => t.id === tabId);
-    const tab = ts.find(t => t.id === tabId);
-    if (!tab) return;
-    const mk = metaKey(p2, tabId);
+    const payload = buildTabTransferPayload(tabId, pid);
+    if (!payload) return;
+    const mk = metaKey(pid || activePid, tabId);
     if (pinned.has(mk)) { toast('📌 Unpin the tab first to move it'); return; }
+    payload.x = screenX;
+    payload.y = screenY;
+    payload.pinned = false;
 
-    const payload = {
-      pid: p2,
-      tab: {
-        id: tab.id,
-        title: tab.title,
-        url: tab.url,
-        favicon: tab.favicon,
-        audible: tab.audible,
-      },
-      pinned: false,
-      muted: muted.has(mk),
-      navHist: navHist[mk] ? { list: [...navHist[mk].list], idx: navHist[mk].idx } : null,
-      x: screenX,
-      y: screenY,
-    };
-
-    destroyWV(tabId, p2);
-    tabsByPid[p2] = ts.filter(t => t.id !== tabId);
-    muted.delete(mk);
-    delete navHist[mk];
-    delete siteViewModes[mk];
-    if (!tabsByPid[p2].length) ensureSessionTabs(p2);
-    if (activeTid[p2] === tabId) {
-      const rem = tabsByPid[p2];
-      activeTid[p2] = rem[Math.min(idx, rem.length - 1)]?.id;
-    }
+    removeTabLocal(tabId, pid);
 
     try {
       await eAPI.openDetachedWindow(payload);
-      renderAll();
+      await renderAll();
       scheduleSessionSave();
     } catch (e) {
       console.error('[detachTab]', e);
       toast('Could not open new window');
-      addTab(p2, tab.url);
+      addTab(pid || activePid, payload.tab.url);
     }
   }
 
@@ -2646,17 +2752,30 @@ const B = (() => {
         hideTabPreview();
         tabDrag.ghost = createTabDragGhost(tabDrag.tabEl);
         tabDrag.tabEl.classList.add('tab-detaching');
+        reportTabbarBounds();
+        eAPI.notifyTabDragStart();
       }
       updateTabDragGhost(tabDrag.ghost, e.clientX, e.clientY);
+      clearTimeout(mergeTargetTimer);
+      mergeTargetTimer = setTimeout(() => {
+        if (!tabDrag?.active) return;
+        eAPI.findMergeTarget({ x: e.screenX, y: e.screenY }).then(id => {
+          mergeTargetWinId = id || null;
+        }).catch(() => {});
+      }, 40);
     });
 
     document.addEventListener('mouseup', e => {
       if (!tabDrag) return;
       const { tid, active } = tabDrag;
+      const targetWinId = mergeTargetWinId;
       const outside = active && isOutsideTabBar(e.clientX, e.clientY);
       clearTabDrag();
-      if (outside) {
-        suppressTabClick = true;
+      if (!active) return;
+      suppressTabClick = true;
+      if (targetWinId) {
+        void mergeTabToOtherWindow(tid, targetWinId);
+      } else if (outside) {
         void detachTabToWindow(tid, activePid, e.screenX, e.screenY);
       }
     });
@@ -5581,6 +5700,12 @@ const B = (() => {
   bindChromeClicks();
   initTabDrag();
   initMoreMenu();
+  eAPI.on('tab-merge-in', payload => { void acceptTabMerge(payload); });
+  eAPI.on('tab-merge-highlight', ({ active }) => {
+    $('tabbar')?.classList.toggle('tab-drop-target', !!active);
+  });
+  eAPI.on('report-tabbar-bounds', () => reportTabbarBounds());
+  window.addEventListener('resize', reportTabbarBounds);
   init();
 
   return {

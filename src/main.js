@@ -518,12 +518,7 @@ async function forceLightColorScheme(webContents) {
 function hookWebviewColorScheme() {
   if (!mainWin) return;
   mainWin.webContents.on('did-attach-webview', (_, contents) => {
-    const apply = () => { void forceLightColorScheme(contents); };
-    contents.on('did-start-loading', apply);
-    contents.on('did-finish-load', apply);
-    contents.on('did-navigate', apply);
-    contents.on('did-navigate-in-page', apply);
-    apply();
+    void forceLightColorScheme(contents);
   });
 }
 
@@ -1073,19 +1068,6 @@ ipcMain.handle('capture-webview', async (_, id) => {
   if (!wc || wc.isDestroyed()) throw new Error('Page not ready');
   const img = await wc.capturePage();
   return img.toPNG().toString('base64');
-});
-
-ipcMain.handle('search-suggest', async (_, q) => {
-  const query = String(q || '').trim();
-  if (query.length < 2 || query.includes('://')) return [];
-  try {
-    const res = await fetch(`https://ac.duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=list`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return Array.isArray(data?.[1]) ? data[1].slice(0, 6) : [];
-  } catch {
-    return [];
-  }
 });
 
 ipcMain.handle('ext-list', () => loadExtensions(read, userDir, activeUserId).items);

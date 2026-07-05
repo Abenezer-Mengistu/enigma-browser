@@ -1104,11 +1104,41 @@ ipcMain.handle('print-webview', (_, id) => new Promise((resolve, reject) => {
     else reject(new Error(err || 'Print failed'));
   });
 }));
-ipcMain.handle('capture-webview', async (_, id) => {
+ipcMain.handle('capture-webview', async (_, id, opts = {}) => {
   const wc = webContents.fromId(Number(id));
   if (!wc || wc.isDestroyed()) throw new Error('Page not ready');
-  const img = await wc.capturePage();
-  return img.toPNG().toString('base64');
+
+  const viewW = Math.max(1, Math.round(Number(opts.width) || 0));
+  const viewH = Math.max(1, Math.round(Number(opts.height) || 0));
+
+  const pageSize = await wc.executeJavaScript(`({
+    w: Math.max(document.documentElement.clientWidth || window.innerWidth || 0, 1),
+    h: Math.max(document.documentElement.clientHeight || window.innerHeight || 0, 1),
+  })`, true).catch(() => ({ w: viewW || 1280, h: viewH || 720 }));
+
+  const rects = [];
+  if (viewW > 1 && viewH > 1) rects.push({ x: 0, y: 0, width: viewW, height: viewH });
+  if (pageSize?.w && pageSize?.h) {
+    rects.push({
+      x: 0,
+      y: 0,
+      width: Math.min(Math.round(pageSize.w), 4096),
+      height: Math.min(Math.round(pageSize.h), 8192),
+    });
+  }
+  rects.push(null);
+
+  for (const rect of rects) {
+    try {
+      const img = rect ? await wc.capturePage(rect) : await wc.capturePage();
+      const png = img.toPNG();
+      const size = img.getSize?.() || {};
+      if (png?.length > 2000 && (size.width || 0) > 8 && (size.height || 0) > 8) {
+        return png.toString('base64');
+      }
+    } catch { /* try next capture mode */ }
+  }
+  throw new Error('Capture returned blank image');
 });
 
 ipcMain.handle('search-suggest', async (_, q) => {

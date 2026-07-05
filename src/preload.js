@@ -51,7 +51,7 @@ contextBridge.exposeInMainWorld('eAPI', {
   blockedReset: () => ipcRenderer.invoke('blocked-reset'),
   saveScreenshot: (data) => ipcRenderer.invoke('save-screenshot', data),
   printWebview: (id) => ipcRenderer.invoke('print-webview', id),
-  captureWebview: (id) => ipcRenderer.invoke('capture-webview', id),
+  captureWebview: (id, opts) => ipcRenderer.invoke('capture-webview', id, opts),
   searchSuggest: (q) => ipcRenderer.invoke('search-suggest', q),
   extList: () => ipcRenderer.invoke('ext-list'),
   extAdd: () => ipcRenderer.invoke('ext-add'),

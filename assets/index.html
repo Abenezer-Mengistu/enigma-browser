@@ -1805,15 +1805,6 @@ const B = (() => {
   function webviewContentsId(wv) {
     try { return wv.getWebContentsId?.(); } catch { return null; }
   }
-  function nativeImageToBase64(img) {
-    try {
-      const png = img.toPNG?.();
-      if (png?.length) return png.toString('base64');
-    } catch {}
-    const url = img.toDataURL?.();
-    if (url) return url.replace(/^data:image\/\w+;base64,/, '');
-    throw new Error('encode failed');
-  }
   const ntKey = (pid, tid) => `${pid}::${tid}`;
   const getNT = (tid, pid = activePid) => newtabs[ntKey(pid, tid)] || null;
   const metaKey = (pid, tid) => wvKey(pid, tid);
@@ -2926,18 +2917,21 @@ const B = (() => {
     closeMenu();
     const wv = pageWebview('Nothing to capture');
     if (!wv) return;
+    const id = webviewContentsId(wv);
+    if (!id) { toast('Screenshot failed — page not ready'); return; }
+    const rect = wv.getBoundingClientRect();
     try {
-      let b64 = '';
-      try {
-        const img = await wv.capturePage();
-        b64 = nativeImageToBase64(img);
-      } catch {
-        const id = webviewContentsId(wv);
-        if (!id) throw new Error('capture unavailable');
-        b64 = await eAPI.captureWebview(id);
-      }
+      const b64 = await eAPI.captureWebview(id, {
+        width: Math.max(1, Math.round(rect.width)),
+        height: Math.max(1, Math.round(rect.height)),
+      });
       const path = await eAPI.saveScreenshot(b64);
-      toast(path ? 'Screenshot saved to Downloads' : 'Screenshot failed');
+      if (path) {
+        toast('Screenshot saved to Downloads');
+        eAPI.openFile(path);
+      } else {
+        toast('Screenshot failed');
+      }
     } catch {
       toast('Screenshot failed');
     }

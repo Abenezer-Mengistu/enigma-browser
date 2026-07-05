@@ -1045,6 +1045,19 @@ ipcMain.handle('capture-webview', async (_, id) => {
   return img.toPNG().toString('base64');
 });
 
+ipcMain.handle('search-suggest', async (_, q) => {
+  const query = String(q || '').trim();
+  if (query.length < 2 || query.includes('://')) return [];
+  try {
+    const res = await fetch(`https://ac.duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=list`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data?.[1]) ? data[1].slice(0, 4) : [];
+  } catch {
+    return [];
+  }
+});
+
 ipcMain.handle('ext-list', () => loadExtensions(read, userDir, activeUserId).items);
 ipcMain.handle('ext-add', async () => {
   const r = await dialog.showOpenDialog(mainWin, {

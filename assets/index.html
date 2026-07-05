@@ -121,6 +121,40 @@ webview:not(.act){
 }
 webview.act{display:flex!important;visibility:visible;pointer-events:auto;width:100%!important;height:100%!important;opacity:1!important;z-index:5!important}
 
+/* Mobile responsive preview — phone frame + narrow viewport */
+.content.site-view-mobile{
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(60,50,100,.25),transparent 70%),var(--page-bg);
+  overflow:auto;
+}
+.mobile-frame{
+  display:none;position:absolute;z-index:4;pointer-events:none;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  width:390px;height:844px;max-height:calc(100% - 28px);
+  border-radius:48px;
+  box-shadow:0 0 0 3px #4a4a58,0 0 0 11px #22222c,0 0 0 12px #0a0a10,0 32px 90px rgba(0,0,0,.55);
+}
+.mobile-frame.show{display:block}
+.mobile-frame-notch{
+  position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  width:110px;height:32px;border-radius:20px;background:#000;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);z-index:7;
+}
+.mobile-frame-home{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  width:120px;height:4px;border-radius:4px;background:rgba(255,255,255,.28);z-index:7;
+}
+.content.site-view-mobile webview.act{
+  position:absolute!important;
+  width:366px!important;height:calc(min(844px,100% - 28px) - 24px)!important;
+  max-height:calc(100% - 48px)!important;
+  top:50%!important;left:50%!important;right:auto!important;bottom:auto!important;
+  transform:translate(-50%,-50%);
+  border-radius:38px!important;
+  z-index:5!important;
+  overflow:hidden!important;
+}
+
 /* ═══ TITLEBAR ═══ */
 .titlebar{
   height:var(--chrome-title-h);background:transparent;
@@ -1169,6 +1203,10 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
   <!-- STAGE (content + side panels) -->
   <div class="stage" id="stage">
   <div class="content" id="content">
+    <div class="mobile-frame" id="mobile-frame" aria-hidden="true">
+      <div class="mobile-frame-notch"></div>
+      <div class="mobile-frame-home"></div>
+    </div>
     <!-- Instant new-tab shell (replaced once JS initializes) -->
     <div id="boot-nt" class="newtab show">
       <div class="nt-bg">
@@ -1639,6 +1677,7 @@ const B = (() => {
   let sgIdx     = -1;
   let progT, closeTabHistory = [], saveSessionT, saveNotesT;
   let pinned = new Set(), muted = new Set(), siteViewModes = {};
+  let suggestTimer = null, suggestReq = 0;
   let navHist = {}; // tabId -> { list: string[], idx: number, internal: boolean }
   let blockedCount = 0;
   let isReading = false;
@@ -2699,6 +2738,15 @@ const B = (() => {
     if (mode === 'desktop') wv.setUserAgent(DESKTOP_UA);
     else if (mode === 'mobile') wv.setUserAgent(MOBILE_UA);
   }
+  function syncSiteViewLayout() {
+    const content = $('content');
+    const frame = $('mobile-frame');
+    const tab = aTab();
+    const mobileOn = !!(tab?.url && !tab.url.startsWith('about:') && getSiteViewMode(activePid, tab.id) === 'mobile');
+    content?.classList.toggle('site-view-mobile', mobileOn);
+    frame?.classList.toggle('show', mobileOn);
+    if (frame) frame.setAttribute('aria-hidden', mobileOn ? 'false' : 'true');
+  }
   function updateSiteViewBtns() {
     const tab = aTab();
     const show = !!(tab?.url && !tab.url.startsWith('about:'));
@@ -2713,6 +2761,7 @@ const B = (() => {
       mb.style.display = show ? 'inline-flex' : 'none';
       mb.classList.toggle('on', show && mode === 'mobile');
     }
+    syncSiteViewLayout();
   }
   function toggleSiteView(mode) {
     closeMenu();
@@ -2723,13 +2772,12 @@ const B = (() => {
     const mk = metaKey(activePid, tab.id);
     if (siteViewModes[mk] === mode) {
       delete siteViewModes[mk];
-      wv.setUserAgent('');
       toast('Default site view');
     } else {
       siteViewModes[mk] = mode;
-      wv.setUserAgent(siteViewUA(mode));
-      toast(mode === 'desktop' ? 'Desktop site on' : 'Mobile site on');
+      toast(mode === 'desktop' ? 'Desktop site on' : 'Mobile preview on');
     }
+    applySiteViewToWv(wv, activePid, tab.id);
     updateSiteViewBtns();
     wv.reload();
   }
@@ -3042,9 +3090,7 @@ const B = (() => {
   function urlFocus(inp) { setTimeout(() => inp.select(), 10); }
   function urlBlur(inp) { setTimeout(() => { if (document.activeElement !== inp) { setUrlBar(aTab()?.url || ''); closeSuggest(); } }, 200); }
 
-  function urlInput(inp) {
-    const q = inp.value.trim();
-    if (!q) { closeSuggest(); return; }
+  function buildLocalSuggestItems(q) {
     const items = [];
     const ql = q.toLowerCase();
     history.slice(0, 100).filter(h => (h.title || '').toLowerCase().includes(ql) || h.url.toLowerCase().includes(ql))
@@ -3065,16 +3111,44 @@ const B = (() => {
       sub: esc((ENGINES[settings.searchEngine] || ENGINES.google)(q)),
       url: null, q,
     });
+    return items;
+  }
 
-    const el = $('suggest'); sgIdx = -1;
+  function renderSuggest(items) {
+    const el = $('suggest');
+    sgIdx = -1;
+    if (!items.length) { closeSuggest(); return; }
     el.innerHTML = items.map((it, i) => `
       <div class="sg" onmousedown="B._sg(${i})" data-i="${i}">
         <div class="sg-ic">${it.icon}</div>
-        <div class="sg-main"><div class="sg-t">${it.text}</div><div class="sg-s">${it.sub}</div></div>
+        <div class="sg-main"><div class="sg-t">${it.text}</div><div class="sg-s">${it.sub || ''}</div></div>
         <span class="sg-badge ${it.type}">${it.type}</span>
       </div>`).join('');
     el._items = items;
     el.classList.add('show');
+  }
+
+  function urlInput(inp) {
+    const q = inp.value.trim();
+    if (!q) { closeSuggest(); return; }
+    renderSuggest(buildLocalSuggestItems(q));
+    clearTimeout(suggestTimer);
+    if (q.length < 2 || q.includes('://')) return;
+    const reqId = ++suggestReq;
+    suggestTimer = setTimeout(async () => {
+      const live = inp.value.trim();
+      if (!live || live !== q || reqId !== suggestReq) return;
+      const remote = await eAPI.searchSuggest(live).catch(() => []);
+      if (reqId !== suggestReq || inp.value.trim() !== live) return;
+      const merged = buildLocalSuggestItems(live);
+      (remote || []).slice(0, 4).forEach(s => {
+        if (!s || merged.some(x => x.q === s)) return;
+        merged.splice(Math.max(0, merged.length - 1), 0, {
+          type: 'suggest', icon: '💡', text: esc(s), sub: 'Web search', url: null, q: s,
+        });
+      });
+      renderSuggest(merged.slice(0, 8));
+    }, 450);
   }
 
   function moveSuggest(dir) {

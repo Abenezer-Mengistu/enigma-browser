@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, shell } = require('electron');
+const { app, shell, BrowserWindow } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -158,21 +158,54 @@ async function downloadAsset(url, dest, onProgress) {
   return dest;
 }
 
+function prepareAppQuit() {
+  app.removeAllListeners('window-all-closed');
+  const win = mainWinRef();
+  if (win && !win.isDestroyed()) {
+    win.removeAllListeners('close');
+    win.destroy();
+  }
+  BrowserWindow.getAllWindows().forEach(w => {
+    try { if (!w.isDestroyed()) w.destroy(); } catch { /* ignore */ }
+  });
+}
+
+function quitAppForUpdate() {
+  prepareAppQuit();
+  setImmediate(() => app.exit(0));
+}
+
 function runInstallerAndQuit(installerPath) {
-  const args = process.platform === 'win32' ? ['--updated', '/S'] : [];
-  const child = spawn(installerPath, args, { detached: true, stdio: 'ignore' });
-  child.unref();
-  setTimeout(() => app.quit(), 400);
+  const exePath = process.execPath;
+  if (process.platform === 'win32') {
+    const cmd = [
+      '$ErrorActionPreference = "Stop"',
+      `$installer = ${JSON.stringify(installerPath)}`,
+      `$exe = ${JSON.stringify(exePath)}`,
+      '$args = @("--updated", "/S", "--force-run")',
+      '$proc = Start-Process -FilePath $installer -ArgumentList $args -PassThru -Wait',
+      'Start-Sleep -Seconds 1',
+      'if (Test-Path $exe) { Start-Process -FilePath $exe }',
+    ].join('; ');
+    spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-Command', cmd], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+    }).unref();
+  } else {
+    spawn(installerPath, ['--updated', '/S', '--force-run'], { detached: true, stdio: 'ignore' }).unref();
+  }
+  quitAppForUpdate();
 }
 
 function runPortableAndQuit(portablePath) {
-  const child = spawn(portablePath, [], {
+  spawn(portablePath, [], {
     detached: true,
     stdio: 'ignore',
     cwd: path.dirname(portablePath),
-  });
-  child.unref();
-  setTimeout(() => app.quit(), 400);
+    windowsHide: true,
+  }).unref();
+  quitAppForUpdate();
 }
 
 async function applyPortableUpdate(downloadedPath, assetName) {
@@ -335,32 +368,45 @@ async function downloadUpdate() {
 }
 
 async function installUpdate({ force = false } = {}) {
-  if (!updateReady && !pendingInstall) {
-    if (pendingRelease?.via === 'autoUpdater' && !isPortableBuild()) {
-      autoUpdater.quitAndInstall(false, true);
+  const doInstall = async () => {
+    if (!updateReady && !pendingInstall) {
+      if (pendingRelease?.via === 'autoUpdater' && !isPortableBuild()) {
+        autoUpdater.quitAndInstall(true, true);
+        return { ok: true };
+      }
+      return { ok: false, reason: 'not-ready' };
+    }
+
+    if (!force && hasActiveDownloadsFn()) {
+      return { ok: false, reason: 'downloads-active' };
+    }
+
+    if (pendingInstall?.mode === 'autoUpdater' || pendingRelease?.via === 'autoUpdater') {
+      prepareAppQuit();
+      autoUpdater.quitAndInstall(true, true);
       return { ok: true };
     }
-    return { ok: false, reason: 'not-ready' };
-  }
 
-  if (!force && hasActiveDownloadsFn()) {
-    return { ok: false, reason: 'downloads-active' };
-  }
+    if (!pendingInstall?.path) return { ok: false, reason: 'not-ready' };
 
-  if (pendingInstall?.mode === 'autoUpdater' || pendingRelease?.via === 'autoUpdater') {
-    autoUpdater.quitAndInstall(false, true);
+    if (pendingInstall.mode === 'portable') {
+      await applyPortableUpdate(pendingInstall.path, pendingInstall.assetName);
+      return { ok: true };
+    }
+
+    runInstallerAndQuit(pendingInstall.path);
     return { ok: true };
-  }
+  };
 
-  if (!pendingInstall?.path) return { ok: false, reason: 'not-ready' };
-
-  if (pendingInstall.mode === 'portable') {
-    await applyPortableUpdate(pendingInstall.path, pendingInstall.assetName);
-    return { ok: true };
-  }
-
-  runInstallerAndQuit(pendingInstall.path);
-  return { ok: true };
+  return new Promise((resolve) => {
+    setImmediate(async () => {
+      try {
+        resolve(await doInstall());
+      } catch (e) {
+        resolve({ ok: false, reason: e?.message || String(e) });
+      }
+    });
+  });
 }
 
 function quitAndInstall() {

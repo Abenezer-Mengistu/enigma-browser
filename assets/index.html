@@ -343,6 +343,7 @@ html.compact-tabs .navbar{gap:4px;padding:4px 8px 6px}
   display:flex;align-items:center;gap:var(--chrome-gap);
   padding:6px var(--chrome-pad-x) 10px;
   flex-shrink:0;position:relative;
+  -webkit-app-region:no-drag;
 }
 .nb{background:rgba(255,255,255,.04);border:1px solid var(--b1);color:var(--t2);cursor:pointer;width:var(--nb-size);height:var(--nb-size);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:calc(var(--nb-size) * .48);font-weight:400;transition:all .12s;flex-shrink:0;line-height:1}
 .nb:hover:not(:disabled){background:var(--s3);color:var(--t1);border-color:var(--b2)}
@@ -712,24 +713,45 @@ html.compact-tabs .navbar{gap:4px;padding:4px 8px 6px}
 
 /* ═══ CONTEXT MENU ═══ */
 .cmenu{
-  position:fixed;background:var(--glass);backdrop-filter:blur(24px) saturate(1.3);
-  border:1px solid var(--b2);border-radius:12px;padding:5px;
-  min-width:220px;max-width:260px;max-height:min(460px,calc(100vh - 20px));
+  position:fixed;background:var(--glass);backdrop-filter:blur(24px) saturate(1.35);
+  border:1px solid var(--b2);border-radius:14px;padding:6px;
+  min-width:248px;max-width:288px;max-height:min(520px,calc(100vh - 16px));
   overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
   box-shadow:var(--shadow-lg);z-index:700;display:none;
   scrollbar-width:thin;scrollbar-color:var(--b2) transparent;
+  -webkit-app-region:no-drag;
 }
 .cmenu::-webkit-scrollbar{width:5px}
 .cmenu::-webkit-scrollbar-track{background:transparent}
 .cmenu::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
 .cmenu.show{display:block}
-.cm{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:12px;cursor:pointer;border-radius:7px;color:var(--t1);transition:background .1s;font-weight:500;line-height:1.3}
-.cm:hover{background:rgba(144,97,249,.12)}
+.cm{
+  display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:0 10px;
+  width:100%;padding:7px 10px;font-size:13px;cursor:pointer;border-radius:9px;
+  color:var(--t1);transition:background .12s,color .12s;font-weight:500;line-height:1.25;
+  background:none;border:none;text-align:left;font-family:var(--font);
+}
+.cm:hover{background:rgba(144,97,249,.11)}
+.cm:hover .cm-ico{background:rgba(144,97,249,.16);color:var(--acc3)}
+.cm:focus-visible{outline:2px solid rgba(144,97,249,.45);outline-offset:-2px}
 .cm.danger{color:var(--red)}.cm.danger:hover{background:rgba(248,113,113,.1)}
-.cm.disabled{opacity:.4;cursor:default}.cm.disabled:hover{background:transparent}
-.cm-sep{height:1px;background:var(--b1);margin:3px 6px}
-.cm-key{margin-left:auto;font-size:9.5px;color:var(--t3);flex-shrink:0;font-family:var(--font-mono)}
-.cm-head{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;padding:6px 10px 3px;pointer-events:none}
+.cm.danger .cm-ico{background:rgba(248,113,113,.1);color:var(--red)}
+.cm.disabled{opacity:.42;cursor:default}.cm.disabled:hover{background:transparent}
+.cm-ico{
+  width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  background:rgba(144,97,249,.08);color:var(--acc3);flex-shrink:0;transition:background .12s,color .12s;
+}
+.cm-ico svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.cm-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cm-sep{height:1px;background:var(--b1);margin:4px 8px}
+.cm-key{
+  font-size:10px;color:var(--t3);flex-shrink:0;font-family:var(--font-mono);
+  background:rgba(255,255,255,.04);border:1px solid var(--b1);border-radius:6px;padding:2px 6px;line-height:1.3;
+}
+.cm-head{
+  font-size:10px;font-weight:650;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;
+  padding:8px 10px 4px;pointer-events:none;font-family:var(--font);
+}
 
 /* ═══ NEW TAB ═══ */
 .newtab,.itab{position:absolute;inset:0;z-index:30;pointer-events:none}
@@ -875,8 +897,9 @@ html[data-theme-pick="light"] .nt-bg{background-color:#f4f2ff}
 [data-theme="light"] .sc-section{color:var(--acc2)}
 [data-theme="light"] .nt-brand-name{color:var(--acc2)}
 [data-theme="light"] .kbd{color:var(--t1);background:var(--s3);box-shadow:0 2px 0 var(--b2)}
-[data-theme="light"] .cm-key{color:var(--t2)}
+[data-theme="light"] .cm-key{color:var(--t2);background:rgba(255,255,255,.65)}
 [data-theme="light"] .cm-head{color:var(--t2)}
+[data-theme="light"] .cm-ico{background:rgba(100,70,200,.08)}
 [data-theme="light"] .s-sec-title{color:var(--t2)}
 [data-theme="light"] .dli-btn:hover{background:rgba(100,70,200,.1)}
 [data-theme="light"] .ub:hover{background:rgba(100,70,200,.08)}
@@ -892,7 +915,7 @@ html[data-theme-pick="light"] .nt-bg{background-color:#f4f2ff}
 [data-theme="light"] .modal{background:rgba(255,255,255,.96)}
 [data-theme="light"] .onboarding-card{background:rgba(255,255,255,.96)}
 [data-theme="light"] .site-info{background:rgba(255,255,255,.96)}
-[data-theme="light"] .cmenu{background:rgba(255,255,255,.96)}
+[data-theme="light"] .cmenu{background:rgba(255,255,255,.97)}
 [data-theme="light"] .sc-card{background:rgba(255,255,255,.96)}
 [data-theme="light"] .sg-t,[data-theme="light"] .sg-s{color:var(--t1)}
 [data-theme="light"] .sg-s{color:var(--t2)}
@@ -1419,36 +1442,7 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
 <div class="toast" id="toast"></div>
 
 <!-- CONTEXT MENU -->
-<div class="cmenu" id="cmenu">
-  <div class="cm-head">Tabs</div>
-  <div class="cm" onclick="B.addTab()">✚ New tab <span class="cm-key">Ctrl+T</span></div>
-  <div class="cm" onclick="B.openProfileModal()">➕ New session <span class="cm-key">Ctrl+⇧+N</span></div>
-  <div class="cm" onclick="B.dupeTab()">⧉ Duplicate tab</div>
-  <div class="cm" onclick="B.toggleMute()">🔇 Toggle mute</div>
-  <div class="cm" onclick="B.togglePin()">📌 Toggle pin</div>
-  <div class="cm-sep"></div>
-  <div class="cm-head">Page</div>
-  <div class="cm" onclick="B.copyPageUrl()">🔗 Copy URL <span class="cm-key">Ctrl+⇧+C</span></div>
-  <div class="cm" onclick="B.copyPageTitle()">📋 Copy title</div>
-  <div class="cm" onclick="B.toggleDesktopSite()">🖥 Desktop site</div>
-  <div class="cm" onclick="B.hardReload()">↻ Hard reload <span class="cm-key">Ctrl+⇧+R</span></div>
-  <div class="cm" onclick="B.screenshotPage()">📷 Screenshot</div>
-  <div class="cm-sep"></div>
-  <div class="cm-head">View</div>
-  <div class="cm" onclick="B.muteAllTabs()">🔇 Mute all tabs</div>
-  <div class="cm" onclick="B.toggleFullscreen()">⛶ Fullscreen <span class="cm-key">F11</span></div>
-  <div class="cm" onclick="B.zoomIn()">🔍 Zoom in <span class="cm-key">Ctrl++</span></div>
-  <div class="cm" onclick="B.zoomOut()">🔎 Zoom out <span class="cm-key">Ctrl+−</span></div>
-  <div class="cm" onclick="B.resetZoom()">⊙ Reset zoom <span class="cm-key">Ctrl+0</span></div>
-  <div class="cm-sep"></div>
-  <div class="cm-head">Tools</div>
-  <div class="cm" onclick="B.openFind()">🔎 Find on page <span class="cm-key">Ctrl+F</span></div>
-  <div class="cm" onclick="B.toggleReading()">📖 Reading mode</div>
-  <div class="cm" onclick="B.togglePanel('notes')">📝 Notes</div>
-  <div class="cm" onclick="B.printPage()">🖨 Print…</div>
-  <div class="cm" onclick="B.viewSource()">📄 View source</div>
-  <div class="cm" onclick="B.openDevTools()">🛠 DevTools <span class="cm-key">Ctrl+⇧+I</span></div>
-</div>
+<div class="cmenu" id="cmenu" role="menu" aria-label="Browser menu"></div>
 
 <script>
 'use strict';
@@ -1492,6 +1486,63 @@ const IFACTS = [
   ['📜','<strong>No browsing history</strong> recorded locally'],
   ['🔒','<strong>Fully isolated storage</strong> from all other sessions'],
   ['🚫','<strong>Ad & tracker blocking</strong> enabled for this session'],
+];
+const CM_SVG = {
+  plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  layers: '<svg viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>',
+  copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  mute: '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>',
+  pin: '<svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 3h6l1 7-4 2-4-2 1-7Z"/><path d="M9 10v4l3 3 3-3v-4"/></svg>',
+  link: '<svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+  text: '<svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>',
+  search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  print: '<svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>',
+  camera: '<svg viewBox="0 0 24 24"><path d="M4 7h4l2-2h8l2 2h4v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  monitor: '<svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
+  code: '<svg viewBox="0 0 24 24"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg>',
+  expand: '<svg viewBox="0 0 24 24"><path d="M8 3H3v5"/><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M16 21h5v-5"/></svg>',
+  'zoom-in': '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M11 8v6M8 11h6"/></svg>',
+  'zoom-out': '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M8 11h6"/></svg>',
+  'zoom-reset': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>',
+  'mute-all': '<svg viewBox="0 0 24 24"><path d="M8 9H4v6h4l5 4V5L8 9Z"/><path d="m17 9 4 4"/><path d="m21 9-4 4"/></svg>',
+  book: '<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>',
+  note: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>',
+  tools: '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>',
+  close: '<svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+  reopen: '<svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>',
+  'close-right': '<svg viewBox="0 0 24 24"><path d="M5 12h12"/><path d="m13 8 4 4-4 4"/></svg>',
+};
+const MORE_MENU = [
+  { label: 'Tabs', items: [
+    { id: 'new-tab', icon: 'plus', label: 'New tab', key: 'Ctrl+T' },
+    { id: 'new-session', icon: 'layers', label: 'New session', key: 'Ctrl+⇧+N' },
+    { id: 'dupe-tab', icon: 'copy', label: 'Duplicate tab' },
+    { id: 'toggle-mute', icon: 'mute', label: 'Toggle mute' },
+    { id: 'toggle-pin', icon: 'pin', label: 'Toggle pin' },
+  ]},
+  { label: 'Page', items: [
+    { id: 'copy-url', icon: 'link', label: 'Copy URL', key: 'Ctrl+⇧+C' },
+    { id: 'copy-title', icon: 'text', label: 'Copy title' },
+    { id: 'find', icon: 'search', label: 'Find on page', key: 'Ctrl+F' },
+    { id: 'print', icon: 'print', label: 'Print', key: 'Ctrl+P' },
+    { id: 'screenshot', icon: 'camera', label: 'Screenshot' },
+    { id: 'desktop-site', icon: 'monitor', label: 'Desktop site' },
+    { id: 'hard-reload', icon: 'refresh', label: 'Hard reload', key: 'Ctrl+⇧+R' },
+    { id: 'view-source', icon: 'code', label: 'View source' },
+  ]},
+  { label: 'View', items: [
+    { id: 'fullscreen', icon: 'expand', label: 'Fullscreen', key: 'F11' },
+    { id: 'zoom-in', icon: 'zoom-in', label: 'Zoom in', key: 'Ctrl++' },
+    { id: 'zoom-out', icon: 'zoom-out', label: 'Zoom out', key: 'Ctrl+−' },
+    { id: 'zoom-reset', icon: 'zoom-reset', label: 'Reset zoom', key: 'Ctrl+0' },
+    { id: 'mute-all', icon: 'mute-all', label: 'Mute all tabs' },
+    { id: 'reading', icon: 'book', label: 'Reading mode' },
+  ]},
+  { label: 'Tools', items: [
+    { id: 'notes', icon: 'note', label: 'Notes', key: 'Ctrl+⇧+O' },
+    { id: 'devtools', icon: 'tools', label: 'Developer tools', key: 'Ctrl+⇧+I' },
+  ]},
 ];
 
 // ══ STATE ════════════════════════════════════════════════════════════════
@@ -1538,6 +1589,68 @@ const B = (() => {
 
   const wvKey = (pid, tid) => `${pid}::${tid}`;
   const getWV = (tid, pid = activePid) => webviews[wvKey(pid, tid)] || null;
+  function cmIcon(name) {
+    return CM_SVG[name] ? `<span class="cm-ico">${CM_SVG[name]}</span>` : '<span class="cm-ico"></span>';
+  }
+  function menuRow(item, attrs = '') {
+    return `<button type="button" class="cm${item.danger ? ' danger' : ''}" role="menuitem" data-action="${item.id}"${attrs}>
+      ${cmIcon(item.icon)}<span class="cm-label">${esc(item.label)}</span>${item.key ? `<span class="cm-key">${esc(item.key)}</span>` : ''}
+    </button>`;
+  }
+  function renderMoreMenu() {
+    const m = $('cmenu');
+    if (!m) return;
+    m.innerHTML = MORE_MENU.map((section, idx) => `
+      <div class="cm-head">${esc(section.label)}</div>
+      ${section.items.map(item => menuRow(item)).join('')}
+      ${idx < MORE_MENU.length - 1 ? '<div class="cm-sep"></div>' : ''}
+    `).join('');
+  }
+  function runMenuAction(action) {
+    const map = {
+      'new-tab': () => addTab(),
+      'new-session': () => openProfileModal(),
+      'dupe-tab': () => dupeTab(),
+      'toggle-mute': () => toggleMute(),
+      'toggle-pin': () => togglePin(),
+      'copy-url': () => copyPageUrl(),
+      'copy-title': () => copyPageTitle(),
+      'find': () => openFind(),
+      'print': () => printPage(),
+      'screenshot': () => screenshotPage(),
+      'desktop-site': () => toggleDesktopSite(),
+      'hard-reload': () => hardReload(),
+      'view-source': () => viewSource(),
+      'fullscreen': () => toggleFullscreen(),
+      'zoom-in': () => zoomIn(),
+      'zoom-out': () => zoomOut(),
+      'zoom-reset': () => resetZoom(),
+      'mute-all': () => muteAllTabs(),
+      'reading': () => toggleReading(),
+      'notes': () => togglePanel('notes'),
+      'devtools': () => openDevTools(),
+    };
+    map[action]?.();
+  }
+  function pageWebview(message = 'Open a page first') {
+    const tab = aTab();
+    if (!tab?.url) { toast(message); return null; }
+    const wv = getWV(tab.id);
+    if (!wv) { toast('Page not loaded yet'); return null; }
+    return wv;
+  }
+  function webviewContentsId(wv) {
+    try { return wv.getWebContentsId?.(); } catch { return null; }
+  }
+  function nativeImageToBase64(img) {
+    try {
+      const png = img.toPNG?.();
+      if (png?.length) return png.toString('base64');
+    } catch {}
+    const url = img.toDataURL?.();
+    if (url) return url.replace(/^data:image\/\w+;base64,/, '');
+    throw new Error('encode failed');
+  }
   const ntKey = (pid, tid) => `${pid}::${tid}`;
   const getNT = (tid, pid = activePid) => newtabs[ntKey(pid, tid)] || null;
   const metaKey = (pid, tid) => wvKey(pid, tid);
@@ -2519,14 +2632,20 @@ const B = (() => {
 
   async function screenshotPage() {
     closeMenu();
-    const tab = aTab();
-    const wv = tab && getWV(tab.id);
-    if (!wv) { toast('Nothing to capture'); return; }
+    const wv = pageWebview('Nothing to capture');
+    if (!wv) return;
     try {
-      const img = await wv.capturePage();
-      const bytes = img.toPNG();
-      const path = await eAPI.saveScreenshot(Array.from(bytes));
-      toast(path ? `📷 Saved to Downloads` : 'Screenshot failed');
+      let b64 = '';
+      try {
+        const img = await wv.capturePage();
+        b64 = nativeImageToBase64(img);
+      } catch {
+        const id = webviewContentsId(wv);
+        if (!id) throw new Error('capture unavailable');
+        b64 = await eAPI.captureWebview(id);
+      }
+      const path = await eAPI.saveScreenshot(b64);
+      toast(path ? 'Screenshot saved to Downloads' : 'Screenshot failed');
     } catch {
       toast('Screenshot failed');
     }
@@ -2856,7 +2975,8 @@ const B = (() => {
   function toggleReading() {
     closeMenu();
     if(isReading){ closeReading(); return; }
-    const wv=getWV(activeTid[activePid]); if(!wv) return;
+    const wv = pageWebview('Reading mode needs an open page');
+    if (!wv) return;
     isReading=true;
     wv.executeJavaScript(`({
       title: document.title,
@@ -2868,7 +2988,7 @@ const B = (() => {
       $('reading-content').innerHTML=`<p>${data.body.replace(/\n{2,}/g,'</p><p>').replace(/\n/g,' ')}</p>`;
       $('reading-overlay').classList.add('show');
     }).catch(()=>{ isReading=false; toast('Reading mode not available for this page'); });
-    toast('📖 Reading mode');
+    toast('Reading mode');
   }
 
   function closeReading() {
@@ -2958,7 +3078,12 @@ const B = (() => {
   }
 
   // ── FIND ─────────────────────────────────────────────────────────────────
-  function openFind()  { $('findbar').classList.add('open'); $('find-inp').focus(); $('find-inp').select(); }
+  function openFind() {
+    closeMenu();
+    $('findbar').classList.add('open');
+    $('find-inp').focus();
+    $('find-inp').select();
+  }
   function closeFind() {
     $('findbar').classList.remove('open');
     const wv=getWV(activeTid[activePid]); if(wv) wv.stopFindInPage('clearSelection');
@@ -3063,8 +3188,28 @@ const B = (() => {
   }
 
   // ── PRINT / DEVTOOLS ─────────────────────────────────────────────────────
-  function printPage()   { const wv=getWV(activeTid[activePid]); closeMenu(); if(wv) wv.print(); }
-  function openDevTools(){ const wv=getWV(activeTid[activePid]); closeMenu(); if(wv) wv.openDevTools(); else eAPI.openDevTools(); }
+  async function printPage() {
+    closeMenu();
+    const wv = pageWebview('Nothing to print');
+    if (!wv) return;
+    try {
+      try {
+        wv.print({ printBackground: true });
+      } catch {
+        const id = webviewContentsId(wv);
+        if (!id) throw new Error('print unavailable');
+        await eAPI.printWebview(id);
+      }
+    } catch {
+      toast('Print failed');
+    }
+  }
+  function openDevTools() {
+    closeMenu();
+    const wv = pageWebview('Open a page to inspect');
+    if (wv) wv.openDevTools();
+    else eAPI.openDevTools();
+  }
 
   // ── PANELS ───────────────────────────────────────────────────────────────
   function bindNewTabEvents() {
@@ -3753,10 +3898,17 @@ const B = (() => {
     e.stopPropagation();
   }
   function closeMenu(){ $('cmenu').classList.remove('show'); }
-  $('cmenu').addEventListener('click', e => {
-    e.stopPropagation();
-    if (e.target.closest('.cm')) closeMenu();
-  });
+  function initMoreMenu() {
+    renderMoreMenu();
+    $('cmenu')?.addEventListener('click', e => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeMenu();
+      runMenuAction(btn.dataset.action);
+    });
+  }
   document.addEventListener('click', e => {
     if (!e.target.closest('#cmenu') && !e.target.closest('#btn-more')) closeMenu();
     closeSuggest();
@@ -3942,22 +4094,36 @@ const B = (() => {
     m.id='tab-ctx'; m.className='cmenu show';
     m.style.top=e.clientY+'px'; m.style.left=Math.min(e.clientX,window.innerWidth-210)+'px';
     m.innerHTML=`
-      <div class="cm" onclick="B.dupeTab()">⧉ Duplicate tab</div>
-      <div class="cm" onclick="B._pinTab('${tid}')">${isPinned?'Unpin tab':'📌 Pin tab'}</div>
-      <div class="cm" onclick="B._muteTab('${tid}')">${isMuted?'🔊 Unmute tab':'🔇 Mute tab'}</div>
+      ${menuRow({ id: 'dupe-tab', icon: 'copy', label: 'Duplicate tab' })}
+      ${menuRow({ id: isPinned ? 'unpin-tab' : 'pin-tab', icon: 'pin', label: isPinned ? 'Unpin tab' : 'Pin tab' }, ` data-tabid="${tid}"`)}
+      ${menuRow({ id: isMuted ? 'unmute-tab' : 'mute-tab', icon: 'mute', label: isMuted ? 'Unmute tab' : 'Mute tab' }, ` data-tabid="${tid}"`)}
       <div class="cm-sep"></div>
-      <div class="cm" onclick="B.addTab()">✚ New tab</div>
-      <div class="cm" onclick="B.reopenClosed()">↩ Reopen closed tab</div>
-      <div class="cm" onclick="B.closeOtherTabs('${tid}')">✕ Close other tabs</div>
-      <div class="cm" onclick="B.closeTabsToRight('${tid}')">→ Close tabs to the right</div>
+      ${menuRow({ id: 'new-tab', icon: 'plus', label: 'New tab' })}
+      ${menuRow({ id: 'reopen-tab', icon: 'reopen', label: 'Reopen closed tab' })}
+      ${menuRow({ id: 'close-other-tabs', icon: 'close', label: 'Close other tabs' }, ` data-tabid="${tid}"`)}
+      ${menuRow({ id: 'close-tabs-right', icon: 'close-right', label: 'Close tabs to the right' }, ` data-tabid="${tid}"`)}
       <div class="cm-sep"></div>
-      <div class="cm danger" onclick="B.closeTab('${tid}')">✕ Close tab</div>
+      ${menuRow({ id: 'close-tab', icon: 'close', label: 'Close tab', danger: true }, ` data-tabid="${tid}"`)}
     `;
     document.body.appendChild(m);
     positionPopup(m, { left: e.clientX, right: e.clientX, top: e.clientY, bottom: e.clientY, width: 0, height: 0 }, false);
     m.addEventListener('click', ev => {
       ev.stopPropagation();
-      if (ev.target.closest('.cm')) { m.remove(); document.removeEventListener('click', rm); }
+      const btn = ev.target.closest('[data-action]');
+      if (!btn) return;
+      ev.preventDefault();
+      const action = btn.dataset.action;
+      const tabId = btn.dataset.tabid || tid;
+      m.remove();
+      document.removeEventListener('click', rm);
+      if (action === 'dupe-tab') dupeTab();
+      else if (action === 'pin-tab' || action === 'unpin-tab') _pinTab(tabId);
+      else if (action === 'mute-tab' || action === 'unmute-tab') _muteTab(tabId);
+      else if (action === 'new-tab') addTab();
+      else if (action === 'reopen-tab') reopenClosed();
+      else if (action === 'close-other-tabs') closeOtherTabs(tabId);
+      else if (action === 'close-tabs-right') closeTabsToRight(tabId);
+      else if (action === 'close-tab') closeTab(tabId);
     });
     const rm = ev => {
       if (m.contains(ev.target)) return;
@@ -4385,6 +4551,7 @@ const B = (() => {
 
   bindNewTabEvents();
   bindChromeClicks();
+  initMoreMenu();
   init();
 
   return {

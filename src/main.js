@@ -1,5 +1,5 @@
 const {
-  app, BrowserWindow, session, ipcMain, Menu, shell, clipboard, screen, nativeImage, nativeTheme, dialog
+  app, BrowserWindow, session, ipcMain, Menu, shell, clipboard, screen, nativeImage, nativeTheme, dialog, webContents,
 } = require('electron');
 const path = require('path');
 const fs   = require('fs');
@@ -220,6 +220,8 @@ function seedUserFiles(userId, opts = {}) {
         privacy: starterSession.defaults || {},
         searchEngine: starterSession.defaults?.searchEngine || settingsOverride.searchEngine || DEFAULT_SETTINGS.searchEngine,
       });
+      session.tabsByPid[sid] = [];
+      session.activeTid[sid] = null;
     }
     write(paths.session, session);
     try { fs.writeFileSync(paths.notes, ''); } catch { /* ignore */ }
@@ -1022,10 +1024,32 @@ ipcMain.handle('import-bookmarks', async () => {
   if (r.canceled || !r.filePaths?.[0]) return null;
   try { return JSON.parse(fs.readFileSync(r.filePaths[0], 'utf8')); } catch { return null; }
 });
-ipcMain.handle('save-screenshot', (_, bytes) => {
+ipcMain.handle('save-screenshot', (_, data) => {
   const p = path.join(os.homedir(), 'Downloads', `Enigma-${Date.now()}.png`);
-  fs.writeFileSync(p, Buffer.from(bytes));
+  const buf = Buffer.isBuffer(data)
+    ? data
+    : Array.isArray(data)
+      ? Buffer.from(data)
+      : Buffer.from(String(data || ''), 'base64');
+  fs.writeFileSync(p, buf);
   return p;
+});
+ipcMain.handle('print-webview', (_, id) => new Promise((resolve, reject) => {
+  const wc = webContents.fromId(Number(id));
+  if (!wc || wc.isDestroyed()) {
+    reject(new Error('Page not ready'));
+    return;
+  }
+  wc.print({ printBackground: true, silent: false }, (ok, err) => {
+    if (ok) resolve(true);
+    else reject(new Error(err || 'Print failed'));
+  });
+}));
+ipcMain.handle('capture-webview', async (_, id) => {
+  const wc = webContents.fromId(Number(id));
+  if (!wc || wc.isDestroyed()) throw new Error('Page not ready');
+  const img = await wc.capturePage();
+  return img.toPNG().toString('base64');
 });
 
 // ── IPC: misc ─────────────────────────────────────────────────────────────────

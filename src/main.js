@@ -342,6 +342,8 @@ const DEFAULT_SETTINGS = {
   doNotTrack: true,
   blockPopups: true,
   restoreSession: false,
+  closeTabsOnExit: false,
+  rememberCloseTabsChoice: false,
   filterLists: true,
   fingerprintProtection: true,
   webrtcProtection: true,
@@ -405,6 +407,7 @@ const browserWindows = new Set();
 const windowSessions = new Map();
 const pendingBoots = new Map();
 const tabBarBounds = new Map();
+const windowCloseAllowed = new Set();
 
 function pointInRect(p, r) {
   return p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
@@ -721,6 +724,14 @@ function createBrowserWindow(opts = {}) {
   attachWindowShortcuts(win);
   win.on('maximize', () => sendWin(win, 'win-state', 'maximized'));
   win.on('unmaximize', () => sendWin(win, 'win-state', 'normal'));
+  win.on('close', (e) => {
+    if (windowCloseAllowed.has(winId)) {
+      windowCloseAllowed.delete(winId);
+      return;
+    }
+    e.preventDefault();
+    sendWin(win, 'window-close-request');
+  });
   win.on('closed', () => {
     browserWindows.delete(win);
     windowSessions.delete(winId);
@@ -764,6 +775,15 @@ ipcMain.handle('win-max', (e) => {
   else win.maximize();
 });
 ipcMain.handle('win-close', (e) => winFromEvent(e)?.close());
+ipcMain.handle('confirm-window-close', (e, allow) => {
+  const win = winFromEvent(e);
+  if (!win) return false;
+  if (allow) {
+    windowCloseAllowed.add(win.id);
+    win.close();
+  }
+  return true;
+});
 ipcMain.handle('win-is-max', (e) => winFromEvent(e)?.isMaximized() ?? false);
 ipcMain.handle('open-devtools', (e) => winFromEvent(e)?.webContents.openDevTools({ mode: 'detach' }));
 ipcMain.handle('get-window-boot', (e) => {

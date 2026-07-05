@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('eAPI', {
   winMin: () => ipcRenderer.invoke('win-min'),
   winMax: () => ipcRenderer.invoke('win-max'),
   winClose: () => ipcRenderer.invoke('win-close'),
+  confirmWindowClose: (allow) => ipcRenderer.invoke('confirm-window-close', allow),
   winIsMax: () => ipcRenderer.invoke('win-is-max'),
   sessionCreate: (id, config) => ipcRenderer.invoke('session-create', id, config),
   sessionRegister: (id, config) => ipcRenderer.invoke('session-register', id, config),

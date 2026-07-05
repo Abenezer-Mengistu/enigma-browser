@@ -739,6 +739,11 @@ html.compact-tabs .navbar{gap:4px;padding:4px 8px 6px}
 .app.onboarding-pending{visibility:hidden}
 .modal{background:var(--glass);backdrop-filter:blur(28px);border:1px solid var(--b2);border-radius:var(--r-xl);padding:28px;width:min(400px,calc(100vw - 32px));display:flex;flex-direction:column;gap:18px;box-shadow:var(--shadow-lg);max-height:min(88vh,720px);overflow-y:auto}
 .modal.modal-wide{width:min(460px,calc(100vw - 32px))}
+.close-tabs-dialog .modal{gap:14px}
+.close-tabs-dialog .close-msg{font-size:13px;color:var(--t2);line-height:1.5}
+.close-tabs-dialog .close-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.close-tabs-dialog .close-remember{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t3);cursor:pointer;user-select:none;margin-top:2px}
+.close-tabs-dialog .close-remember input{accent-color:var(--acc)}
 .m-header{display:flex;flex-direction:column;gap:8px}
 .m-title{font-size:17px;font-weight:700;color:var(--t1);letter-spacing:-.02em;line-height:1.3}
 .m-sub{font-size:12px;color:var(--t2);line-height:1.55;margin:0}
@@ -1669,6 +1674,22 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
   <div class="tp-url" id="tp-url"></div>
 </div>
 
+<!-- Close tabs dialog -->
+<div class="overlay close-tabs-dialog" id="close-tabs-dialog" style="display:none">
+  <div class="modal" style="width:min(380px,calc(100vw - 32px))">
+    <div class="ph-title" style="font-size:16px;font-weight:650">Close all tabs?</div>
+    <div class="close-msg" id="close-tabs-msg">You have open tabs. Close all tabs and exit Enigma?</div>
+    <label class="close-remember">
+      <input type="checkbox" id="close-tabs-remember"/>
+      Remember my choice
+    </label>
+    <div class="close-actions">
+      <button type="button" class="btn btn-g" onclick="B.cancelCloseBrowser()">Cancel</button>
+      <button type="button" class="btn btn-p" onclick="B.confirmCloseBrowser()">Close all tabs</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1838,7 +1859,7 @@ const B = (() => {
   let newtabs   = {};
   let bookmarks = [];
   let history   = [];
-  let settings  = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,sessionRules:{}};
+  let settings  = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,closeTabsOnExit:false,rememberCloseTabsChoice:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,sessionRules:{}};
   let privacyDoc = { filterLists: true, fingerprintProtection: true, webrtcProtection: true, mixedContentBlock: false, siteExceptions: {} };
   let sessionMeta = {};
   let obFinishMode = 'account';
@@ -3032,6 +3053,19 @@ const B = (() => {
     try { inp.focus({ preventScroll: true }); } catch { inp.focus(); }
   }
 
+  function pruneSessionWebviews(pid, keepTabId) {
+    const prefix = `${pid}::`;
+    for (const [key, wv] of Object.entries(webviews)) {
+      if (!key.startsWith(prefix)) continue;
+      const tid = key.slice(prefix.length);
+      if (tid === keepTabId) continue;
+      const t = tabRef(tid, pid);
+      if (t?.audible || t?.loading) continue;
+      wv.remove();
+      delete webviews[key];
+    }
+  }
+
   async function activateContent(tab, pid, epoch) {
     return withContentLock(async () => {
       if (epoch !== undefined && epoch !== renderEpoch) return;
@@ -3040,6 +3074,7 @@ const B = (() => {
       hideAllContent();
       if (epoch !== undefined && epoch !== renderEpoch) return;
       removeBootShell();
+      pruneSessionWebviews(pid, liveTab.id);
       if (!liveTab.url) {
         showNewTab(liveTab, pid);
         return;
@@ -3494,6 +3529,82 @@ const B = (() => {
     toast('🔥 Session burned — all container data wiped');
   }
 
+  function countOpenPages() {
+    let n = 0;
+    for (const list of Object.values(tabsByPid)) {
+      if (!Array.isArray(list)) continue;
+      n += list.filter(t => t?.url && !t.url.startsWith('about:')).length;
+    }
+    return n;
+  }
+
+  function clearTabsForExit() {
+    for (const p of profiles) {
+      const list = tabsByPid[p.id];
+      if (!Array.isArray(list)) continue;
+      for (const t of list) destroyWV(t.id, p.id);
+      tabsByPid[p.id] = [];
+      activeTid[p.id] = null;
+      ensureSessionTabs(p.id);
+    }
+    pendingRestoreSession = null;
+    hideRestoreBanner();
+  }
+
+  function showCloseTabsDialog(count) {
+    const dlg = $('close-tabs-dialog');
+    const msg = $('close-tabs-msg');
+    if (msg) {
+      msg.textContent = count === 1
+        ? 'You have 1 open tab. Close all tabs and exit Enigma?'
+        : `You have ${count} open tabs. Close all tabs and exit Enigma?`;
+    }
+    const remember = $('close-tabs-remember');
+    if (remember) remember.checked = false;
+    if (dlg) dlg.style.display = 'flex';
+  }
+
+  function hideCloseTabsDialog() {
+    $('close-tabs-dialog').style.display = 'none';
+  }
+
+  async function finishCloseBrowser(remember) {
+    hideCloseTabsDialog();
+    if (remember) {
+      settings.closeTabsOnExit = true;
+      settings.rememberCloseTabsChoice = true;
+      await eAPI.settingsSave(settings);
+    }
+    clearTabsForExit();
+    saveSessionState();
+    eAPI.confirmWindowClose(true);
+  }
+
+  async function handleWindowCloseRequest() {
+    if (settings.closeTabsOnExit === true) {
+      clearTabsForExit();
+      saveSessionState();
+      eAPI.confirmWindowClose(true);
+      return;
+    }
+    const openCount = countOpenPages();
+    if (openCount < 1) {
+      eAPI.confirmWindowClose(true);
+      return;
+    }
+    showCloseTabsDialog(openCount);
+  }
+
+  function confirmCloseBrowser() {
+    const remember = !!$('close-tabs-remember')?.checked;
+    void finishCloseBrowser(remember);
+  }
+
+  function cancelCloseBrowser() {
+    hideCloseTabsDialog();
+    eAPI.confirmWindowClose(false);
+  }
+
   function scheduleSessionSave() {
     clearTimeout(saveSessionT);
     saveSessionT = setTimeout(saveSessionState, 500);
@@ -3660,11 +3771,6 @@ const B = (() => {
       tabsByPid[p.id] = [];
       activeTid[p.id] = null;
       ensureSessionTabs(p.id);
-    }
-
-    if (restorable) {
-      pendingRestoreSession = s;
-      showRestoreBanner(countRestorableTabs(s));
     }
   }
 
@@ -4250,6 +4356,10 @@ const B = (() => {
         <div class="s-row">
           <div class="s-lbl">Restore tabs automatically<div class="s-sub">Reopen last pages on launch without asking</div></div>
           <button class="tgl${settings.restoreSession===true?' on':''}" onclick="B.toggleSetting('restoreSession',this)"></button>
+        </div>
+        <div class="s-row">
+          <div class="s-lbl">Close all tabs on exit<div class="s-sub">When enabled, open pages are not saved when you close the browser</div></div>
+          <button class="tgl${settings.closeTabsOnExit===true?' on':''}" onclick="B.toggleSetting('closeTabsOnExit',this)"></button>
         </div>
       </div>
       <div class="s-sec">
@@ -5645,7 +5755,7 @@ const B = (() => {
     const windowBoot = await eAPI.getWindowBoot().catch(() => null);
     mainUserPartition = await eAPI.userMainPartition();
     renderUserStrip();
-    const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,checkUpdates:true,autoInstallUpdates:false};
+    const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,closeTabsOnExit:false,rememberCloseTabsChoice:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,checkUpdates:true,autoInstallUpdates:false};
     try {
       [bookmarks, history, settings, chromiumVer, electronVer, blockedCount, privacyDoc, sessionTemplates, fpScript] = await Promise.all([
         eAPI.bmLoad().catch(() => []),
@@ -5683,6 +5793,7 @@ const B = (() => {
       $('boot-clock').textContent = n.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     }
     await initSessionOnStartup(windowBoot);
+    if (settings.closeTabsOnExit && settings.restoreSession !== true) saveSessionState();
     for (const p of profiles) sanitizeTabsForProfile(p.id);
     for (const p of profiles) await sanitizeTabUrls(p.id);
     for (const p of profiles) {
@@ -5705,6 +5816,7 @@ const B = (() => {
     $('tabbar')?.classList.toggle('tab-drop-target', !!active);
   });
   eAPI.on('report-tabbar-bounds', () => reportTabbarBounds());
+  eAPI.on('window-close-request', () => { void handleWindowCloseRequest(); });
   window.addEventListener('resize', reportTabbarBounds);
   init();
 
@@ -5720,7 +5832,7 @@ const B = (() => {
     setSessionRuleFromSiteInfo, clearSiteData, addSessionRule, removeSessionRule, importFromBrowser,
     checkForUpdate, checkForUpdateFromSettings, downloadUpdate, dismissUpdate,
     installUpdateNow, deferUpdateRestart, retryUpdate, openManualUpdate,
-    restorePreviousPages, dismissRestore,
+    restorePreviousPages, dismissRestore, confirmCloseBrowser, cancelCloseBrowser,
     navigate:(url)=>navigate(url),
     goBack, goFwd, reload, hardReload, goHome, focusUrl, viewSource,
     copyPageUrl, copyPageTitle, toggleFullscreen, toggleDesktopSite, toggleMobileSite,

@@ -23,7 +23,7 @@
   --tab-h:38px;--tab-item-h:34px;--tab-pad-x:12px;--tab-gap:6px;--tab-fs:12px;
   --tab-r:12px;--tab-min-w:96px;--tab-max-w:220px;--tab-fav:15px;--add-tab-h:32px;
   --chrome-title-h:34px;--chrome-nav-h:40px;--nb-size:30px;--url-h:34px;
-  --tb-act-size:28px;--tb-logo-size:22px;
+  --tb-act-size:32px;--tb-logo-size:22px;
   --glass:rgba(14,12,26,.78);--glass-2:rgba(20,17,36,.65);
   --chrome-blur:28px;--glow:rgba(124,58,237,.35);
   --shadow-sm:0 2px 12px rgba(0,0,0,.28);
@@ -187,7 +187,7 @@ webview.act{display:flex!important;visibility:visible;pointer-events:auto;width:
 .tb-title{font-size:12px;color:var(--t2);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;letter-spacing:-.02em}
 .tb-actions{display:flex;-webkit-app-region:no-drag;flex-shrink:0;padding:0 6px;gap:3px}
 .tb-act{background:rgba(255,255,255,.04);border:1px solid var(--b1);cursor:pointer;color:var(--t3);width:var(--tb-act-size);height:var(--tb-act-size);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;-webkit-app-region:no-drag}
-.tb-act .ico{width:14px;height:14px}
+.tb-act .ico{width:18px;height:18px}
 .tb-act:hover{background:var(--s3);color:var(--t1);border-color:var(--b2)}
 .tb-act.on{color:var(--acc3);background:rgba(144,97,249,.18);border-color:rgba(144,97,249,.35)}
 
@@ -1626,7 +1626,7 @@ const CHROME_ICO = {
   notes: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/>',
   download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
   keyboard: '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/>',
-  settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>',
   desktop: '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
   mobile: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
   book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>',

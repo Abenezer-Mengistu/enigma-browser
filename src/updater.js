@@ -26,6 +26,57 @@ autoUpdater.disableDifferentialDownload = true;
 
 let suppressAutoUpdaterErrors = false;
 
+const pendingUpdatePath = () => path.join(app.getPath('userData'), 'pending-update.json');
+
+function readPendingUpdate() {
+  try {
+    if (fs.existsSync(pendingUpdatePath())) {
+      return JSON.parse(fs.readFileSync(pendingUpdatePath(), 'utf8'));
+    }
+  } catch { /* ignore corrupt marker */ }
+  return null;
+}
+
+function writePendingUpdate(data) {
+  try {
+    fs.writeFileSync(pendingUpdatePath(), JSON.stringify({ ...data, at: Date.now() }));
+  } catch { /* ignore */ }
+}
+
+function clearPendingUpdate() {
+  try { fs.unlinkSync(pendingUpdatePath()); } catch { /* ignore */ }
+}
+
+function markPendingInstall(version, mode) {
+  writePendingUpdate({ version, mode, exePath: process.execPath });
+}
+
+function checkPendingUpdateOnStartup() {
+  const pending = readPendingUpdate();
+  if (!pending?.version) return null;
+  const current = app.getVersion();
+  if (!isVersionNewer(pending.version, current)) {
+    clearPendingUpdate();
+    return null;
+  }
+  return {
+    expectedVersion: pending.version,
+    currentVersion: current,
+    latestVersion: pending.version,
+    available: true,
+    failedInstall: true,
+    exePath: pending.exePath || process.execPath,
+    releaseUrl: `https://github.com/${UPDATE_REPO}/releases/tag/v${pending.version}`,
+    url: `https://github.com/${UPDATE_REPO}/releases/tag/v${pending.version}`,
+    downloadUrl: UPDATE_PAGE,
+    portable: isPortableBuild(),
+  };
+}
+
+function openReleasePage(url) {
+  shell.openExternal(url || UPDATE_PAGE);
+}
+
 function send(channel, payload) {
   mainWinRef()?.webContents.send(channel, payload);
 }
@@ -181,9 +232,8 @@ function spawnDetachedPowerShell(script) {
   ], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
 }
 
-/** Wait for this process to exit, then run NSIS silently into the same folder and relaunch via --force-run. */
+/** Wait for this process to exit, then run NSIS silently (upgrade via registry) and relaunch via --force-run. */
 function runInstallerAndQuit(installerPath) {
-  const installDir = path.dirname(process.execPath);
   const pid = process.pid;
 
   if (process.platform === 'win32') {
@@ -192,8 +242,7 @@ function runInstallerAndQuit(installerPath) {
       `Wait-Process -Id ${pid} -ErrorAction SilentlyContinue`,
       'Start-Sleep -Seconds 2',
       `$installer = ${JSON.stringify(installerPath)}`,
-      `$installDir = ${JSON.stringify(`/D=${installDir}`)}`,
-      '$args = @("--updated", "/S", "--force-run", $installDir)',
+      '$args = @("--updated", "/S", "--force-run")',
       'try {',
       '  $p = Start-Process -FilePath $installer -ArgumentList $args -Verb RunAs -PassThru -Wait',
       '  if ($null -eq $p -or $p.ExitCode -ne 0) { Start-Process -FilePath $installer -ArgumentList $args -Wait | Out-Null }',
@@ -302,6 +351,11 @@ function initUpdater(getMainWindow, opts = {}) {
 
 async function checkForUpdates() {
   const current = app.getVersion();
+  const pending = readPendingUpdate();
+  if (pending?.version && !isVersionNewer(pending.version, current)) {
+    clearPendingUpdate();
+  }
+
   const base = {
     currentVersion: current,
     latestVersion: current,
@@ -326,6 +380,7 @@ async function checkForUpdates() {
 
     const release = await fetchLatestRelease();
     const latest = (release.tag_name || '').replace(/^v/i, '');
+    if (!isVersionNewer(latest, current)) clearPendingUpdate();
     const notes = releaseNotesSnippet(release.body || '');
     const asset = pickAsset(release, isPortableBuild());
     pendingRelease = { release, version: latest, via: 'github', releaseNotes: notes };
@@ -408,10 +463,12 @@ async function installUpdate({ force = false } = {}) {
     if (!pendingInstall?.path) return { ok: false, reason: 'not-ready' };
 
     if (pendingInstall.mode === 'portable') {
+      markPendingInstall(pendingInstall.version, 'portable');
       await applyPortableUpdate(pendingInstall.path);
       return { ok: true };
     }
 
+    markPendingInstall(pendingInstall.version, 'installer');
     runInstallerAndQuit(pendingInstall.path);
     return { ok: true };
   };
@@ -443,9 +500,11 @@ function getUpdateStatus() {
 module.exports = {
   initUpdater,
   checkForUpdates,
+  checkPendingUpdateOnStartup,
   downloadUpdate,
   installUpdate,
   quitAndInstall,
   getUpdateStatus,
+  openReleasePage,
   isPortableBuild,
 };

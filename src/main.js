@@ -11,7 +11,7 @@ const { DEFAULT_PRIVACY, effectiveSettings } = require('./privacy-store');
 const { encryptVault, decryptVault } = require('./sync-crypto');
 const { sharedEngine } = require('./filter-engine');
 const {
-  initUpdater, checkForUpdates, downloadUpdate, installUpdate, quitAndInstall, getUpdateStatus,
+  initUpdater, checkForUpdates, checkPendingUpdateOnStartup, downloadUpdate, installUpdate, quitAndInstall, getUpdateStatus, openReleasePage,
 } = require('./updater');
 const {
   loadExtensions, saveExtensions, readManifest, applyExtensionsToSession, removeExtensionsFromSession,
@@ -643,6 +643,12 @@ function createMain() {
     hasActiveDownloads: () => downloads.some(d => d.state === 'progressing'),
     shouldCheckUpdates: () => getSettings().checkUpdates !== false,
   });
+  const failedUpdate = checkPendingUpdateOnStartup();
+  if (failedUpdate) {
+    mainWin.webContents.once('did-finish-load', () => {
+      mainWin?.webContents.send('update-install-failed', failedUpdate);
+    });
+  }
   ensureUsersMigrated();
   const reg = getRegistry();
   if (reg.activeUserId) setActiveUser(reg.activeUserId);
@@ -1212,6 +1218,7 @@ ipcMain.handle('download-update', () => downloadUpdate());
 ipcMain.handle('install-update', (_, opts) => installUpdate(opts || {}));
 ipcMain.handle('quit-and-install', () => quitAndInstall());
 ipcMain.handle('update-status', () => getUpdateStatus());
+ipcMain.handle('open-update-page', (_, url) => { openReleasePage(url); return true; });
 ipcMain.handle('has-active-downloads', () => downloads.some(d => d.state === 'progressing'));
 
 ipcMain.handle('context-menu', (_, p) => {

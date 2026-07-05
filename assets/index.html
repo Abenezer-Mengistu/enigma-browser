@@ -508,6 +508,7 @@ html.compact-tabs .navbar{gap:4px;padding:4px 8px 6px}
 .update-banner .ubtn-x{background:none;border:none;color:var(--t3);cursor:pointer;padding:4px 8px;font-size:14px;line-height:1}
 .update-banner.update-busy .ubtn,.update-banner.update-busy .ubtn-x{display:none}
 .update-banner.update-failed #update-btn{display:none}
+.update-banner.update-failed #update-manual-btn{display:inline-flex}
 .update-notes{font-size:11px;color:var(--t2);max-width:420px;line-height:1.35;display:none}
 .update-banner.show-notes .update-notes{display:block}
 .update-detail{font-size:10px;color:var(--t3);min-width:88px;text-align:right;white-space:nowrap}
@@ -1176,6 +1177,7 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
         <button type="button" class="ubtn" id="update-restart-now" onclick="B.installUpdateNow()">Restart now</button>
       </div>
       <button type="button" class="ubtn" id="update-btn" onclick="B.downloadUpdate()">Update now</button>
+      <button type="button" class="ubtn-secondary" id="update-manual-btn" style="display:none" onclick="B.openManualUpdate()">Download manually</button>
       <button type="button" class="ubtn" id="update-retry-btn" style="display:none" onclick="B.retryUpdate()">Retry</button>
       <button type="button" class="ubtn-x" id="update-dismiss" onclick="B.dismissUpdate()" title="Dismiss">✕</button>
     </div>
@@ -1920,6 +1922,7 @@ const B = (() => {
     if (settings.checkUpdates === false) return;
     applyPendingUpdate(info, { toastOnNew: true });
   });
+  eAPI.onUpdateInstallFailed(info => showUpdateFailedInstall(info));
   eAPI.on('open-link', url => openUrlInSession(null, url));
   eAPI.on('open-link-incog', url => openLinkIncognito(url));
   eAPI.on('permission-blocked', ({ permission, url }) => {
@@ -1947,12 +1950,29 @@ const B = (() => {
   const mkId = () => 'tab_'+(++tabCtr)+'_'+Date.now();
   const esc  = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
+  function isLocalHost(h) {
+    return /^(localhost|\[::1\]|127\.|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(h || '');
+  }
+  function isValidHttpHost(h) {
+    return !!h && (h.includes('.') || isLocalHost(h));
+  }
+
   function normUrl(raw) {
     raw=(raw||'').trim();
     if (!raw) return '';
     if (/^(https?|view-source|blob):/.test(raw)) {
       if (settings.httpsOnly && raw.startsWith('http://') && !/^(http:\/\/localhost|http:\/\/127\.)/.test(raw)) {
         return 'https://' + raw.slice(7);
+      }
+      if (/^https?:/.test(raw)) {
+        try {
+          const u = new URL(raw);
+          if (!isValidHttpHost(u.hostname)) {
+            const p = prof();
+            const engineKey = p?.searchEngine || settings.searchEngine;
+            return (ENGINES[engineKey]||ENGINES.google)(raw.replace(/^https?:\/\//, ''));
+          }
+        } catch { return ''; }
       }
       return raw;
     }
@@ -2496,11 +2516,31 @@ const B = (() => {
       setChromeIcon('btn-reload', 'stop');
       setStatus('Loading…', 0);
     });
-    wv.addEventListener('did-stop-loading', () => {
+    wv.addEventListener('did-stop-loading', async () => {
       const t = tabRef(tabId, pid);
       if (!t) return;
       t.loading = false;
-      try { t.url = wv.getURL() || t.url; } catch { /* webview may be detached */ }
+      try {
+        const live = wv.getURL() || '';
+        if (/^chrome-error:/.test(live)) {
+          showError(tabId, "This site can't be reached", -105, t.url || live);
+          updateTabEl(t, pid);
+          showProgress(1);
+          setStatus('Page failed to load');
+          return;
+        }
+        if (t.url && !/^about:/.test(live)) {
+          const ok = await eAPI.validateUrl(t.url);
+          if (!ok && /^about:blank$/i.test(live)) {
+            showError(tabId, "This site can't be reached", -105, t.url);
+            updateTabEl(t, pid);
+            showProgress(1);
+            setStatus('Page failed to load');
+            return;
+          }
+        }
+        t.url = live || t.url;
+      } catch { try { t.url = wv.getURL() || t.url; } catch { /* webview may be detached */ } }
       try { t.title = wv.getTitle() || t.url; } catch { /* ignore */ }
       updateTabEl(t, pid);
       showProgress(1);
@@ -3004,6 +3044,18 @@ const B = (() => {
     tabsByPid[pid] = list.filter(t => keepIds.has(t.id));
     if (!tabsByPid[pid].find(t => t.id === activeTid[pid])) {
       activeTid[pid] = tabsByPid[pid][0]?.id || null;
+    }
+  }
+
+  async function sanitizeTabUrls(pid) {
+    const list = tabsByPid[pid];
+    if (!list) return;
+    for (const t of list) {
+      if (!t.url || t.url.startsWith('about:')) continue;
+      try {
+        const ok = await eAPI.validateUrl(t.url);
+        if (!ok) { t.url = ''; t.title = 'New tab'; t.favicon = null; }
+      } catch { t.url = ''; t.title = 'New tab'; }
     }
   }
 
@@ -4448,7 +4500,10 @@ const B = (() => {
     $('err-msg').textContent = msg || 'Something went wrong while loading this page.';
     $('err-code').textContent = code ? `Error ${code}` : '';
     $('errpage').classList.add('show');
+    if (url && tid === activeTid[activePid]) setUrlBar(url);
     document.querySelectorAll('webview').forEach(w => w.classList.remove('act'));
+    const wv = getWV(tid);
+    if (wv) wv.classList.add('act');
   }
   function hideError(tid) {
     if (!lastError || lastError.tid === tid) $('errpage')?.classList.remove('show');
@@ -4788,9 +4843,36 @@ const B = (() => {
       : '';
   }
 
+  function showUpdateFailedInstall(info) {
+    if (!info?.expectedVersion && !info?.latestVersion) return;
+    pendingUpdate = { ...info, available: true, latestVersion: info.latestVersion || info.expectedVersion };
+    updateReady = false;
+    updateBusy = false;
+    $('update-ver').textContent = pendingUpdate.latestVersion;
+    $('update-banner')?.classList.add('show', 'update-failed', 'update-install-failed');
+    $('update-banner')?.classList.remove('update-ready', 'update-busy', 'show-notes');
+    $('update-progress-wrap')?.classList.remove('show');
+    $('update-actions')?.classList.remove('show');
+    $('update-btn').style.display = 'none';
+    $('update-retry-btn').style.display = '';
+    $('update-manual-btn').style.display = '';
+    $('update-dismiss').style.display = '';
+    $('update-msg').innerHTML = `Update to <strong>${esc(pendingUpdate.latestVersion)}</strong> did not apply — you still have <strong>${esc(info.currentVersion || '')}</strong>. Download and install manually, then restart from the Start Menu shortcut.`;
+    toast(`Update did not apply — still on ${info.currentVersion || 'current version'}`);
+    refreshSettingsUpdateStatus();
+  }
+
+  function openManualUpdate() {
+    const url = pendingUpdate?.url || pendingUpdate?.releaseUrl || pendingUpdate?.downloadUrl;
+    if (url) eAPI.openExternal(url);
+    else eAPI.openUpdatePage?.();
+  }
+
   function applyPendingUpdate(info, { toastOnNew = false, forceBanner = false } = {}) {
     if (!info?.available) return { shown: false, info };
-    if (!forceBanner && settings.dismissedUpdateVersion === info.latestVersion && !updateReady) return { shown: false, info };
+    if (!forceBanner && !info.failedInstall && settings.dismissedUpdateVersion === info.latestVersion && !updateReady) {
+      return { shown: false, info };
+    }
     pendingUpdate = info;
     if (info.ready) updateReady = true;
     $('update-ver').textContent = info.latestVersion;
@@ -5075,6 +5157,7 @@ const B = (() => {
     }
     await initSessionOnStartup();
     for (const p of profiles) sanitizeTabsForProfile(p.id);
+    for (const p of profiles) await sanitizeTabUrls(p.id);
     for (const p of profiles) {
       if (!p.partition) await ensurePartition(p);
     }
@@ -5102,7 +5185,7 @@ const B = (() => {
     finishOnboardingGuest, finishOnboardingAccount, finishOnboardingStart, importBrowserOnboarding, _scOb,
     setSessionRuleFromSiteInfo, clearSiteData, addSessionRule, removeSessionRule, importFromBrowser,
     checkForUpdate, checkForUpdateFromSettings, downloadUpdate, dismissUpdate,
-    installUpdateNow, deferUpdateRestart, retryUpdate,
+    installUpdateNow, deferUpdateRestart, retryUpdate, openManualUpdate,
     restorePreviousPages, dismissRestore,
     navigate:(url)=>navigate(url),
     goBack, goFwd, reload, hardReload, goHome, focusUrl, viewSource,

@@ -61,11 +61,31 @@ function isSafeExternalUrl(url) {
   return u.protocol === 'https:' || u.protocol === 'http:' || u.protocol === 'mailto:';
 }
 
+function isLocalHostname(host) {
+  return /^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|\[::1\])$/i.test(String(host || ''));
+}
+
+function isResolvableHttpUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return true;
+    const h = u.hostname;
+    return !!h && (h.includes('.') || isLocalHostname(h));
+  } catch {
+    return false;
+  }
+}
+
 function isNavigableUrl(url) {
   const u = parseUrl(url);
   if (!u) return false;
   if (BLOCKED_PROTOCOLS.has(u.protocol)) return false;
-  return ['https:', 'http:', 'view-source:', 'blob:'].includes(u.protocol);
+  if (!['https:', 'http:', 'view-source:', 'blob:'].includes(u.protocol)) return false;
+  if (u.protocol === 'https:' || u.protocol === 'http:') {
+    const h = u.hostname;
+    if (!h || (!h.includes('.') && !isLocalHostname(h))) return false;
+  }
+  return true;
 }
 
 function upgradeToHttps(url) {
@@ -213,6 +233,8 @@ module.exports = {
   FORCE_LIGHT_PAGE,
   isSafeExternalUrl,
   isNavigableUrl,
+  isLocalHostname,
+  isResolvableHttpUrl,
   upgradeToHttps,
   hardenSession,
   shouldBlockRequest,

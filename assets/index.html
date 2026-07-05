@@ -153,6 +153,7 @@ webview.act{display:flex!important;visibility:visible;pointer-events:auto;width:
 .tb-title{font-size:12px;color:var(--t2);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;letter-spacing:-.02em}
 .tb-actions{display:flex;-webkit-app-region:no-drag;flex-shrink:0;padding:0 6px;gap:3px}
 .tb-act{background:rgba(255,255,255,.04);border:1px solid var(--b1);cursor:pointer;color:var(--t3);width:var(--tb-act-size);height:var(--tb-act-size);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;-webkit-app-region:no-drag}
+.tb-act .ico{width:14px;height:14px}
 .tb-act:hover{background:var(--s3);color:var(--t1);border-color:var(--b2)}
 .tb-act.on{color:var(--acc3);background:rgba(144,97,249,.18);border-color:rgba(144,97,249,.35)}
 
@@ -346,6 +347,7 @@ html.compact-tabs .navbar{gap:4px;padding:4px 8px 6px}
   -webkit-app-region:no-drag;
 }
 .nb{background:rgba(255,255,255,.04);border:1px solid var(--b1);color:var(--t2);cursor:pointer;width:var(--nb-size);height:var(--nb-size);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:calc(var(--nb-size) * .48);font-weight:400;transition:all .12s;flex-shrink:0;line-height:1}
+.nb .ico{width:15px;height:15px}
 .nb:hover:not(:disabled){background:var(--s3);color:var(--t1);border-color:var(--b2)}
 .nb:disabled{opacity:.22;cursor:default}
 .nb.act{color:var(--acc3);background:rgba(144,97,249,.15);border-color:rgba(144,97,249,.3)}
@@ -365,10 +367,16 @@ html.compact-tabs .navbar{gap:4px;padding:4px 8px 6px}
 .url-sec.s{color:var(--green)}.url-sec.i{color:var(--t3)}.url-sec.w{color:var(--orange)}
 .urlbar input{flex:1;border:none;background:none;color:var(--t1);font-size:13px;outline:none;min-width:0;font-weight:500;letter-spacing:-.01em}
 .urlbar input::placeholder{color:var(--t3);font-weight:400}
-.url-btns{display:flex;align-items:center;gap:2px;flex-shrink:0}
-.ub{background:transparent;border:none;cursor:pointer;color:var(--t3);font-size:12px;padding:4px 6px;border-radius:6px;line-height:1;transition:all .12s}
-.ub:hover{background:rgba(255,255,255,.08);color:var(--t1)}
-.ub.on{background:rgba(144,97,249,.2);color:var(--acc3)}
+.url-btns{display:flex;align-items:center;gap:3px;flex-shrink:0}
+.ub{
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.04);border:1px solid transparent;cursor:pointer;color:var(--t3);
+  padding:0;border-radius:7px;line-height:1;transition:all .12s;flex-shrink:0;
+}
+.ub .ico{width:14px;height:14px}
+.ub:hover{background:rgba(255,255,255,.08);color:var(--t1);border-color:var(--b1)}
+.ub.on{color:var(--acc3);background:rgba(144,97,249,.15);border-color:rgba(144,97,249,.25)}
+.ico{stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;display:block}
 .url-incog{font-size:12px}
 .reading-mode-btn{font-size:12px}
 
@@ -1053,11 +1061,11 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
       </div>
 
       <div class="tb-actions">
-        <button class="tb-act" id="btn-theme" onclick="B.cycleTheme()" title="Change theme (click to cycle)">◐</button>
-        <button class="tb-act" id="btn-notes-hdr" onclick="B.togglePanel('notes')" title="Notes">📝</button>
-        <button class="tb-act" id="btn-dl-hdr" onclick="B.togglePanel('downloads')" title="Downloads">⬇</button>
-        <button class="tb-act" onclick="B.showShortcuts()" title="Keyboard shortcuts">⌨</button>
-        <button class="tb-act" onclick="B.togglePanel('settings')" title="Settings">⚙</button>
+        <button class="tb-act" id="btn-theme" onclick="B.cycleTheme()" title="Change theme (click to cycle)" data-ico="theme"></button>
+        <button class="tb-act" id="btn-notes-hdr" onclick="B.togglePanel('notes')" title="Notes" data-ico="notes"></button>
+        <button class="tb-act" id="btn-dl-hdr" onclick="B.togglePanel('downloads')" title="Downloads" data-ico="download"></button>
+        <button class="tb-act" onclick="B.showShortcuts()" title="Keyboard shortcuts" data-ico="keyboard"></button>
+        <button class="tb-act" onclick="B.togglePanel('settings')" title="Settings" data-ico="settings"></button>
       </div>
 
       <!-- Windows controls -->
@@ -1112,10 +1120,10 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
 
     <!-- NAVBAR -->
     <div class="navbar" id="navbar">
-      <button class="nb" id="btn-back" onclick="B.goBack()" title="Back (Alt+←)" disabled>‹</button>
-      <button class="nb" id="btn-fwd"  onclick="B.goFwd()"  title="Forward (Alt+→)" disabled>›</button>
-      <button class="nb" id="btn-reload" onclick="B.reload()" title="Reload (Ctrl+R)">↻</button>
-      <button class="nb" id="btn-home" onclick="B.goHome()" title="Home">⌂</button>
+      <button class="nb" id="btn-back" onclick="B.goBack()" title="Back (Alt+←)" disabled data-ico="back"></button>
+      <button class="nb" id="btn-fwd"  onclick="B.goFwd()"  title="Forward (Alt+→)" disabled data-ico="forward"></button>
+      <button class="nb" id="btn-reload" onclick="B.reload()" title="Reload (Ctrl+R)" data-ico="reload"></button>
+      <button class="nb" id="btn-home" onclick="B.goHome()" title="Home" data-ico="home"></button>
 
       <div class="urlwrap">
         <div class="urlbar" onclick="document.getElementById('url-inp').focus()">
@@ -1128,9 +1136,9 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
             onblur="B.urlBlur(this)"
             spellcheck="false" autocomplete="off"/>
           <div class="url-btns">
-            <button class="ub" id="btn-desktop" onclick="B.toggleDesktopSite()" title="Desktop site" style="display:none">🖥</button>
-            <button class="ub reading-mode-btn" id="btn-read" onclick="B.toggleReading()" title="Reading mode" style="display:none">📖</button>
-            <button class="ub" id="btn-bm" onclick="B.toggleBookmark()" title="Bookmark (Ctrl+D)">🔖</button>
+            <button class="ub" id="btn-desktop" onclick="B.toggleDesktopSite()" title="Desktop site" style="display:none" data-ico="desktop"></button>
+            <button class="ub reading-mode-btn" id="btn-read" onclick="B.toggleReading()" title="Reading mode" style="display:none" data-ico="book"></button>
+            <button class="ub" id="btn-bm" onclick="B.toggleBookmark()" title="Bookmark this page (Ctrl+D)" data-ico="bookmark"></button>
             <span class="ub url-incog" id="url-incog" style="display:none" title="Incognito">🕵️</span>
           </div>
         </div>
@@ -1147,9 +1155,8 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
         </div>
       </div>
 
-      <button class="nb" id="nb-bm" onclick="B.togglePanel('bookmarks')" title="Bookmarks (Ctrl+B)">🔖</button>
-      <button class="nb" id="nb-hist" onclick="B.togglePanel('history')"  title="History (Ctrl+H)">🕐</button>
-      <button class="nb" id="btn-more" onclick="B.openMenu(event)" title="More">⋮</button>
+      <button class="nb" id="nb-hist" onclick="B.togglePanel('history')" title="History (Ctrl+H)" data-ico="history"></button>
+      <button class="nb" id="btn-more" onclick="B.openMenu(event)" title="More" data-ico="more"></button>
       <div class="pbar" id="pbar"></div>
     </div>
   </div>
@@ -1544,6 +1551,39 @@ const MORE_MENU = [
     { id: 'devtools', icon: 'tools', label: 'Developer tools', key: 'Ctrl+⇧+I' },
   ]},
 ];
+const CHROME_ICO = {
+  back: '<path d="M15 18l-6-6 6-6"/>',
+  forward: '<path d="M9 18l6-6-6-6"/>',
+  reload: '<path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>',
+  stop: '<path d="M7 7h10v10H7z"/>',
+  home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+  bookmark: '<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>',
+  'bookmark-on': '<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" fill="currentColor"/>',
+  history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',
+  more: '<circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/>',
+  theme: '<path d="M12 3a9 9 0 1 0 9 9 4.5 4.5 0 0 1-9-9Z"/>',
+  'theme-light': '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>',
+  'theme-dark': '<path d="M12 3a6 6 0 1 0 9 9 9 9 0 1 1-9-9Z"/>',
+  notes: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/>',
+  download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+  keyboard: '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>',
+  desktop: '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>',
+};
+function chromeIco(name) {
+  const body = CHROME_ICO[name];
+  return body ? `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${body}</svg>` : '';
+}
+function setChromeIcon(id, name) {
+  const el = typeof id === 'string' ? document.getElementById(id) : id;
+  if (!el || !name) return;
+  el.dataset.ico = name;
+  el.innerHTML = chromeIco(name);
+}
+function paintChromeIcons(root = document) {
+  root.querySelectorAll('[data-ico]').forEach(el => setChromeIcon(el, el.dataset.ico));
+}
 
 // ══ STATE ════════════════════════════════════════════════════════════════
 const B = (() => {
@@ -2048,7 +2088,8 @@ const B = (() => {
     const btn = $('btn-theme');
     if (!btn) return;
     const r = resolveTheme(settings.theme);
-    btn.textContent = settings.theme === 'system' ? '◐' : r === 'light' ? '☀' : '☾';
+    const icon = settings.theme === 'system' ? 'theme' : r === 'light' ? 'theme-light' : 'theme-dark';
+    setChromeIcon(btn, icon);
     btn.title = `Theme: ${THEME_LIST.find(t=>t[0]===settings.theme)?.[1]||settings.theme} (click to cycle)`;
   }
 
@@ -2293,8 +2334,8 @@ const B = (() => {
       t.loading = true;
       updateTabEl(t, pid);
       showProgress(0.2);
-      $('btn-reload').textContent = '✕';
       $('btn-reload').title = 'Stop';
+      setChromeIcon('btn-reload', 'stop');
       setStatus('Loading…', 0);
     });
     wv.addEventListener('did-stop-loading', () => {
@@ -2306,7 +2347,7 @@ const B = (() => {
       updateTabEl(t, pid);
       showProgress(1);
       setStatus('Done');
-      $('btn-reload').textContent = '↻';
+      setChromeIcon('btn-reload', 'reload');
       $('btn-reload').title = 'Reload (Ctrl+R)';
       if (pid === activePid && tabId === activeTid[pid]) updateNav();
       if (!prof(pid).isIncognito && t.url && !t.url.startsWith('about:')) {
@@ -2364,7 +2405,7 @@ const B = (() => {
       t.loading = false;
       updateTabEl(t, pid);
       showProgress(1);
-      $('btn-reload').textContent = '↻';
+      setChromeIcon('btn-reload', 'reload');
       showError(tabId, e.errorDescription || 'Page failed to load', e.errorCode, e.validatedURL || t.url);
       setStatus('Page failed to load');
     });
@@ -3015,7 +3056,16 @@ const B = (() => {
     else{bookmarks.unshift({url:tab.url,title:tab.title||tab.url,favicon:tab.favicon,ts:Date.now()});toast('🔖 Bookmarked!');}
     eAPI.bmSave(bookmarks); renderBM(); updateBmBtn();
   }
-  function updateBmBtn() { $('btn-bm').textContent=bookmarks.some(b=>b.url===aTab()?.url)?'🌟':'🔖'; }
+  function updateBmBtn() {
+    const btn = $('btn-bm');
+    if (!btn) return;
+    const on = bookmarks.some(b => b.url === aTab()?.url);
+    btn.classList.toggle('on', on);
+    setChromeIcon(btn, on ? 'bookmark-on' : 'bookmark');
+    btn.title = on
+      ? 'Remove bookmark (Ctrl+D) · Right-click for bookmarks list'
+      : 'Bookmark this page (Ctrl+D) · Right-click for bookmarks list';
+  }
 
   function renderBM() {
     const q=($('bm-search')?.value||'').toLowerCase();
@@ -3286,6 +3336,11 @@ const B = (() => {
       const tabEl = e.target.closest('.tab[data-tabid]');
       if (tabEl?.dataset.tabid) tabCtx(e, tabEl.dataset.tabid);
     });
+    $('btn-bm')?.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      togglePanel('bookmarks');
+    });
+    paintChromeIcons();
   }
 
   function togglePanel(id) {
@@ -3294,7 +3349,6 @@ const B = (() => {
     openPanel=id;
     $('panel-backdrop')?.classList.add('show');
     $('panel-'+id).classList.add('open');
-    $('nb-bm')?.classList.toggle('act',id==='bookmarks');
     $('nb-hist')?.classList.toggle('act',id==='history');
     $('btn-dl-hdr')?.classList.toggle('on',id==='downloads');
     $('btn-notes-hdr')?.classList.toggle('on',id==='notes');
@@ -3308,7 +3362,6 @@ const B = (() => {
     $('panel-'+id)?.classList.remove('open');
     if(openPanel===id) openPanel=null;
     if(!openPanel) $('panel-backdrop')?.classList.remove('show');
-    $('nb-bm')?.classList.remove('act');
     $('nb-hist')?.classList.remove('act');
     $('btn-dl-hdr')?.classList.remove('on');
     $('btn-notes-hdr')?.classList.remove('on');

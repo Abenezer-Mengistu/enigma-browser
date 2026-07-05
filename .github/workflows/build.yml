@@ -127,3 +127,39 @@ jobs:
           name: downloads-manifest
           path: website/downloads.json
           retention-days: 90
+
+  deploy-website:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Generate downloads manifest
+        run: node scripts/generate-downloads-manifest.mjs
+
+      - name: Refresh site icons
+        run: |
+          mkdir -p website/assets/icons
+          cp assets/icons/icon_32.png assets/icons/icon_64.png website/assets/icons/
+          touch website/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: website
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

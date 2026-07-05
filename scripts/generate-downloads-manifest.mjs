@@ -9,22 +9,50 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-const v = pkg.version;
 const REPO = 'Abenezer-Mengistu/enigma-browser';
-const LATEST = `https://github.com/${REPO}/releases/latest/download`;
-const RELEASE = `https://github.com/${REPO}/releases/tag/v${v}`;
+const REPO_URL = `https://github.com/${REPO}`;
+
+async function ghFetch(path) {
+  const res = await fetch(`https://api.github.com/repos/${REPO}${path}`, {
+    headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Enigma-Manifest' },
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
 
 async function fetchReleaseAssets(version) {
   try {
-    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/tags/v${version}`, {
-      headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Enigma-Manifest' },
-    });
-    if (!res.ok) return null;
-    const release = await res.json();
-    return release.assets || [];
+    const release = await ghFetch(`/releases/tags/v${version}`);
+    return release?.assets || null;
   } catch {
     return null;
   }
+}
+
+function hasInstallerAssets(assets) {
+  return !!assets?.some(a => /^Enigma-(Setup|Portable)-.*\.exe$/i.test(a.name || ''));
+}
+
+async function resolvePublishedVersion() {
+  const pkgVersion = pkg.version;
+  const pkgAssets = await fetchReleaseAssets(pkgVersion);
+  if (hasInstallerAssets(pkgAssets)) {
+    return { version: pkgVersion, tag: `v${pkgVersion}`, assets: pkgAssets };
+  }
+  const latest = await ghFetch('/releases/latest');
+  if (!latest) {
+    return { version: pkgVersion, tag: `v${pkgVersion}`, assets: pkgAssets || [] };
+  }
+  const version = String(latest.tag_name || '').replace(/^v/i, '') || pkgVersion;
+  return {
+    version,
+    tag: latest.tag_name || `v${version}`,
+    assets: latest.assets || [],
+  };
+}
+
+function tagDownloadUrl(tag, filename) {
+  return `${REPO_URL}/releases/download/${tag}/${filename}`;
 }
 
 function pickMacAsset(assets, arch) {
@@ -45,7 +73,7 @@ async function macVariant(version, arch, label, assets) {
   const picked = pickMacAsset(assets, arch);
   const ext = picked?.format || 'zip';
   const filename = picked?.filename || `Enigma-${version}-mac-${arch}.${ext}`;
-  const url = picked?.url || `${LATEST}/${filename}`;
+  const url = picked?.url || tagDownloadUrl(`v${version}`, filename);
   return {
     label,
     arch,
@@ -75,16 +103,19 @@ async function fetchDownloadCount() {
 }
 
 const downloadCount = await fetchDownloadCount();
-const releaseAssets = await fetchReleaseAssets(v);
+const { version: v, tag, assets: releaseAssets } = await resolvePublishedVersion();
+const RELEASE = `${REPO_URL}/releases/tag/${tag}`;
 const macArm = await macVariant(v, 'arm64', 'Apple Silicon (M1/M2/M3/M4)', releaseAssets);
 const macX64 = await macVariant(v, 'x64', 'Intel Mac', releaseAssets);
 const macUsesZip = macArm.format === 'zip' || macX64.format === 'zip';
+const setupFile = `Enigma-Setup-${v}.exe`;
+const portableFile = `Enigma-Portable-${v}.exe`;
 
 const manifest = {
   name: 'Enigma',
   version: v,
-  tag: `v${v}`,
-  repository: `https://github.com/${REPO}`,
+  tag: tag,
+  repository: REPO_URL,
   releasePage: RELEASE,
   updated: new Date().toISOString().slice(0, 10),
   downloadCount,
@@ -99,14 +130,14 @@ const manifest = {
       primary: {
         label: 'Installer (.exe)',
         description: 'Recommended — creates Desktop & Start Menu shortcuts',
-        url: `${LATEST}/Enigma-Setup-${v}.exe`,
-        filename: `Enigma-Setup-${v}.exe`,
+        url: tagDownloadUrl(tag, setupFile),
+        filename: setupFile,
       },
       alternate: {
         label: 'Portable (.exe)',
         description: 'No install — run from any folder or USB drive',
-        url: `${LATEST}/Enigma-Portable-${v}.exe`,
-        filename: `Enigma-Portable-${v}.exe`,
+        url: tagDownloadUrl(tag, portableFile),
+        filename: portableFile,
       },
       install: [
         'Download Enigma-Setup and run the installer.',
@@ -146,19 +177,19 @@ const manifest = {
         {
           label: 'AppImage (universal)',
           format: 'appimage',
-          url: `${LATEST}/Enigma-${v}-linux-x86_64.AppImage`,
+          url: tagDownloadUrl(tag, `Enigma-${v}-linux-x86_64.AppImage`),
           filename: `Enigma-${v}-linux-x86_64.AppImage`,
         },
         {
           label: 'Debian / Ubuntu (.deb)',
           format: 'deb',
-          url: `${LATEST}/Enigma-${v}-linux-amd64.deb`,
+          url: tagDownloadUrl(tag, `Enigma-${v}-linux-amd64.deb`),
           filename: `Enigma-${v}-linux-amd64.deb`,
         },
         {
           label: 'Fedora / RHEL (.rpm)',
           format: 'rpm',
-          url: `${LATEST}/Enigma-${v}-linux-x86_64.rpm`,
+          url: tagDownloadUrl(tag, `Enigma-${v}-linux-x86_64.rpm`),
           filename: `Enigma-${v}-linux-x86_64.rpm`,
         },
       ],
@@ -203,7 +234,7 @@ const manifest = {
       note: 'Use the Linux AppImage via Linuxulator, or build from source.',
       primary: {
         label: 'Linux AppImage',
-        url: `${LATEST}/Enigma-${v}-linux-x86_64.AppImage`,
+        url: tagDownloadUrl(tag, `Enigma-${v}-linux-x86_64.AppImage`),
         filename: `Enigma-${v}-linux-x86_64.AppImage`,
       },
       install: [

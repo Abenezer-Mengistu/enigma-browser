@@ -175,65 +175,83 @@ function quitAppForUpdate() {
   setImmediate(() => app.exit(0));
 }
 
+function spawnDetachedPowerShell(script) {
+  spawn('powershell.exe', [
+    '-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-Command', script,
+  ], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+}
+
+/** Wait for this process to exit, then run NSIS silently into the same folder and relaunch via --force-run. */
 function runInstallerAndQuit(installerPath) {
-  const exePath = process.execPath;
+  const installDir = path.dirname(process.execPath);
+  const pid = process.pid;
+
   if (process.platform === 'win32') {
-    const cmd = [
-      '$ErrorActionPreference = "Stop"',
+    const script = [
+      '$ErrorActionPreference = "SilentlyContinue"',
+      `Wait-Process -Id ${pid} -ErrorAction SilentlyContinue`,
+      'Start-Sleep -Seconds 2',
       `$installer = ${JSON.stringify(installerPath)}`,
-      `$exe = ${JSON.stringify(exePath)}`,
-      '$args = @("--updated", "/S", "--force-run")',
-      '$proc = Start-Process -FilePath $installer -ArgumentList $args -PassThru -Wait',
-      'Start-Sleep -Seconds 1',
-      'if (Test-Path $exe) { Start-Process -FilePath $exe }',
+      `$installDir = ${JSON.stringify(`/D=${installDir}`)}`,
+      '$args = @("--updated", "/S", "--force-run", $installDir)',
+      'try {',
+      '  $p = Start-Process -FilePath $installer -ArgumentList $args -Verb RunAs -PassThru -Wait',
+      '  if ($null -eq $p -or $p.ExitCode -ne 0) { Start-Process -FilePath $installer -ArgumentList $args -Wait | Out-Null }',
+      '} catch {',
+      '  Start-Process -FilePath $installer -ArgumentList $args -Wait | Out-Null',
+      '}',
     ].join('; ');
-    spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-Command', cmd], {
-      detached: true,
-      stdio: 'ignore',
-      windowsHide: true,
-    }).unref();
+    spawnDetachedPowerShell(script);
   } else {
     spawn(installerPath, ['--updated', '/S', '--force-run'], { detached: true, stdio: 'ignore' }).unref();
   }
   quitAppForUpdate();
 }
 
-function runPortableAndQuit(portablePath) {
-  spawn(portablePath, [], {
-    detached: true,
-    stdio: 'ignore',
-    cwd: path.dirname(portablePath),
-    windowsHide: true,
-  }).unref();
+/** Replace the running portable exe in-place after this process exits. */
+function runPortableReplaceAndQuit(downloadedPath) {
+  const currentExe = path.normalize(process.env.PORTABLE_EXECUTABLE_FILE || process.execPath);
+  const pid = process.pid;
+
+  if (process.platform === 'win32') {
+    const script = [
+      '$ErrorActionPreference = "Stop"',
+      `Wait-Process -Id ${pid} -ErrorAction SilentlyContinue`,
+      'Start-Sleep -Seconds 2',
+      `$current = ${JSON.stringify(currentExe)}`,
+      `$new = ${JSON.stringify(path.normalize(downloadedPath))}`,
+      'if (-not (Test-Path $new)) { exit 1 }',
+      'Copy-Item -Path $new -Destination $current -Force',
+      'Start-Process -FilePath $current',
+    ].join('; ');
+    spawnDetachedPowerShell(script);
+  } else {
+    const script = [
+      '#!/bin/sh',
+      `while kill -0 ${pid} 2>/dev/null; do sleep 1; done`,
+      'sleep 1',
+      `cp ${JSON.stringify(downloadedPath)} ${JSON.stringify(currentExe)}`,
+      `${JSON.stringify(currentExe)} &`,
+    ].join('\n');
+    const sh = path.join(app.getPath('temp'), `enigma-portable-update-${Date.now()}.sh`);
+    fs.writeFileSync(sh, script, { mode: 0o755 });
+    spawn('sh', [sh], { detached: true, stdio: 'ignore' }).unref();
+  }
   quitAppForUpdate();
 }
 
-async function applyPortableUpdate(downloadedPath, assetName) {
-  const currentExe = process.env.PORTABLE_EXECUTABLE_FILE || process.execPath;
-  const targetDir = process.env.PORTABLE_EXECUTABLE_DIR || path.dirname(currentExe);
-  const targetPath = path.join(targetDir, assetName || path.basename(downloadedPath));
-
+async function applyPortableUpdate(downloadedPath) {
+  const currentExe = path.normalize(process.env.PORTABLE_EXECUTABLE_FILE || process.execPath);
+  const targetDir = path.dirname(currentExe);
   try {
     await fs.promises.access(targetDir, fs.constants.W_OK);
   } catch {
     throw new Error('Cannot write to the portable folder — move Enigma to a writable location');
   }
-
-  const backupPath = `${currentExe}.old`;
-  try { await fs.promises.unlink(backupPath); } catch { /* ignore */ }
-
-  if (fs.existsSync(currentExe)) {
-    await fs.promises.copyFile(currentExe, backupPath);
+  if (!fs.existsSync(downloadedPath)) {
+    throw new Error('Downloaded update file is missing');
   }
-
-  await fs.promises.copyFile(downloadedPath, targetPath);
-
-  const launchPath = path.normalize(targetPath);
-  if (!fs.existsSync(launchPath)) {
-    throw new Error('Updated portable file could not be written');
-  }
-
-  runPortableAndQuit(launchPath);
+  runPortableReplaceAndQuit(downloadedPath);
 }
 
 function markUpdateReady(version, mode) {
@@ -390,7 +408,7 @@ async function installUpdate({ force = false } = {}) {
     if (!pendingInstall?.path) return { ok: false, reason: 'not-ready' };
 
     if (pendingInstall.mode === 'portable') {
-      await applyPortableUpdate(pendingInstall.path, pendingInstall.assetName);
+      await applyPortableUpdate(pendingInstall.path);
       return { ok: true };
     }
 

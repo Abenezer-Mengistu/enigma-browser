@@ -4834,7 +4834,7 @@ const B = (() => {
     $('update-pbar').style.width = '100%';
     $('update-pct').textContent = '100%';
     $('update-detail').textContent = '';
-    $('update-msg').innerHTML = `Installing Enigma <strong>${esc(version)}</strong>… Restarting.${esc(smartScreenHint())}`;
+    $('update-msg').innerHTML = `Installing Enigma <strong>${esc(version)}</strong>… Accept the Windows admin prompt if shown, then Enigma will restart.${esc(smartScreenHint())}`;
   }
 
   async function refreshSettingsUpdateStatus() {

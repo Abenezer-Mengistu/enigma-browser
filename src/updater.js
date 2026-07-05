@@ -52,6 +52,25 @@ function markPendingInstall(version, mode) {
 }
 
 function checkPendingUpdateOnStartup() {
+  const pending = getFailedPendingUpdate();
+  if (!pending) return null;
+  const current = app.getVersion();
+  return {
+    expectedVersion: pending.version,
+    currentVersion: current,
+    latestVersion: pending.version,
+    available: true,
+    failedInstall: true,
+    blockAutoInstall: true,
+    exePath: pending.exePath || process.execPath,
+    portable: isPortableBuild(),
+    releaseUrl: `https://github.com/${UPDATE_REPO}/releases/latest`,
+    url: `https://github.com/${UPDATE_REPO}/releases/latest`,
+    downloadUrl: UPDATE_PAGE,
+  };
+}
+
+function getFailedPendingUpdate() {
   const pending = readPendingUpdate();
   if (!pending?.version) return null;
   const current = app.getVersion();
@@ -59,18 +78,7 @@ function checkPendingUpdateOnStartup() {
     clearPendingUpdate();
     return null;
   }
-  return {
-    expectedVersion: pending.version,
-    currentVersion: current,
-    latestVersion: pending.version,
-    available: true,
-    failedInstall: true,
-    exePath: pending.exePath || process.execPath,
-    releaseUrl: `https://github.com/${UPDATE_REPO}/releases/tag/v${pending.version}`,
-    url: `https://github.com/${UPDATE_REPO}/releases/tag/v${pending.version}`,
-    downloadUrl: UPDATE_PAGE,
-    portable: isPortableBuild(),
-  };
+  return pending;
 }
 
 function openReleasePage(url) {
@@ -232,7 +240,7 @@ function spawnDetachedPowerShell(script) {
   ], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
 }
 
-/** Wait for this process to exit, then run NSIS silently (upgrade via registry) and relaunch via --force-run. */
+/** Wait for exit, then run NSIS interactively (upgrade via registry) and relaunch via --force-run. */
 function runInstallerAndQuit(installerPath) {
   const pid = process.pid;
 
@@ -242,17 +250,12 @@ function runInstallerAndQuit(installerPath) {
       `Wait-Process -Id ${pid} -ErrorAction SilentlyContinue`,
       'Start-Sleep -Seconds 2',
       `$installer = ${JSON.stringify(installerPath)}`,
-      '$args = @("--updated", "/S", "--force-run")',
-      'try {',
-      '  $p = Start-Process -FilePath $installer -ArgumentList $args -Verb RunAs -PassThru -Wait',
-      '  if ($null -eq $p -or $p.ExitCode -ne 0) { Start-Process -FilePath $installer -ArgumentList $args -Wait | Out-Null }',
-      '} catch {',
-      '  Start-Process -FilePath $installer -ArgumentList $args -Wait | Out-Null',
-      '}',
+      '$args = @("--updated", "--force-run")',
+      'Start-Process -FilePath $installer -ArgumentList $args -Wait | Out-Null',
     ].join('; ');
     spawnDetachedPowerShell(script);
   } else {
-    spawn(installerPath, ['--updated', '/S', '--force-run'], { detached: true, stdio: 'ignore' }).unref();
+    spawn(installerPath, ['--updated', '--force-run'], { detached: true, stdio: 'ignore' }).unref();
   }
   quitAppForUpdate();
 }
@@ -344,13 +347,19 @@ function initUpdater(getMainWindow, opts = {}) {
     if (!app.isPackaged || !shouldCheckUpdatesFn()) return;
     try {
       const result = await checkForUpdates();
-      if (result.available) send('update-available', result);
+      if (result.failedInstall) send('update-install-failed', result);
+      else if (result.available) send('update-available', result);
     } catch { /* ignore background check errors */ }
   }, CHECK_INTERVAL_MS);
 }
 
 async function checkForUpdates() {
   const current = app.getVersion();
+  const failedPending = checkPendingUpdateOnStartup();
+  if (failedPending) {
+    return failedPending;
+  }
+
   const pending = readPendingUpdate();
   if (pending?.version && !isVersionNewer(pending.version, current)) {
     clearPendingUpdate();
@@ -397,6 +406,19 @@ async function checkForUpdates() {
   }
 }
 
+async function downloadViaAutoUpdater() {
+  if (isPortableBuild()) return null;
+  suppressAutoUpdaterErrors = false;
+  const check = await autoUpdater.checkForUpdates();
+  const ver = check?.updateInfo?.version;
+  if (!ver || !isVersionNewer(ver, app.getVersion())) return null;
+  await autoUpdater.downloadUpdate();
+  pendingInstall = { mode: 'autoUpdater', version: ver };
+  pendingRelease = { version: ver, via: 'autoUpdater' };
+  markUpdateReady(ver, 'autoUpdater');
+  return { ok: true, mode: 'autoUpdater', ready: true };
+}
+
 async function downloadViaGithub() {
   const release = pendingRelease?.release || await fetchLatestRelease();
   const portable = isPortableBuild();
@@ -417,6 +439,10 @@ async function downloadViaGithub() {
 
 async function downloadUpdate() {
   if (downloading) return { ok: false, reason: 'busy' };
+  if (getFailedPendingUpdate()) {
+    openReleasePage(`https://github.com/${UPDATE_REPO}/releases/latest`);
+    return { ok: false, reason: 'manual-required' };
+  }
   if (!app.isPackaged) {
     shell.openExternal(UPDATE_PAGE);
     return { ok: false, reason: 'dev' };
@@ -426,10 +452,16 @@ async function downloadUpdate() {
   downloading = true;
   updateReady = false;
   pendingInstall = null;
-  suppressAutoUpdaterErrors = true;
   send('update-progress', { percent: 0, transferred: 0, total: 0, bytesPerSecond: 0, etaSeconds: 0 });
 
   try {
+    if (!isPortableBuild()) {
+      try {
+        const auto = await downloadViaAutoUpdater();
+        if (auto) return auto;
+      } catch { /* fall back to GitHub download */ }
+    }
+    suppressAutoUpdaterErrors = true;
     return await downloadViaGithub();
   } catch (e) {
     downloading = false;
@@ -437,6 +469,7 @@ async function downloadUpdate() {
     throw e;
   } finally {
     suppressAutoUpdaterErrors = false;
+    downloading = false;
   }
 }
 
@@ -455,6 +488,7 @@ async function installUpdate({ force = false } = {}) {
     }
 
     if (pendingInstall?.mode === 'autoUpdater' || pendingRelease?.via === 'autoUpdater') {
+      markPendingInstall(pendingInstall?.version || pendingRelease?.version, 'autoUpdater');
       prepareAppQuit();
       autoUpdater.quitAndInstall(true, true);
       return { ok: true };
@@ -497,6 +531,14 @@ function getUpdateStatus() {
   };
 }
 
+function getInstallInfo() {
+  return {
+    version: app.getVersion(),
+    execPath: process.execPath,
+    portable: isPortableBuild(),
+  };
+}
+
 module.exports = {
   initUpdater,
   checkForUpdates,
@@ -505,6 +547,7 @@ module.exports = {
   installUpdate,
   quitAndInstall,
   getUpdateStatus,
+  getInstallInfo,
   openReleasePage,
   isPortableBuild,
 };

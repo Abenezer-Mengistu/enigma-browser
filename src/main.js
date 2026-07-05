@@ -11,7 +11,7 @@ const { DEFAULT_PRIVACY, effectiveSettings } = require('./privacy-store');
 const { encryptVault, decryptVault } = require('./sync-crypto');
 const { sharedEngine } = require('./filter-engine');
 const {
-  initUpdater, checkForUpdates, checkPendingUpdateOnStartup, downloadUpdate, installUpdate, quitAndInstall, getUpdateStatus, openReleasePage,
+  initUpdater, checkForUpdates, checkPendingUpdateOnStartup, downloadUpdate, installUpdate, quitAndInstall, getUpdateStatus, openReleasePage, getInstallInfo,
 } = require('./updater');
 const {
   loadExtensions, saveExtensions, readManifest, applyExtensionsToSession, removeExtensionsFromSession,
@@ -1219,6 +1219,7 @@ ipcMain.handle('install-update', (_, opts) => installUpdate(opts || {}));
 ipcMain.handle('quit-and-install', () => quitAndInstall());
 ipcMain.handle('update-status', () => getUpdateStatus());
 ipcMain.handle('open-update-page', (_, url) => { openReleasePage(url); return true; });
+ipcMain.handle('app-install-info', () => getInstallInfo());
 ipcMain.handle('has-active-downloads', () => downloads.some(d => d.state === 'progressing'));
 
 ipcMain.handle('context-menu', (_, p) => {

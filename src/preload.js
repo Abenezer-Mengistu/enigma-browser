@@ -80,6 +80,7 @@ contextBridge.exposeInMainWorld('eAPI', {
   onUpdateAvailable: (fn) => ipcRenderer.on('update-available', (_, d) => fn(d)),
   onUpdateInstallFailed: (fn) => ipcRenderer.on('update-install-failed', (_, d) => fn(d)),
   openUpdatePage: (url) => ipcRenderer.invoke('open-update-page', url),
+  appInstallInfo: () => ipcRenderer.invoke('app-install-info'),
   chromiumVersion: () => ipcRenderer.invoke('chromium-version'),
   electronVersion: () => ipcRenderer.invoke('electron-version'),
   contextMenu: (p) => ipcRenderer.invoke('context-menu', p),

@@ -13,9 +13,9 @@ const REPO = 'Abenezer-Mengistu/enigma-browser';
 const REPO_URL = `https://github.com/${REPO}`;
 
 async function ghFetch(path) {
-  const res = await fetch(`https://api.github.com/repos/${REPO}${path}`, {
-    headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Enigma-Manifest' },
-  });
+  const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'Enigma-Manifest' };
+  if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  const res = await fetch(`https://api.github.com/repos/${REPO}${path}`, { headers });
   if (!res.ok) return null;
   return res.json();
 }
@@ -34,21 +34,24 @@ function hasInstallerAssets(assets) {
 }
 
 async function resolvePublishedVersion() {
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const latest = await ghFetch('/releases/latest');
+    if (latest?.tag_name) {
+      const version = String(latest.tag_name).replace(/^v/i, '');
+      const assets = latest.assets || [];
+      if (hasInstallerAssets(assets)) {
+        return { version, tag: latest.tag_name, assets };
+      }
+    }
+    if (attempt < 11) await new Promise(r => setTimeout(r, 5000));
+  }
+
   const pkgVersion = pkg.version;
   const pkgAssets = await fetchReleaseAssets(pkgVersion);
   if (hasInstallerAssets(pkgAssets)) {
     return { version: pkgVersion, tag: `v${pkgVersion}`, assets: pkgAssets };
   }
-  const latest = await ghFetch('/releases/latest');
-  if (!latest) {
-    return { version: pkgVersion, tag: `v${pkgVersion}`, assets: pkgAssets || [] };
-  }
-  const version = String(latest.tag_name || '').replace(/^v/i, '') || pkgVersion;
-  return {
-    version,
-    tag: latest.tag_name || `v${version}`,
-    assets: latest.assets || [],
-  };
+  return { version: pkgVersion, tag: `v${pkgVersion}`, assets: pkgAssets || [] };
 }
 
 function tagDownloadUrl(tag, filename) {

@@ -4845,7 +4845,7 @@ const B = (() => {
 
   function showUpdateFailedInstall(info) {
     if (!info?.expectedVersion && !info?.latestVersion) return;
-    pendingUpdate = { ...info, available: true, latestVersion: info.latestVersion || info.expectedVersion };
+    pendingUpdate = { ...info, available: true, latestVersion: info.latestVersion || info.expectedVersion, blockAutoInstall: true };
     updateReady = false;
     updateBusy = false;
     $('update-ver').textContent = pendingUpdate.latestVersion;
@@ -4854,10 +4854,14 @@ const B = (() => {
     $('update-progress-wrap')?.classList.remove('show');
     $('update-actions')?.classList.remove('show');
     $('update-btn').style.display = 'none';
-    $('update-retry-btn').style.display = '';
+    $('update-retry-btn').style.display = 'none';
     $('update-manual-btn').style.display = '';
     $('update-dismiss').style.display = '';
-    $('update-msg').innerHTML = `Update to <strong>${esc(pendingUpdate.latestVersion)}</strong> did not apply — you still have <strong>${esc(info.currentVersion || '')}</strong>. Download and install manually, then restart from the Start Menu shortcut.`;
+    const where = info.portable
+      ? 'Replace your portable Enigma.exe with the downloaded file, then launch that copy.'
+      : 'Run the installer, then launch Enigma from the Start Menu shortcut (not an old Desktop copy).';
+    const pathHint = info.exePath ? `<br><span style="opacity:.75;font-size:11px">Currently running: ${esc(info.exePath)}</span>` : '';
+    $('update-msg').innerHTML = `Update to <strong>${esc(pendingUpdate.latestVersion)}</strong> did not apply — you still have <strong>${esc(info.currentVersion || '')}</strong>. ${esc(where)}${pathHint}`;
     toast(`Update did not apply — still on ${info.currentVersion || 'current version'}`);
     refreshSettingsUpdateStatus();
   }
@@ -4870,7 +4874,11 @@ const B = (() => {
 
   function applyPendingUpdate(info, { toastOnNew = false, forceBanner = false } = {}) {
     if (!info?.available) return { shown: false, info };
-    if (!forceBanner && !info.failedInstall && settings.dismissedUpdateVersion === info.latestVersion && !updateReady) {
+    if (info.failedInstall || info.blockAutoInstall) {
+      showUpdateFailedInstall(info);
+      return { shown: true, info };
+    }
+    if (!forceBanner && settings.dismissedUpdateVersion === info.latestVersion && !updateReady) {
       return { shown: false, info };
     }
     pendingUpdate = info;
@@ -4949,6 +4957,10 @@ const B = (() => {
     if (settings.checkUpdates === false && silent) return null;
     try {
       const info = await eAPI.checkForUpdate();
+      if (info?.failedInstall || info?.blockAutoInstall) {
+        showUpdateFailedInstall(info);
+        return info;
+      }
       if (!info?.available && !info?.ready) {
         if (!silent) refreshSettingsUpdateStatus();
         return info;
@@ -4984,6 +4996,10 @@ const B = (() => {
 
   async function downloadUpdate() {
     if (updateBusy) return;
+    if (pendingUpdate?.blockAutoInstall || pendingUpdate?.failedInstall) {
+      openManualUpdate();
+      return;
+    }
     if (updateReady) {
       await promptInstallUpdate(pendingUpdate?.latestVersion || '');
       return;
@@ -5074,6 +5090,10 @@ const B = (() => {
   }
 
   function retryUpdate() {
+    if (pendingUpdate?.blockAutoInstall || pendingUpdate?.failedInstall) {
+      openManualUpdate();
+      return;
+    }
     $('update-banner')?.classList.remove('update-failed');
     $('update-retry-btn').style.display = 'none';
     $('update-btn').style.display = '';

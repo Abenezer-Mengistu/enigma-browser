@@ -30,6 +30,8 @@ jobs:
 
       - name: Generate downloads manifest
         run: node scripts/generate-downloads-manifest.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate analytics data
         run: node scripts/generate-analytics-data.mjs

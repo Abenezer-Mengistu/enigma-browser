@@ -136,10 +136,12 @@ jobs:
       actions: write
       contents: read
     steps:
+      - uses: actions/checkout@v4
+
       - name: Wait for release assets to propagate
         run: sleep 25
 
       - name: Trigger Pages deploy workflow
-        run: gh workflow run pages.yml --ref main
+        run: gh workflow run pages.yml --ref main --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

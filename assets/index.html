@@ -975,7 +975,7 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
 
 /* ═══ SITE INFO POPOVER ═══ */
 .site-info{
-  position:absolute;top:calc(100% + 10px);left:0;width:320px;
+  position:absolute;top:calc(100% + 10px);left:0;width:340px;
   background:var(--glass);backdrop-filter:blur(24px);border:1px solid var(--b2);border-radius:var(--r-lg);
   box-shadow:var(--shadow-lg);z-index:310;display:none;padding:16px;
 }
@@ -987,6 +987,11 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
 .si-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-top:1px solid var(--b1);font-size:11px}
 .si-row span:first-child{color:var(--t3)}
 .si-row span:last-child{color:var(--t1);font-weight:500}
+.si-divider{height:1px;background:var(--b1);margin:8px 0}
+.si-select{max-width:150px;padding:4px 8px;border-radius:8px;border:1px solid var(--b2);background:var(--s2);color:var(--t1);font-size:11px}
+.si-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.si-actions .btn{flex:1;min-width:120px;padding:8px 10px;font-size:11px}
+.si-perm{font-size:10px;color:var(--t3);margin-top:6px;line-height:1.5}
 
 /* ═══ ERROR PAGE ═══ */
 .errpage{
@@ -1069,7 +1074,35 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
         onkeydown="if(event.key==='Enter')B.finishOnboardingAccount()"/>
       <div class="m-label">Accent color</div>
       <div class="swatches" id="ob-swatches"></div>
-      <button type="button" class="ob-btn ob-btn-primary" style="margin-top:16px" onclick="B.finishOnboardingAccount()">Start browsing</button>
+      <button type="button" class="ob-btn ob-btn-primary" style="margin-top:16px" onclick="B.obNext()">Continue</button>
+      <button type="button" class="ob-back" onclick="B.obBack()">← Back</button>
+    </div>
+
+    <div class="ob-step" id="ob-step-ready">
+      <div class="ob-step-title">Your sessions are ready</div>
+      <p class="ob-sub" style="margin-bottom:14px">Work and Personal containers keep cookies and logins separate — like Firefox Containers.</p>
+      <div class="ob-features">
+        <div class="ob-feat">
+          <span class="ob-feat-ico">💼</span>
+          <div class="ob-feat-body">
+            <div class="ob-feat-title">Work</div>
+            <div class="ob-feat-desc">Strict HTTPS and tracker blocking for work accounts.</div>
+          </div>
+        </div>
+        <div class="ob-feat">
+          <span class="ob-feat-ico">🏠</span>
+          <div class="ob-feat-body">
+            <div class="ob-feat-title">Personal</div>
+            <div class="ob-feat-desc">Separate cookies for social, shopping, and personal sites.</div>
+          </div>
+        </div>
+      </div>
+      <div class="ob-note" id="ob-import-note" style="margin-top:12px">Import bookmarks from your old browser? (optional)</div>
+      <div class="ob-actions" id="ob-import-actions" style="margin-top:10px"></div>
+      <label style="display:flex;align-items:center;gap:8px;margin:14px 0;font-size:11px;color:var(--t2);justify-content:center">
+        <input type="checkbox" id="ob-import-history" checked/> Include recent browsing history
+      </label>
+      <button type="button" class="ob-btn ob-btn-primary" style="margin-top:8px" onclick="B.finishOnboardingStart()">Start browsing</button>
       <button type="button" class="ob-back" onclick="B.obBack()">← Back</button>
     </div>
 
@@ -1078,6 +1111,7 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
       <span class="ob-dot" data-ob-dot="1"></span>
       <span class="ob-dot" data-ob-dot="2"></span>
       <span class="ob-dot" data-ob-dot="3"></span>
+      <span class="ob-dot" data-ob-dot="4"></span>
     </div>
   </div>
 </div>
@@ -1191,6 +1225,19 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
           <div class="si-row"><span>Protocol</span><span id="si-proto">—</span></div>
           <div class="si-row"><span>Tracker blocking</span><span id="si-track">—</span></div>
           <div class="si-row"><span>Do Not Track</span><span id="si-dnt">—</span></div>
+          <div class="si-divider"></div>
+          <div class="si-row"><span>Cookies (this session)</span><span id="si-cookies">—</span></div>
+          <div class="si-row"><span>Site exception</span><span id="si-exception">—</span></div>
+          <div class="si-row"><span>Always open in</span>
+            <select class="si-select" id="si-session-rule" onchange="B.setSessionRuleFromSiteInfo()">
+              <option value="">Current session only</option>
+            </select>
+          </div>
+          <div class="si-perm" id="si-perms"></div>
+          <div class="si-actions">
+            <button type="button" class="btn btn-r" onclick="B.clearSiteData()">Clear site data</button>
+            <button type="button" class="btn btn-g" onclick="B.closeSiteInfo()">Close</button>
+          </div>
         </div>
       </div>
 
@@ -1441,8 +1488,11 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
       <button class="ph-x" onclick="B.closeSessionDashboard()">✕</button>
     </div>
     <div class="sd-stat"><span>Trackers blocked</span><b id="sd-blocked">0</b></div>
+    <div class="sd-stat"><span>Open tabs</span><b id="sd-tabs">0</b></div>
+    <div class="sd-stat"><span>Last used</span><b id="sd-last">—</b></div>
     <div class="sd-stat"><span>Cookies stored</span><b id="sd-cookies">0</b></div>
     <div class="sd-stat"><span>Cache size</span><b id="sd-cache">—</b></div>
+    <div class="sd-stat"><span>Total storage</span><b id="sd-storage">—</b></div>
     <div class="sd-stat"><span>Filter rules active</span><b id="sd-rules">0</b></div>
     <div>
       <div class="m-label">Sites with cookies</div>
@@ -1659,8 +1709,11 @@ const B = (() => {
   let newtabs   = {};
   let bookmarks = [];
   let history   = [];
-  let settings  = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false};
+  let settings  = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,sessionRules:{}};
   let privacyDoc = { filterLists: true, fingerprintProtection: true, webrtcProtection: true, mixedContentBlock: false, siteExceptions: {} };
+  let sessionMeta = {};
+  let obFinishMode = 'account';
+  let obBrowsers = [];
   let sessionTemplates = [];
   let selectedTemplateId = 'custom';
   let sessionBlockedByPid = {};
@@ -1913,6 +1966,40 @@ const B = (() => {
 
   function fav(url) { try{return 'https://www.google.com/s2/favicons?domain='+new URL(url).hostname+'&sz=32';}catch{return null;} }
   function host(url){ try{return new URL(url).hostname;}catch{return url;} }
+  function normalizeHost(h) {
+    return String(h || '').toLowerCase().replace(/^www\./, '');
+  }
+  function matchSessionRule(url) {
+    const rules = settings.sessionRules || {};
+    if (!url || !Object.keys(rules).length) return null;
+    let h;
+    try { h = normalizeHost(new URL(url).hostname); } catch { return null; }
+    while (h) {
+      if (rules[h]) return rules[h];
+      const dot = h.indexOf('.');
+      if (dot < 0) break;
+      h = h.slice(dot + 1);
+    }
+    return null;
+  }
+  function resolveSessionForUrl(url, preferredPid) {
+    const targetId = matchSessionRule(url);
+    if (!targetId) return preferredPid || activePid;
+    if (!profiles.find(p => p.id === targetId)) return preferredPid || activePid;
+    return targetId;
+  }
+  function touchSession(pid) {
+    if (!pid) return;
+    sessionMeta[pid] = { ...(sessionMeta[pid] || {}), lastUsed: Date.now() };
+  }
+  function formatLastUsed(ts) {
+    if (!ts) return 'Never';
+    const diff = Date.now() - ts;
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return new Date(ts).toLocaleDateString();
+  }
 
   function uniqueHistory(list, limit = 8) {
     const seen = new Set();
@@ -2254,7 +2341,9 @@ const B = (() => {
 
   function openUrlInSession(pid, url) {
     if (!url) return;
-    const p2 = pid || activePid;
+    const routed = resolveSessionForUrl(url, pid || activePid);
+    const p2 = routed || pid || activePid;
+    if (p2 !== activePid) switchProfile(p2);
     const list = tabsByPid[p2] || [];
     let empty = list.find(t => t.id === activeTid[p2] && !t.url);
     if (!empty) {
@@ -2639,11 +2728,17 @@ const B = (() => {
     if(!url){ toast('Invalid or blocked address'); return; }
     const ok = await eAPI.validateUrl(url);
     if (!ok && !url.startsWith('view-source:')) { toast('This address is not allowed'); return; }
+    const routedPid = resolveSessionForUrl(url, pid || activePid);
+    if (routedPid !== (pid || activePid)) {
+      touchSession(routedPid);
+      return openUrlInSession(routedPid, url);
+    }
     return withContentLock(async () => {
       closeMenu(); closeSuggest(); closeReading(); closeSiteInfo();
       const p2=pid||activePid, tid=tabId||activeTid[p2];
       const tab=tabRef(tid, p2);
       if(!tab) return;
+      touchSession(p2);
       hideAllContent();
       tab.url = url; tab.loading = true; updateTabEl(tab, p2);
       if (p2 === activePid && tid === activeTid[p2]) { setUrlBar(url); updateSecIco(url); }
@@ -2848,7 +2943,7 @@ const B = (() => {
     const p = prof(pid || activePid);
     if (!p) return;
     dashboardPid = p.id;
-    $('sd-title').textContent = (p.isIncognito ? '🕵️ ' : '') + p.name;
+    $('sd-title').textContent = p.name;
     $('sd-sub').textContent = p.templateId && p.templateId !== 'custom'
       ? `${p.templateId} container · isolated storage`
       : 'Session container · isolated storage';
@@ -2856,8 +2951,11 @@ const B = (() => {
     const stats = await eAPI.sessionStats(p.id, !!p.ephemeral).catch(() => ({}));
     const blocked = stats.blocked ?? sessionBlockedByPid[p.id] ?? 0;
     $('sd-blocked').textContent = String(blocked);
+    $('sd-tabs').textContent = String(tabs(p.id).filter(t => t.url).length || tabs(p.id).length);
+    $('sd-last').textContent = formatLastUsed(sessionMeta[p.id]?.lastUsed);
     $('sd-cookies').textContent = String(stats.cookies ?? 0);
     $('sd-cache').textContent = formatBytes(stats.cacheBytes || 0);
+    $('sd-storage').textContent = formatBytes((stats.cacheBytes || 0) + (stats.cookies || 0) * 120);
     $('sd-rules').textContent = String(stats.filterRules ?? 0);
     const origins = stats.origins || [];
     $('sd-origins').innerHTML = origins.length
@@ -2925,7 +3023,7 @@ const B = (() => {
         id: p.id, name: p.name, color: p.color, isIncognito: p.isIncognito, ephemeral: p.ephemeral,
         partition: p.partition, templateId: p.templateId, proxy: p.proxy, searchEngine: p.searchEngine, privacy: p.privacy,
       })),
-      activePid, tabsByPid: snap, activeTid: savedActiveTid,
+      activePid, tabsByPid: snap, activeTid: savedActiveTid, sessionMeta,
     });
   }
 
@@ -2990,6 +3088,7 @@ const B = (() => {
 
     if (Array.isArray(s?.profiles) && s.profiles.length) {
       profiles = s.profiles.map(p => ({ ...p }));
+      sessionMeta = s.sessionMeta && typeof s.sessionMeta === 'object' ? { ...s.sessionMeta } : {};
       for (const p of profiles) {
         if (!p.partition) await ensurePartition(p);
       }
@@ -3687,6 +3786,17 @@ const B = (() => {
           </div>
           <div class="exc-list" id="exc-list"></div>
         </div>
+        <div class="s-row" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:10px">
+          <div class="s-lbl">Always open in session<div class="s-sub">Route domains to Work, Personal, or other containers</div></div>
+          <div class="exc-row">
+            <input class="s-inp" id="rule-host" placeholder="github.com"/>
+            <select class="s-sel" id="rule-session" style="width:120px">
+              ${profiles.filter(p => !p.ephemeral).map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}
+            </select>
+            <button class="btn btn-p" style="padding:5px 10px;font-size:11px" onclick="B.addSessionRule()">Add</button>
+          </div>
+          <div class="exc-list" id="rule-list"></div>
+        </div>
       </div>
       <div class="s-sec">
         <div class="s-sec-title">Encrypted sync (optional)</div>
@@ -3707,9 +3817,10 @@ const B = (() => {
         </div>
         <div class="s-row">
           <div class="s-lbl">Bookmarks<div class="s-sub">${bookmarks.length} saved</div></div>
-          <div style="display:flex;gap:6px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="btn btn-g" style="padding:5px 12px;font-size:11px" onclick="B.exportBookmarks()">Export</button>
-            <button class="btn btn-g" style="padding:5px 12px;font-size:11px" onclick="B.importBookmarks()">Import</button>
+            <button class="btn btn-g" style="padding:5px 12px;font-size:11px" onclick="B.importBookmarks()">Import JSON</button>
+            <button class="btn btn-g" style="padding:5px 12px;font-size:11px" onclick="B.importFromBrowser()">Chrome / Edge</button>
             <button class="btn btn-r" style="padding:5px 12px;font-size:11px" onclick="if(confirm('Delete all bookmarks?')){bookmarks=[];eAPI.bmSave([]);B.renderBM();B.renderSettings();B.toast('Bookmarks cleared')}">Clear</button>
           </div>
         </div>
@@ -3749,6 +3860,7 @@ const B = (() => {
         </div>
       </div>`;
     renderSiteExceptions();
+    renderSessionRules();
     eAPI.appVersion().then(v => { const el = $('settings-ver'); if (el) el.textContent = v; }).catch(() => {});
     refreshSettingsUpdateStatus();
   }
@@ -3785,6 +3897,75 @@ const B = (() => {
     privacyDoc = await eAPI.siteExceptionSet(host, null);
     eAPI.sessionApplySettings();
     renderSiteExceptions();
+  }
+
+  function renderSessionRules() {
+    const list = $('rule-list');
+    if (!list) return;
+    const rules = settings.sessionRules || {};
+    const entries = Object.entries(rules);
+    list.innerHTML = entries.length
+      ? entries.map(([host, sid]) => {
+          const p = profiles.find(x => x.id === sid);
+          return `<div class="exc-item">
+            <span>${esc(host)} → <b>${esc(p?.name || sid)}</b></span>
+            <button class="btn btn-r" style="padding:2px 8px;font-size:10px" onclick="B.removeSessionRule(${JSON.stringify(host)})">Remove</button>
+          </div>`;
+        }).join('')
+      : '<div class="s-sub">No session routing rules yet</div>';
+  }
+
+  async function addSessionRule() {
+    const host = normalizeHost(($('rule-host')?.value || '').trim());
+    const sid = $('rule-session')?.value || '';
+    if (!host || !sid) { toast('Enter a hostname and session'); return; }
+    settings.sessionRules = settings.sessionRules || {};
+    settings.sessionRules[host] = sid;
+    await eAPI.settingsSave(settings);
+    $('rule-host').value = '';
+    renderSessionRules();
+    toast(`Always open ${host} in ${prof(sid)?.name || 'session'}`);
+  }
+
+  async function removeSessionRule(host) {
+    if (!settings.sessionRules?.[host]) return;
+    delete settings.sessionRules[host];
+    await eAPI.settingsSave(settings);
+    renderSessionRules();
+    toast('Session rule removed');
+  }
+
+  async function importFromBrowser() {
+    const browsers = await eAPI.browsersDetect().catch(() => []);
+    if (!browsers.length) { toast('Chrome or Edge not found on this device'); return; }
+    const browserId = browsers.length === 1 ? browsers[0].id : await pickBrowser(browsers);
+    if (!browserId) return;
+    const includeHistory = confirm('Also import recent browsing history?');
+    const data = await eAPI.importBrowserData(browserId, { includeHistory }).catch(() => null);
+    if (!data?.bookmarks?.length && !data?.history?.length) { toast('Nothing to import'); return; }
+    if (data.bookmarks?.length) {
+      const seen = new Set(bookmarks.map(b => b.url));
+      for (const b of data.bookmarks) {
+        if (!seen.has(b.url)) { bookmarks.push(b); seen.add(b.url); }
+      }
+      await eAPI.bmSave(bookmarks);
+    }
+    if (data.history?.length) {
+      for (const e of data.history.slice().reverse()) {
+        await eAPI.historyAdd({ url: e.url, title: e.title });
+      }
+      history = await eAPI.historyLoad();
+    }
+    renderBM();
+    renderSettings();
+    toast(`Imported from ${data.browser || 'browser'}: ${data.bookmarks?.length || 0} bookmarks${data.history?.length ? `, ${data.history.length} history` : ''}`);
+  }
+
+  function pickBrowser(browsers) {
+    const names = browsers.map((b, i) => `${i + 1}. ${b.name}`).join('\n');
+    const choice = prompt(`Which browser?\n${names}`, '1');
+    const idx = parseInt(choice, 10) - 1;
+    return browsers[idx]?.id || browsers[0]?.id;
   }
 
   async function exportVault() {
@@ -3900,7 +4081,7 @@ const B = (() => {
     ]);
     bookmarks = Array.isArray(bookmarks) ? bookmarks : [];
     history = Array.isArray(history) ? history : [];
-    settings = { ...defaults, ...(settings && typeof settings === 'object' ? settings : {}) };
+    settings = { ...defaults, ...(settings && typeof settings === 'object' ? settings : {}), sessionRules: settings?.sessionRules || {} };
     profiles = [{ id:'default', name:'Main', color:'#8b5cf6', isIncognito:false, ephemeral:false, partition:null }];
     tabsByPid = { default: [] };
     activePid = 'default';
@@ -4056,6 +4237,7 @@ const B = (() => {
     ++renderEpoch;
     hideAllContent();
     activePid = id;
+    touchSession(id);
     ensureSessionTabs(id);
     void renderAll();
     scheduleSessionSave();
@@ -4191,8 +4373,13 @@ const B = (() => {
     const pop = $('site-info');
     if (pop.classList.contains('show')) { closeSiteInfo(); return; }
     closeSuggest();
-    const h = host(url) || 'No site loaded';
-    $('si-host').textContent = h;
+    void populateSiteInfo(url);
+    pop.classList.add('show');
+  }
+
+  async function populateSiteInfo(url) {
+    const h = normalizeHost(host(url)) || 'No site loaded';
+    $('si-host').textContent = h === 'No site loaded' ? h : h;
     $('si-ico').textContent = url.startsWith('https://') ? '🔒' : url.startsWith('http://') ? '⚠️' : '🔍';
     $('si-desc').textContent = url.startsWith('https://')
       ? 'Your connection to this site is encrypted.'
@@ -4202,8 +4389,57 @@ const B = (() => {
     $('si-proto').textContent = url.startsWith('https://') ? 'HTTPS' : url.startsWith('http://') ? 'HTTP' : '—';
     $('si-track').textContent = settings.blockTrackers !== false ? 'Active' : 'Off';
     $('si-dnt').textContent = settings.doNotTrack !== false ? 'Enabled' : 'Off';
-    pop.classList.add('show');
+    const exc = privacyDoc.siteExceptions?.[h];
+    $('si-exception').textContent = exc === 'allow' ? 'Trackers allowed' : exc === 'block' ? 'Trackers blocked' : 'Default';
+    $('si-cookies').textContent = '…';
+    $('si-perms').textContent = '';
+    const sel = $('si-session-rule');
+    if (sel) {
+      sel.innerHTML = '<option value="">Current session only</option>'
+        + profiles.filter(p => !p.ephemeral).map(p =>
+          `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+      const rule = (settings.sessionRules || {})[h];
+      sel.value = rule && profiles.find(p => p.id === rule) ? rule : '';
+    }
+    if (!url || h === 'No site loaded') {
+      $('si-cookies').textContent = '—';
+      return;
+    }
+    const p = prof();
+    const data = await eAPI.siteDataGet({ sessionId: p.id, host: h, ephemeral: !!p.ephemeral }).catch(() => ({}));
+    $('si-cookies').textContent = String(data.cookies ?? 0);
+    if (data.permissions?.length) {
+      $('si-perms').textContent = 'Permissions: ' + data.permissions.map(x => `${x.permission} (${x.status})`).join(', ');
+    }
   }
+
+  async function setSessionRuleFromSiteInfo() {
+    const tab = aTab();
+    const url = tab?.url || '';
+    const h = normalizeHost(host(url));
+    if (!h) return;
+    const sel = $('si-session-rule');
+    const val = sel?.value || '';
+    settings.sessionRules = settings.sessionRules || {};
+    if (val) settings.sessionRules[h] = val;
+    else delete settings.sessionRules[h];
+    await eAPI.settingsSave(settings);
+    toast(val ? `Always open ${h} in ${prof(val)?.name || 'session'}` : `Removed session rule for ${h}`);
+    renderSettings();
+  }
+
+  async function clearSiteData() {
+    const tab = aTab();
+    const url = tab?.url || '';
+    const h = normalizeHost(host(url));
+    if (!h) { toast('No site loaded'); return; }
+    if (!confirm(`Clear cookies and site data for ${h} in this session?`)) return;
+    const p = prof();
+    await eAPI.siteDataClear({ sessionId: p.id, host: h, ephemeral: !!p.ephemeral });
+    await populateSiteInfo(url);
+    toast(`Cleared site data for ${h}`);
+  }
+
   function closeSiteInfo() { $('site-info')?.classList.remove('show'); }
 
   function showError(tid, msg, code, url) {
@@ -4389,7 +4625,7 @@ const B = (() => {
     if(last) addTab(last.pid,last.url); else toast('No recently closed tabs');
   }
 
-  const OB_STEPS = ['ob-step-welcome', 'ob-step-features', 'ob-step-setup', 'ob-step-account'];
+  const OB_STEPS = ['ob-step-welcome', 'ob-step-features', 'ob-step-setup', 'ob-step-account', 'ob-step-ready'];
   let obStep = 0;
 
   function setObStep(n) {
@@ -4404,14 +4640,63 @@ const B = (() => {
     const dots = $('ob-dots');
     if (dots) dots.style.display = obStep >= OB_STEPS.length - 1 ? 'none' : 'flex';
     if (obStep === 3) setTimeout(() => $('ob-name')?.focus(), 80);
+    if (obStep === 4) renderObImportActions();
   }
 
   function obNext() {
-    if (obStep < 2) setObStep(obStep + 1);
+    if (obStep === 2 && obFinishMode === 'guest') {
+      setObStep(4);
+      return;
+    }
+    if (obStep < OB_STEPS.length - 1) setObStep(obStep + 1);
   }
 
   function obBack() {
-    if (obStep > 0) setObStep(obStep - 1);
+    if (obStep === 4 && obFinishMode === 'guest') setObStep(2);
+    else if (obStep > 0) setObStep(obStep - 1);
+  }
+
+  function renderObImportActions() {
+    const box = $('ob-import-actions');
+    if (!box) return;
+    if (!obBrowsers.length) {
+      box.innerHTML = '<div class="ob-note">No Chrome or Edge profile found on this device.</div>';
+      return;
+    }
+    box.innerHTML = obBrowsers.map(b =>
+      `<button type="button" class="ob-btn ob-btn-ghost" onclick="B.importBrowserOnboarding('${b.id}')">Import from ${esc(b.name)}</button>`
+    ).join('');
+  }
+
+  async function importBrowserOnboarding(browserId) {
+    const includeHistory = $('ob-import-history')?.checked !== false;
+    const data = await eAPI.importBrowserData(browserId, { includeHistory }).catch(() => null);
+    if (!data?.bookmarks?.length && !data?.history?.length) {
+      toast('Nothing to import from that browser');
+      return;
+    }
+    obPendingImport = data;
+    toast(`Ready to import ${data.bookmarks?.length || 0} bookmarks${data.history?.length ? ` and ${data.history.length} history entries` : ''}`);
+  }
+
+  let obPendingImport = null;
+
+  async function applyObImport() {
+    if (!obPendingImport) return;
+    if (obPendingImport.bookmarks?.length) {
+      const seen = new Set(bookmarks.map(b => b.url));
+      for (const b of obPendingImport.bookmarks) {
+        if (!seen.has(b.url)) { bookmarks.push(b); seen.add(b.url); }
+      }
+      await eAPI.bmSave(bookmarks);
+    }
+    if (obPendingImport.history?.length) {
+      for (const e of obPendingImport.history.slice().reverse()) {
+        await eAPI.historyAdd({ url: e.url, title: e.title });
+      }
+      history = await eAPI.historyLoad();
+    }
+    obPendingImport = null;
   }
 
   function showOnboarding(reg) {
@@ -4421,6 +4706,9 @@ const B = (() => {
     $('ob-version').textContent = reg.appVersion ? `Enigma ${reg.appVersion}` : 'Your private, multi-session browser';
     selColor = COLORS[Math.floor(Math.random() * COLORS.length)];
     renderObSwatches();
+    obFinishMode = 'account';
+    obPendingImport = null;
+    eAPI.browsersDetect().then(list => { obBrowsers = list || []; }).catch(() => { obBrowsers = []; });
     $('onboarding').style.display = 'flex';
     setObStep(0);
   }
@@ -4446,22 +4734,26 @@ const B = (() => {
   function _scOb(c) { selColor = c; renderObSwatches(); }
 
   async function finishOnboardingGuest() {
-    const res = await eAPI.onboardingComplete({ mode: 'guest', name: 'Guest', color: selColor });
-    users = res.users;
-    activeUserId = res.activeUserId;
-    hideOnboarding();
-    await continueInit();
-    toast('Welcome — browsing as Guest on this device');
+    obFinishMode = 'guest';
+    setObStep(4);
   }
 
   async function finishOnboardingAccount() {
-    const name = ($('ob-name')?.value || '').trim() || 'User';
-    const res = await eAPI.onboardingComplete({ mode: 'account', name, color: selColor });
+    obFinishMode = 'account';
+    setObStep(4);
+  }
+
+  async function finishOnboardingStart() {
+    const mode = obFinishMode === 'guest' ? 'guest' : 'account';
+    const name = mode === 'guest' ? 'Guest' : (($('ob-name')?.value || '').trim() || 'User');
+    const res = await eAPI.onboardingComplete({ mode, name, color: selColor, starterSessions: true });
     users = res.users;
     activeUserId = res.activeUserId;
     hideOnboarding();
     await continueInit();
-    toast(`Welcome, ${name}`);
+    await applyObImport();
+    renderBM();
+    toast(mode === 'guest' ? 'Welcome — Work & Personal sessions are ready' : `Welcome, ${name} — sessions ready`);
   }
 
   let pendingUpdate = null;
@@ -4768,7 +5060,7 @@ const B = (() => {
     }
     bookmarks = Array.isArray(bookmarks) ? bookmarks : [];
     history = Array.isArray(history) ? history : [];
-    settings = { ...defaults, ...(settings && typeof settings === 'object' ? settings : {}) };
+    settings = { ...defaults, ...(settings && typeof settings === 'object' ? settings : {}), sessionRules: settings?.sessionRules || {} };
     privacyDoc = { filterLists: true, fingerprintProtection: true, webrtcProtection: true, mixedContentBlock: false, siteExceptions: {}, ...(privacyDoc || {}) };
     $('tb-logo-img').src = APP_ICON_SVG;
     eAPI.appIconUrl().then(url => { if (url) $('tb-logo-img').src = url; }).catch(() => {});
@@ -4807,7 +5099,8 @@ const B = (() => {
     addSiteException, removeSiteException, exportVault, importVault,
     switchUser, removeUser, openUserModal, closeUserModal, createUser, _scUser, _scUserAvatar, _scUserPrivacy,
     showOnboarding, showOnboardingMain, showOnboardingSignIn, obNext, obBack,
-    finishOnboardingGuest, finishOnboardingAccount, _scOb,
+    finishOnboardingGuest, finishOnboardingAccount, finishOnboardingStart, importBrowserOnboarding, _scOb,
+    setSessionRuleFromSiteInfo, clearSiteData, addSessionRule, removeSessionRule, importFromBrowser,
     checkForUpdate, checkForUpdateFromSettings, downloadUpdate, dismissUpdate,
     installUpdateNow, deferUpdateRestart, retryUpdate,
     restorePreviousPages, dismissRestore,

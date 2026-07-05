@@ -16,6 +16,7 @@ const {
 const {
   loadExtensions, saveExtensions, readManifest, applyExtensionsToSession, removeExtensionsFromSession,
 } = require('./extensions');
+const { detectBrowsers, importFromBrowser, starterSessionsSeed } = require('./browser-import');
 
 app.setName('Enigma');
 if (process.platform === 'win32') app.setAppUserModelId('app.enigmabrowser');
@@ -347,6 +348,7 @@ const DEFAULT_SETTINGS = {
   mixedContentBlock: false,
   checkUpdates: true,
   autoInstallUpdates: false,
+  sessionRules: {},
 };
 
 const sessionConfigs = new Map();
@@ -665,7 +667,7 @@ ipcMain.handle('users-init', () => {
   };
 });
 
-ipcMain.handle('onboarding-complete', (_, { mode, name, color }) => {
+ipcMain.handle('onboarding-complete', (_, { mode, name, color, starterSessions }) => {
   const reg = getRegistry();
   if (reg.onboardingComplete) {
     return { ...reg, needsOnboarding: false, appVersion: app.getVersion() };
@@ -675,6 +677,9 @@ ipcMain.handle('onboarding-complete', (_, { mode, name, color }) => {
   const accent = color || '#8b5cf6';
   userDir(id);
   seedUserFiles(id, { name: displayName, color: accent, type: mode === 'guest' ? 'guest' : 'account' });
+  if (starterSessions !== false) {
+    write(userPaths(id).session, starterSessionsSeed(accent));
+  }
   const next = {
     activeUserId: id,
     onboardingComplete: true,
@@ -825,6 +830,61 @@ ipcMain.handle('session-stats', async (_, id, ephemeral) => {
     blocked: sessionBlockedCounts.get(key) || 0,
     filterRules: sharedEngine.domainRules.size,
   };
+});
+
+function hostMatchesCookie(host, domain) {
+  const h = String(host || '').toLowerCase().replace(/^www\./, '');
+  const d = String(domain || '').toLowerCase().replace(/^\./, '');
+  if (!h || !d) return false;
+  return h === d || h.endsWith('.' + d) || d.endsWith(h);
+}
+
+ipcMain.handle('site-data-get', async (_, { sessionId, host, ephemeral }) => {
+  const h = String(host || '').toLowerCase().replace(/^www\./, '');
+  if (!h) return { cookies: 0, origins: [], permissions: [] };
+  const ses = session.fromPartition(sessionPartition(activeUserId, sessionId, ephemeral));
+  let cookies = [];
+  try { cookies = await ses.cookies.get({}); } catch {}
+  const matched = cookies.filter(c => hostMatchesCookie(h, c.domain));
+  const origins = [...new Set(matched.map(c => String(c.domain || '').replace(/^\./, '')))].filter(Boolean);
+  const permissions = [];
+  for (const perm of ['media', 'geolocation', 'notifications', 'midi', 'pointerLock']) {
+    try {
+      const st = ses.getPermissionStatus?.({ permission: perm, requestingOrigin: `https://${h}` });
+      const status = typeof st === 'string' ? st : st?.state;
+      if (status && status !== 'prompt' && status !== 'unknown') permissions.push({ permission: perm, status });
+    } catch {}
+  }
+  return { cookies: matched.length, origins, permissions };
+});
+
+ipcMain.handle('site-data-clear', async (_, { sessionId, host, ephemeral }) => {
+  const h = String(host || '').toLowerCase().replace(/^www\./, '');
+  if (!h) return false;
+  const ses = session.fromPartition(sessionPartition(activeUserId, sessionId, ephemeral));
+  const origins = [`https://${h}`, `http://${h}`, `https://www.${h}`, `http://www.${h}`];
+  for (const origin of origins) {
+    try { await ses.clearStorageData({ origin }); } catch {}
+  }
+  try {
+    const cookies = await ses.cookies.get({});
+    for (const c of cookies) {
+      if (hostMatchesCookie(h, c.domain)) {
+        const scheme = c.secure ? 'https' : 'http';
+        const domain = String(c.domain || '').replace(/^\./, '');
+        const url = `${scheme}://${domain}${c.path || '/'}`;
+        await ses.cookies.remove(url, c.name);
+      }
+    }
+  } catch {}
+  return true;
+});
+
+ipcMain.handle('browsers-detect', () => detectBrowsers());
+
+ipcMain.handle('import-browser-data', (_, browserId, opts = {}) => {
+  const profileId = opts.profileId || 'Default';
+  return importFromBrowser(browserId, profileId, opts);
 });
 
 ipcMain.handle('session-blocked-count', (_, id) => sessionBlockedCounts.get(sessionKey(activeUserId, id)) || 0);

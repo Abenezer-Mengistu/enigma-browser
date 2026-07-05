@@ -285,7 +285,6 @@ function setActiveUser(userId) {
   appSettings = getSettings();
   const ses = session.fromPartition(mainPartition(userId));
   applySessionPolicy(ses);
-  void reloadUserExtensions(ses);
 }
 
 async function reloadUserExtensions(targetSes = null) {
@@ -496,30 +495,8 @@ function readOsPrefersDark() {
 
 const webContentsLightHooked = new WeakSet();
 
-/** Keep guest pages on light color scheme — runs before any page script. */
-async function forceLightColorScheme(webContents) {
-  if (!webContents || webContents.isDestroyed()) return;
-  try {
-    const dbg = webContents.debugger;
-    if (!dbg.isAttached()) dbg.attach('1.3');
-    await dbg.sendCommand('Emulation.setEmulatedMedia', {
-      features: [{ name: 'prefers-color-scheme', value: 'light' }],
-    });
-    if (!webContentsLightHooked.has(webContents)) {
-      webContentsLightHooked.add(webContents);
-      await dbg.sendCommand('Page.enable');
-      await dbg.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
-        source: FORCE_LIGHT_PAGE,
-      });
-    }
-  } catch {}
-}
-
 function hookWebviewColorScheme() {
-  if (!mainWin) return;
-  mainWin.webContents.on('did-attach-webview', (_, contents) => {
-    void forceLightColorScheme(contents);
-  });
+  /* disabled — debugger attach on guest pages caused blank renders */
 }
 
 let osThemeWatchTimer = null;
@@ -795,7 +772,6 @@ ipcMain.handle('session-register', async (_, id, config) => {
   const ses = session.fromPartition(sessionPartition(activeUserId, id, ephemeral));
   applySessionPolicy(ses, id, ephemeral);
   if (cfg.proxy) await applyProxy(ses, cfg.proxy);
-  await applyExtensionsForSession(id, ephemeral);
   return true;
 });
 
@@ -807,7 +783,6 @@ ipcMain.handle('session-create', async (_, id, config) => {
   const ses = session.fromPartition(partition);
   applySessionPolicy(ses, id, ephemeral);
   if (cfg.proxy) await applyProxy(ses, cfg.proxy);
-  await applyExtensionsForSession(id, ephemeral);
   return partition;
 });
 

@@ -2695,7 +2695,9 @@ const B = (() => {
   }
   function applySiteViewToWv(wv, pid, tid) {
     if (!wv) return;
-    wv.setUserAgent(siteViewUA(getSiteViewMode(pid, tid)));
+    const mode = getSiteViewMode(pid, tid);
+    if (mode === 'desktop') wv.setUserAgent(DESKTOP_UA);
+    else if (mode === 'mobile') wv.setUserAgent(MOBILE_UA);
   }
   function updateSiteViewBtns() {
     const tab = aTab();

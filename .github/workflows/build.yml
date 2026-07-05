@@ -133,19 +133,10 @@ jobs:
     needs: [release]
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: read
-      pages: write
-      id-token: write
-      actions: read
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
 
       - name: Wait for release assets to propagate
         run: node scripts/wait-for-release-assets.mjs
@@ -153,35 +144,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.ref_name }}
 
-      - name: Generate downloads manifest
-        run: node scripts/generate-downloads-manifest.mjs
+      - name: Trigger Pages deploy on main
+        run: gh workflow run pages.yml --ref main --repo "${{ github.repository }}" -f release_tag="${{ github.ref_name }}"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ github.ref_name }}
-
-      - name: Generate analytics data
-        run: node scripts/generate-analytics-data.mjs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Refresh site icons
-        run: |
-          mkdir -p website/assets/icons
-          cp assets/icons/icon_32.png assets/icons/icon_64.png website/assets/icons/
-          touch website/.nojekyll
-
-      - uses: actions/configure-pages@v5
-
-      - name: Wait for in-flight Pages deployments
-        uses: softprops/turnstyle@v1
-        with:
-          poll-interval-seconds: 15
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: website
-
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

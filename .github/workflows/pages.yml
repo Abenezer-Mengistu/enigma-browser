@@ -4,6 +4,11 @@ on:
   push:
     branches: [main, master]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to publish (optional, e.g. v3.0.5)'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -32,12 +37,14 @@ jobs:
         run: node scripts/wait-for-release-assets.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
+          RELEASE_TAG: ${{ inputs.release_tag || '' }}
+        continue-on-error: ${{ github.event_name == 'push' }}
 
       - name: Generate downloads manifest
         run: node scripts/generate-downloads-manifest.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag || '' }}
 
       - name: Generate analytics data
         run: node scripts/generate-analytics-data.mjs

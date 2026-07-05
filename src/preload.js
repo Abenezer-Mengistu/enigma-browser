@@ -85,6 +85,8 @@ contextBridge.exposeInMainWorld('eAPI', {
   electronVersion: () => ipcRenderer.invoke('electron-version'),
   contextMenu: (p) => ipcRenderer.invoke('context-menu', p),
   openDevTools: () => ipcRenderer.invoke('open-devtools'),
+  getWindowBoot: () => ipcRenderer.invoke('get-window-boot'),
+  openDetachedWindow: (payload) => ipcRenderer.invoke('open-detached-window', payload),
   on: (ch, fn) => ipcRenderer.on(ch, (_, ...a) => fn(...a)),
   off: (ch, fn) => ipcRenderer.off(ch, fn),
 });

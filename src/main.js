@@ -401,6 +401,99 @@ const write = (p, d)  => { try { fs.writeFileSync(p, JSON.stringify(d, null, 2))
 
 let mainWin = null;
 let splashWin = null;
+const browserWindows = new Set();
+const windowSessions = new Map();
+const pendingBoots = new Map();
+
+function getMainWin() {
+  if (mainWin && !mainWin.isDestroyed()) return mainWin;
+  for (const w of browserWindows) {
+    if (!w.isDestroyed()) return w;
+  }
+  return null;
+}
+
+function winFromEvent(e) {
+  if (e?.sender) {
+    const w = BrowserWindow.fromWebContents(e.sender);
+    if (w && !w.isDestroyed()) return w;
+  }
+  return getMainWin();
+}
+
+function broadcastToWindows(channel, payload) {
+  for (const w of browserWindows) {
+    if (!w.isDestroyed()) w.webContents.send(channel, payload);
+  }
+}
+
+function mergeSessionSnapshots(snapshots) {
+  const list = snapshots.filter(Boolean);
+  if (!list.length) return null;
+  const base = { ...list[list.length - 1] };
+  const tabsByPid = {};
+  const activeTid = {};
+  for (const snap of list) {
+    for (const [pid, tabs] of Object.entries(snap.tabsByPid || {})) {
+      if (!Array.isArray(tabs)) continue;
+      if (!tabsByPid[pid]) tabsByPid[pid] = [];
+      for (const tab of tabs) {
+        if (!tab?.id || tabsByPid[pid].some(t => t.id === tab.id)) continue;
+        tabsByPid[pid].push(tab);
+      }
+    }
+    if (snap.activePid && snap.activeTid?.[snap.activePid]) {
+      activeTid[snap.activePid] = snap.activeTid[snap.activePid];
+    }
+  }
+  return { ...base, tabsByPid, activeTid };
+}
+
+function persistMergedSessions() {
+  const merged = mergeSessionSnapshots([...windowSessions.values()]);
+  if (merged) write(userPaths().session, merged);
+}
+
+function attachWindowShortcuts(win) {
+  win.webContents.on('before-input-event', (e, k) => {
+    const c = k.control || k.meta;
+    if (!c) {
+      if (!k.shift && !k.alt && k.key === 'F11') {
+        win.webContents.send('cmd', 'fullscreen');
+        e.preventDefault();
+      }
+      return;
+    }
+    const MAP = {
+      t: 'new-tab', w: 'close-tab', r: 'reload', l: 'focus-url',
+      f: 'find', b: 'bookmarks', h: 'history', d: 'bookmark',
+      '=': 'zoom-in', '+': 'zoom-in', '-': 'zoom-out', '0': 'zoom-reset',
+      '[': 'back', ']': 'fwd', p: 'print',
+    };
+    const cmd = MAP[k.key.toLowerCase()];
+    if (cmd) { win.webContents.send('cmd', cmd); e.preventDefault(); return; }
+    if (c && k.shift && k.key.toLowerCase() === 't') {
+      win.webContents.send('cmd', 'reopen-tab');
+      e.preventDefault();
+    }
+    if (c && k.shift && k.key.toLowerCase() === 'n') {
+      win.webContents.send('cmd', 'new-incognito');
+      e.preventDefault();
+    }
+    if (c && k.shift && k.key.toLowerCase() === 'i') {
+      win.webContents.send('cmd', 'devtools');
+      e.preventDefault();
+    }
+    if (c && k.shift && k.key.toLowerCase() === 'r') {
+      win.webContents.send('cmd', 'hard-reload');
+      e.preventDefault();
+    }
+    if (c && k.shift && k.key.toLowerCase() === 'c') {
+      win.webContents.send('cmd', 'copy-url');
+      e.preventDefault();
+    }
+  });
+}
 const downloads = [];
 const downloadItems = new Map();
 const hookedSessions = new WeakSet();
@@ -563,13 +656,16 @@ function createSplash() {
   splashWin.loadFile(path.join(__dirname, '../assets/splash.html'));
 }
 
-function createMain() {
+function createBrowserWindow(opts = {}) {
+  const { x, y, boot, isPrimary = false } = opts;
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  mainWin = new BrowserWindow({
+  const win = new BrowserWindow({
+    x: Number.isFinite(x) ? x : undefined,
+    y: Number.isFinite(y) ? y : undefined,
     width: Math.min(1440, width),
     height: Math.min(920, height),
     minWidth: 900, minHeight: 600,
-    show: false,
+    show: !isPrimary,
     frame: false,
     backgroundColor: '#0d0b18',
     icon: APP_ICON,
@@ -584,82 +680,97 @@ function createMain() {
     },
   });
 
-  mainWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-  hookWebviewColorScheme();
-  if (process.platform === 'win32' && !APP_ICON.isEmpty()) mainWin.setIcon(APP_ICON);
-  mainWin.loadFile(path.join(__dirname, '../assets/index.html'));
+  browserWindows.add(win);
+  if (isPrimary || !mainWin || mainWin.isDestroyed()) mainWin = win;
 
-  mainWin.once('ready-to-show', () => {
-    setTimeout(() => {
-      splashWin?.destroy();
-      splashWin = null;
-      mainWin.show();
-      mainWin.focus();
-    }, 1400);
-  });
+  if (boot) pendingBoots.set(win.webContents.id, boot);
 
-  mainWin.webContents.on('before-input-event', (e, k) => {
-    const c = k.control || k.meta;
-    if (!c) return;
-    const MAP = {
-      t: 'new-tab', w: 'close-tab', r: 'reload', l: 'focus-url',
-      f: 'find', b: 'bookmarks', h: 'history', d: 'bookmark',
-      '=': 'zoom-in', '+': 'zoom-in', '-': 'zoom-out', '0': 'zoom-reset',
-      '[': 'back', ']': 'fwd', p: 'print',
-    };
-    const cmd = MAP[k.key.toLowerCase()];
-    if (cmd) { mainWin.webContents.send('cmd', cmd); e.preventDefault(); return; }
-    if (c && k.shift && k.key.toLowerCase() === 't') {
-      mainWin.webContents.send('cmd', 'reopen-tab');
-      e.preventDefault();
-    }
-    if (c && k.shift && k.key.toLowerCase() === 'n') {
-      mainWin.webContents.send('cmd', 'new-incognito');
-      e.preventDefault();
-    }
-    if (c && k.shift && k.key.toLowerCase() === 'i') {
-      mainWin.webContents.send('cmd', 'devtools');
-      e.preventDefault();
-    }
-    if (c && k.shift && k.key.toLowerCase() === 'r') {
-      mainWin.webContents.send('cmd', 'hard-reload');
-      e.preventDefault();
-    }
-    if (c && k.shift && k.key.toLowerCase() === 'c') {
-      mainWin.webContents.send('cmd', 'copy-url');
-      e.preventDefault();
-    }
-    if (!c && !k.shift && !k.alt && k.key === 'F11') {
-      mainWin.webContents.send('cmd', 'fullscreen');
-      e.preventDefault();
-    }
-  });
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  if (process.platform === 'win32' && !APP_ICON.isEmpty()) win.setIcon(APP_ICON);
+  win.loadFile(path.join(__dirname, '../assets/index.html'));
 
-  mainWin.on('maximize', () => mainWin.webContents.send('win-state', 'maximized'));
-  mainWin.on('unmaximize', () => mainWin.webContents.send('win-state', 'normal'));
-  mainWin.on('closed', () => { mainWin = null; });
-
-  initUpdater(() => mainWin, {
-    hasActiveDownloads: () => downloads.some(d => d.state === 'progressing'),
-    shouldCheckUpdates: () => getSettings().checkUpdates !== false,
-  });
-  const failedUpdate = checkPendingUpdateOnStartup();
-  if (failedUpdate) {
-    mainWin.webContents.once('did-finish-load', () => {
-      mainWin?.webContents.send('update-install-failed', failedUpdate);
+  if (isPrimary) {
+    win.once('ready-to-show', () => {
+      setTimeout(() => {
+        splashWin?.destroy();
+        splashWin = null;
+        win.show();
+        win.focus();
+      }, 1400);
+    });
+  } else {
+    win.once('ready-to-show', () => {
+      win.show();
+      win.focus();
     });
   }
-  ensureUsersMigrated();
-  const reg = getRegistry();
-  if (reg.activeUserId) setActiveUser(reg.activeUserId);
+
+  attachWindowShortcuts(win);
+  win.on('maximize', () => win.webContents.send('win-state', 'maximized'));
+  win.on('unmaximize', () => win.webContents.send('win-state', 'normal'));
+  win.on('closed', () => {
+    browserWindows.delete(win);
+    windowSessions.delete(win.id);
+    pendingBoots.delete(win.webContents.id);
+    persistMergedSessions();
+    if (mainWin === win) {
+      mainWin = getMainWin();
+    }
+  });
+
+  if (isPrimary) {
+    hookWebviewColorScheme();
+    initUpdater(() => getMainWin(), {
+      hasActiveDownloads: () => downloads.some(d => d.state === 'progressing'),
+      shouldCheckUpdates: () => getSettings().checkUpdates !== false,
+    });
+    const failedUpdate = checkPendingUpdateOnStartup();
+    if (failedUpdate) {
+      win.webContents.once('did-finish-load', () => {
+        if (!win.isDestroyed()) win.webContents.send('update-install-failed', failedUpdate);
+      });
+    }
+    ensureUsersMigrated();
+    const reg = getRegistry();
+    if (reg.activeUserId) setActiveUser(reg.activeUserId);
+  }
+
+  return win;
+}
+
+function createMain() {
+  createBrowserWindow({ isPrimary: true });
 }
 
 // ── IPC: window chrome ────────────────────────────────────────────────────────
-ipcMain.handle('win-min', () => mainWin?.minimize());
-ipcMain.handle('win-max', () => (mainWin?.isMaximized() ? mainWin.unmaximize() : mainWin.maximize()));
-ipcMain.handle('win-close', () => mainWin?.close());
-ipcMain.handle('win-is-max', () => mainWin?.isMaximized() ?? false);
-ipcMain.handle('open-devtools', () => mainWin?.webContents.openDevTools({ mode: 'detach' }));
+ipcMain.handle('win-min', (e) => winFromEvent(e)?.minimize());
+ipcMain.handle('win-max', (e) => {
+  const win = winFromEvent(e);
+  if (!win) return;
+  if (win.isMaximized()) win.unmaximize();
+  else win.maximize();
+});
+ipcMain.handle('win-close', (e) => winFromEvent(e)?.close());
+ipcMain.handle('win-is-max', (e) => winFromEvent(e)?.isMaximized() ?? false);
+ipcMain.handle('open-devtools', (e) => winFromEvent(e)?.webContents.openDevTools({ mode: 'detach' }));
+ipcMain.handle('get-window-boot', (e) => {
+  const boot = pendingBoots.get(e.sender.id);
+  if (boot) pendingBoots.delete(e.sender.id);
+  return boot || null;
+});
+ipcMain.handle('open-detached-window', (_, payload = {}) => {
+  const px = Number(payload.x);
+  const py = Number(payload.y);
+  const point = {
+    x: Number.isFinite(px) ? px : screen.getPrimaryDisplay().workArea.x + 80,
+    y: Number.isFinite(py) ? py : screen.getPrimaryDisplay().workArea.y + 80,
+  };
+  const display = screen.getDisplayNearestPoint(point);
+  const wx = Math.max(display.workArea.x, point.x - 140);
+  const wy = Math.max(display.workArea.y, point.y - 48);
+  createBrowserWindow({ x: wx, y: wy, boot: payload, isPrimary: false });
+  return true;
+});
 
 // ── IPC: users ────────────────────────────────────────────────────────────────
 ipcMain.handle('users-init', () => {
@@ -1047,7 +1158,12 @@ ipcMain.handle('dl-remove', (_, id) => {
   downloadItems.delete(id);
   return true;
 });
-ipcMain.handle('session-save', (_, d) => { write(userPaths().session, d); return true; });
+ipcMain.handle('session-save', (e, d) => {
+  const win = winFromEvent(e);
+  if (win) windowSessions.set(win.id, d);
+  persistMergedSessions();
+  return true;
+});
 ipcMain.handle('session-load', () => read(userPaths().session, null));
 ipcMain.handle('notes-load', () => {
   try { return fs.readFileSync(userPaths().notes, 'utf8'); } catch { return ''; }
@@ -1252,41 +1368,44 @@ ipcMain.handle('open-update-page', (_, url) => { openReleasePage(url); return tr
 ipcMain.handle('app-install-info', () => getInstallInfo());
 ipcMain.handle('has-active-downloads', () => downloads.some(d => d.state === 'progressing'));
 
-ipcMain.handle('context-menu', (_, p) => {
+ipcMain.handle('context-menu', (e, p) => {
+  const win = winFromEvent(e);
+  if (!win) return;
+  const send = (ch, ...args) => { if (!win.isDestroyed()) win.webContents.send(ch, ...args); };
   const items = [];
   if (p.selectionText?.trim()) {
     items.push(
-      { label: `Search "${p.selectionText.slice(0, 30)}"`, click: () => mainWin.webContents.send('cmd', `search-selection:${p.selectionText}`) },
+      { label: `Search "${p.selectionText.slice(0, 30)}"`, click: () => send('cmd', `search-selection:${p.selectionText}`) },
       { label: 'Copy', role: 'copy' },
       { type: 'separator' },
     );
   }
   if (p.linkURL) {
     items.push(
-      { label: 'Open in new tab', click: () => mainWin.webContents.send('open-link', p.linkURL) },
-      { label: 'Open in incognito', click: () => mainWin.webContents.send('open-link-incog', p.linkURL) },
+      { label: 'Open in new tab', click: () => send('open-link', p.linkURL) },
+      { label: 'Open in incognito', click: () => send('open-link-incog', p.linkURL) },
       { label: 'Copy link', click: () => clipboard.writeText(p.linkURL) },
       { type: 'separator' },
     );
   }
   if (p.mediaType === 'image') {
     items.push(
-      { label: 'Open image in new tab', click: () => mainWin.webContents.send('open-link', p.srcURL) },
+      { label: 'Open image in new tab', click: () => send('open-link', p.srcURL) },
       { label: 'Copy image address', click: () => clipboard.writeText(p.srcURL) },
       { type: 'separator' },
     );
   }
   items.push(
-    { label: 'Back', enabled: p.canBack, click: () => mainWin.webContents.send('cmd', 'back') },
-    { label: 'Forward', enabled: p.canFwd, click: () => mainWin.webContents.send('cmd', 'fwd') },
-    { label: 'Reload', click: () => mainWin.webContents.send('cmd', 'reload') },
+    { label: 'Back', enabled: p.canBack, click: () => send('cmd', 'back') },
+    { label: 'Forward', enabled: p.canFwd, click: () => send('cmd', 'fwd') },
+    { label: 'Reload', click: () => send('cmd', 'reload') },
     { type: 'separator' },
-    { label: 'Print…', click: () => mainWin.webContents.send('cmd', 'print') },
+    { label: 'Print…', click: () => send('cmd', 'print') },
     { type: 'separator' },
-    { label: 'View page source', click: () => mainWin.webContents.send('cmd', 'view-source') },
-    { label: 'Inspect', click: () => mainWin.webContents.send('cmd', 'devtools') },
+    { label: 'View page source', click: () => send('cmd', 'view-source') },
+    { label: 'Inspect', click: () => send('cmd', 'devtools') },
   );
-  Menu.buildFromTemplate(items).popup({ window: mainWin });
+  Menu.buildFromTemplate(items).popup({ window: win });
 });
 
 // ── App lifecycle ─────────────────────────────────────────────────────────────
@@ -1295,9 +1414,10 @@ if (!lock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    if (mainWin) {
-      if (mainWin.isMinimized()) mainWin.restore();
-      mainWin.focus();
+    const win = getMainWin();
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
     }
   });
   app.whenReady().then(() => {
@@ -1311,5 +1431,5 @@ if (!lock) {
     createMain();
   });
   app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
-  app.on('activate', () => { if (!mainWin) createMain(); });
+  app.on('activate', () => { if (browserWindows.size === 0) createMain(); });
 }

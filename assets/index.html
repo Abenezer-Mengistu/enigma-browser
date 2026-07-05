@@ -387,6 +387,17 @@ html.compact-tabs .userrow{max-width:42%}
 .tab-x{font-size:8px;color:var(--t4);padding:2px 4px;border-radius:4px;flex-shrink:0;line-height:1;opacity:0;transition:all .12s;margin-left:1px}
 .tab:hover .tab-x,.tab.act .tab-x{opacity:1}
 .tab-x:hover{background:rgba(248,113,113,.2);color:var(--red)}
+.tab.tab-detaching{opacity:.35}
+.tab-drag-ghost{
+  position:fixed;z-index:900;pointer-events:none;
+  display:flex;align-items:center;gap:var(--tab-gap);
+  padding:0 var(--tab-pad-x);height:var(--tab-item-h);
+  max-width:var(--tab-max-w);min-width:var(--tab-min-w);
+  border-radius:var(--tab-r);font-size:var(--tab-fs);
+  color:var(--t1);background:var(--s2);border:1px solid var(--b2);
+  box-shadow:var(--shadow-md);opacity:.92;transform:translate(-50%,-50%);
+}
+.tab-drag-ghost .tab-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .i-pip{width:5px;height:5px;border-radius:50%;flex-shrink:0;box-shadow:0 0 6px currentColor}
 .spin{width:11px;height:11px;border:2px solid var(--b2);border-top-color:var(--acc3);border-radius:50%;animation:spin .65s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -1206,7 +1217,6 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
         <button class="tb-act" id="btn-notes-hdr" onclick="B.togglePanel('notes')" title="Notes" data-ico="notes"></button>
         <button class="tb-act" id="btn-dl-hdr" onclick="B.togglePanel('downloads')" title="Downloads" data-ico="download"></button>
         <button class="tb-act" onclick="B.showShortcuts()" title="Keyboard shortcuts" data-ico="keyboard"></button>
-        <button class="tb-act" onclick="B.togglePanel('settings')" title="Settings" data-ico="settings"></button>
       </div>
 
       <!-- Windows controls -->
@@ -1312,6 +1322,7 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
       </div>
 
       <button class="nb" id="nb-hist" onclick="B.togglePanel('history')" title="History (Ctrl+H)" data-ico="history"></button>
+      <button class="nb" id="nb-settings" onclick="B.togglePanel('settings')" title="Settings" data-ico="settings"></button>
       <button class="nb" id="btn-more" onclick="B.openMenu(event)" title="More" data-ico="more"></button>
       <div class="pbar" id="pbar"></div>
     </div>
@@ -2525,6 +2536,131 @@ const B = (() => {
     scheduleSessionSave();
   }
   function dupeTab() { const t=aTab(); if(!t) return; addTab(activePid,t.url); closeMenu(); }
+
+  const TAB_DRAG_THRESHOLD = 8;
+  let tabDrag = null;
+  let suppressTabClick = false;
+
+  function createTabDragGhost(tabEl) {
+    const ghost = document.createElement('div');
+    ghost.className = 'tab-drag-ghost';
+    const fav = tabEl.querySelector('.tab-fav')?.cloneNode(true);
+    const title = tabEl.querySelector('.tab-title')?.cloneNode(true);
+    if (fav) ghost.appendChild(fav);
+    if (title) ghost.appendChild(title);
+    else ghost.textContent = tabEl.title || 'Tab';
+    document.body.appendChild(ghost);
+    return ghost;
+  }
+
+  function updateTabDragGhost(ghost, x, y) {
+    ghost.style.left = x + 'px';
+    ghost.style.top = y + 'px';
+  }
+
+  function clearTabDrag() {
+    if (tabDrag?.ghost) tabDrag.ghost.remove();
+    if (tabDrag?.tabEl) tabDrag.tabEl.classList.remove('tab-detaching');
+    tabDrag = null;
+  }
+
+  function isOutsideTabBar(clientX, clientY) {
+    const bar = $('tabbar');
+    if (!bar) return false;
+    const r = bar.getBoundingClientRect();
+    return clientY < r.top - 10 || clientY > r.bottom + 20 || clientX < r.left - 30 || clientX > r.right + 30;
+  }
+
+  async function detachTabToWindow(tabId, pid, screenX, screenY) {
+    const p2 = pid || activePid;
+    const ts = tabs(p2);
+    const idx = ts.findIndex(t => t.id === tabId);
+    const tab = ts.find(t => t.id === tabId);
+    if (!tab) return;
+    const mk = metaKey(p2, tabId);
+    if (pinned.has(mk)) { toast('📌 Unpin the tab first to move it'); return; }
+
+    const payload = {
+      pid: p2,
+      tab: {
+        id: tab.id,
+        title: tab.title,
+        url: tab.url,
+        favicon: tab.favicon,
+        audible: tab.audible,
+      },
+      pinned: false,
+      muted: muted.has(mk),
+      navHist: navHist[mk] ? { list: [...navHist[mk].list], idx: navHist[mk].idx } : null,
+      x: screenX,
+      y: screenY,
+    };
+
+    destroyWV(tabId, p2);
+    tabsByPid[p2] = ts.filter(t => t.id !== tabId);
+    muted.delete(mk);
+    delete navHist[mk];
+    delete siteViewModes[mk];
+    if (!tabsByPid[p2].length) ensureSessionTabs(p2);
+    if (activeTid[p2] === tabId) {
+      const rem = tabsByPid[p2];
+      activeTid[p2] = rem[Math.min(idx, rem.length - 1)]?.id;
+    }
+
+    try {
+      await eAPI.openDetachedWindow(payload);
+      renderAll();
+      scheduleSessionSave();
+    } catch (e) {
+      console.error('[detachTab]', e);
+      toast('Could not open new window');
+      addTab(p2, tab.url);
+    }
+  }
+
+  function initTabDrag() {
+    const bar = $('tabbar');
+    if (!bar) return;
+
+    bar.addEventListener('mousedown', e => {
+      if (e.button !== 0) return;
+      if (e.target.closest('[data-action="close-tab"], [data-action="mute-tab"]')) return;
+      const tabEl = e.target.closest('.tab[data-tabid]');
+      if (!tabEl?.dataset.tabid) return;
+      tabDrag = {
+        tid: tabEl.dataset.tabid,
+        startX: e.clientX,
+        startY: e.clientY,
+        active: false,
+        tabEl,
+      };
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!tabDrag) return;
+      const dx = e.clientX - tabDrag.startX;
+      const dy = e.clientY - tabDrag.startY;
+      if (!tabDrag.active) {
+        if (Math.hypot(dx, dy) < TAB_DRAG_THRESHOLD) return;
+        tabDrag.active = true;
+        hideTabPreview();
+        tabDrag.ghost = createTabDragGhost(tabDrag.tabEl);
+        tabDrag.tabEl.classList.add('tab-detaching');
+      }
+      updateTabDragGhost(tabDrag.ghost, e.clientX, e.clientY);
+    });
+
+    document.addEventListener('mouseup', e => {
+      if (!tabDrag) return;
+      const { tid, active } = tabDrag;
+      const outside = active && isOutsideTabBar(e.clientX, e.clientY);
+      clearTabDrag();
+      if (outside) {
+        suppressTabClick = true;
+        void detachTabToWindow(tid, activePid, e.screenX, e.screenY);
+      }
+    });
+  }
   function togglePin() {
     const tid=activeTid[activePid]; if(!tid) return;
     const pk = metaKey(activePid, tid);
@@ -3345,7 +3481,7 @@ const B = (() => {
     if (s.activePid && profiles.find(p => p.id === s.activePid)) activePid = s.activePid;
   }
 
-  async function initSessionOnStartup() {
+  async function initSessionOnStartup(boot) {
     const s = await eAPI.sessionLoad();
     tabsByPid = {};
     activeTid = {};
@@ -3363,6 +3499,35 @@ const B = (() => {
       profiles = [{ id: 'default', name: 'Main', color: '#8b5cf6', isIncognito: false, ephemeral: false, partition: null }];
       activePid = 'default';
       await ensurePartition(profiles[0]);
+    }
+
+    if (boot?.tab?.id && boot?.pid && profiles.find(p => p.id === boot.pid)) {
+      for (const p of profiles) {
+        tabsByPid[p.id] = [];
+        activeTid[p.id] = null;
+      }
+      activePid = boot.pid;
+      tabsByPid[boot.pid] = [{
+        id: boot.tab.id,
+        title: boot.tab.title || 'New tab',
+        url: boot.tab.url || '',
+        favicon: boot.tab.favicon || null,
+        loading: false,
+        audible: !!boot.tab.audible,
+      }];
+      activeTid[boot.pid] = boot.tab.id;
+      const mk = metaKey(boot.pid, boot.tab.id);
+      if (boot.pinned) pinned.add(mk);
+      if (boot.muted) muted.add(mk);
+      if (boot.navHist?.list?.length) {
+        navHist[mk] = {
+          list: [...boot.navHist.list],
+          idx: Math.min(boot.navHist.idx ?? boot.navHist.list.length - 1, boot.navHist.list.length - 1),
+          internal: false,
+        };
+      }
+      hideRestoreBanner();
+      return;
     }
 
     const restorable = sessionHasRestorablePages(s);
@@ -3871,6 +4036,12 @@ const B = (() => {
       if (chip?.dataset.pid) openSessionDashboard(chip.dataset.pid);
     });
     $('tabbar')?.addEventListener('click', e => {
+      if (suppressTabClick) {
+        suppressTabClick = false;
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       if (e.target.closest('[data-action="new-page"]')) {
         addTab();
         return;
@@ -3911,6 +4082,7 @@ const B = (() => {
     $('panel-backdrop')?.classList.add('show');
     $('panel-'+id).classList.add('open');
     $('nb-hist')?.classList.toggle('act',id==='history');
+    $('nb-settings')?.classList.toggle('act',id==='settings');
     $('btn-dl-hdr')?.classList.toggle('on',id==='downloads');
     $('btn-notes-hdr')?.classList.toggle('on',id==='notes');
     if(id==='bookmarks') renderBM();
@@ -3925,6 +4097,7 @@ const B = (() => {
     if(openPanel===id) openPanel=null;
     if(!openPanel) $('panel-backdrop')?.classList.remove('show');
     $('nb-hist')?.classList.remove('act');
+    $('nb-settings')?.classList.remove('act');
     $('btn-dl-hdr')?.classList.remove('on');
     $('btn-notes-hdr')?.classList.remove('on');
   }
@@ -5350,6 +5523,7 @@ const B = (() => {
   }
 
   async function continueInit() {
+    const windowBoot = await eAPI.getWindowBoot().catch(() => null);
     mainUserPartition = await eAPI.userMainPartition();
     renderUserStrip();
     const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,checkUpdates:true,autoInstallUpdates:false};
@@ -5389,7 +5563,7 @@ const B = (() => {
       bootDate.textContent = n.toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric'});
       $('boot-clock').textContent = n.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     }
-    await initSessionOnStartup();
+    await initSessionOnStartup(windowBoot);
     for (const p of profiles) sanitizeTabsForProfile(p.id);
     for (const p of profiles) await sanitizeTabUrls(p.id);
     for (const p of profiles) {
@@ -5405,6 +5579,7 @@ const B = (() => {
 
   bindNewTabEvents();
   bindChromeClicks();
+  initTabDrag();
   initMoreMenu();
   init();
 

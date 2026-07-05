@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -27,6 +27,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+
+      - name: Wait for release assets
+        run: node scripts/wait-for-release-assets.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
       - name: Generate downloads manifest
         run: node scripts/generate-downloads-manifest.mjs

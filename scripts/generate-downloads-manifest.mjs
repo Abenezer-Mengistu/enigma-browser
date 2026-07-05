@@ -34,7 +34,20 @@ function hasInstallerAssets(assets) {
 }
 
 async function resolvePublishedVersion() {
-  for (let attempt = 0; attempt < 12; attempt++) {
+  const forcedTag = normalizeTag(process.env.RELEASE_TAG);
+  if (forcedTag) {
+    for (let attempt = 0; attempt < 24; attempt++) {
+      const release = await ghFetch(`/releases/tags/${forcedTag}`);
+      if (release?.assets && hasInstallerAssets(release.assets)) {
+        const version = forcedTag.replace(/^v/i, '');
+        return { version, tag: forcedTag, assets: release.assets };
+      }
+      if (attempt < 23) await new Promise(r => setTimeout(r, 10000));
+    }
+    console.warn(`[manifest] Forced tag ${forcedTag} has no installer assets yet — falling back to /releases/latest`);
+  }
+
+  for (let attempt = 0; attempt < 24; attempt++) {
     const latest = await ghFetch('/releases/latest');
     if (latest?.tag_name) {
       const version = String(latest.tag_name).replace(/^v/i, '');
@@ -43,7 +56,7 @@ async function resolvePublishedVersion() {
         return { version, tag: latest.tag_name, assets };
       }
     }
-    if (attempt < 11) await new Promise(r => setTimeout(r, 5000));
+    if (attempt < 23) await new Promise(r => setTimeout(r, 10000));
   }
 
   const pkgVersion = pkg.version;
@@ -52,6 +65,12 @@ async function resolvePublishedVersion() {
     return { version: pkgVersion, tag: `v${pkgVersion}`, assets: pkgAssets };
   }
   return { version: pkgVersion, tag: `v${pkgVersion}`, assets: pkgAssets || [] };
+}
+
+function normalizeTag(raw) {
+  if (!raw) return null;
+  const t = String(raw).replace(/^refs\/tags\//, '').trim();
+  return t.startsWith('v') ? t : `v${t}`;
 }
 
 function tagDownloadUrl(tag, filename) {

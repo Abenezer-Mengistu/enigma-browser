@@ -1,12 +1,12 @@
 {
   "name": "Enigma",
-  "version": "3.0.2",
-  "tag": "v3.0.2",
+  "version": "3.0.4",
+  "tag": "v3.0.4",
   "repository": "https://github.com/Abenezer-Mengistu/enigma-browser",
-  "releasePage": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v3.0.2",
+  "releasePage": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/tag/v3.0.4",
   "updated": "2026-07-05",
-  "downloadCount": 75,
-  "downloadCountUpdated": "2026-07-05T12:07:05.075Z",
+  "downloadCount": 78,
+  "downloadCountUpdated": "2026-07-05T12:37:25.727Z",
   "platforms": {
     "windows": {
       "id": "windows",
@@ -17,14 +17,14 @@
       "primary": {
         "label": "Installer (.exe)",
         "description": "Recommended — creates Desktop & Start Menu shortcuts",
-        "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.2/Enigma-Setup-3.0.2.exe",
-        "filename": "Enigma-Setup-3.0.2.exe"
+        "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.4/Enigma-Setup-3.0.4.exe",
+        "filename": "Enigma-Setup-3.0.4.exe"
       },
       "alternate": {
         "label": "Portable (.exe)",
         "description": "No install — run from any folder or USB drive",
-        "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.2/Enigma-Portable-3.0.2.exe",
-        "filename": "Enigma-Portable-3.0.2.exe"
+        "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.4/Enigma-Portable-3.0.4.exe",
+        "filename": "Enigma-Portable-3.0.4.exe"
       },
       "install": [
         "Download Enigma-Setup and run the installer.",
@@ -43,15 +43,15 @@
         {
           "label": "Apple Silicon (M1/M2/M3/M4)",
           "arch": "arm64",
-          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.2/Enigma-3.0.2-mac-arm64.zip",
-          "filename": "Enigma-3.0.2-mac-arm64.zip",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.4/Enigma-3.0.4-mac-arm64.zip",
+          "filename": "Enigma-3.0.4-mac-arm64.zip",
           "format": "zip"
         },
         {
           "label": "Intel Mac",
           "arch": "x64",
-          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.2/Enigma-3.0.2-mac-x64.zip",
-          "filename": "Enigma-3.0.2-mac-x64.zip",
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.4/Enigma-3.0.4-mac-x64.zip",
+          "filename": "Enigma-3.0.4-mac-x64.zip",
           "format": "zip"
         }
       ],
@@ -72,20 +72,20 @@
         {
           "label": "AppImage (universal)",
           "format": "appimage",
-          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.2/Enigma-3.0.2-linux-x86_64.AppImage",
-          "filename": "Enigma-3.0.2-linux-x86_64.AppImage"
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.4/Enigma-3.0.4-linux-x86_64.AppImage",
+          "filename": "Enigma-3.0.4-linux-x86_64.AppImage"
         },
         {
           "label": "Debian / Ubuntu (.deb)",
           "format": "deb",
-          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.2/Enigma-3.0.2-linux-amd64.deb",
-          "filename": "Enigma-3.0.2-linux-amd64.deb"
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.4/Enigma-3.0.4-linux-amd64.deb",
+          "filename": "Enigma-3.0.4-linux-amd64.deb"
         },
         {
           "label": "Fedora / RHEL (.rpm)",
           "format": "rpm",
-          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.2/Enigma-3.0.2-linux-x86_64.rpm",
-          "filename": "Enigma-3.0.2-linux-x86_64.rpm"
+          "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.4/Enigma-3.0.4-linux-x86_64.rpm",
+          "filename": "Enigma-3.0.4-linux-x86_64.rpm"
         }
       ],
       "install": [
@@ -129,8 +129,8 @@
       "note": "Use the Linux AppImage via Linuxulator, or build from source.",
       "primary": {
         "label": "Linux AppImage",
-        "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.2/Enigma-3.0.2-linux-x86_64.AppImage",
-        "filename": "Enigma-3.0.2-linux-x86_64.AppImage"
+        "url": "https://github.com/Abenezer-Mengistu/enigma-browser/releases/download/v3.0.4/Enigma-3.0.4-linux-x86_64.AppImage",
+        "filename": "Enigma-3.0.4-linux-x86_64.AppImage"
       },
       "install": [
         "Enable Linux binary compatibility on FreeBSD.",

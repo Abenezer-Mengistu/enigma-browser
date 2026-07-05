@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
   <title>Enigma — Download the Browser</title>
   <meta name="description" content="Download Enigma, a fast multi-session desktop browser for Windows, macOS, Linux, and Unix.">
   <link rel="icon" href="assets/icons/icon_32.png" type="image/png">
@@ -1048,6 +1050,95 @@
         el.classList.remove('loading');
       }
 
+      function compareVersion(a, b) {
+        const pa = String(a || '').replace(/^v/i, '').split('.').map(Number);
+        const pb = String(b || '').replace(/^v/i, '').split('.').map(Number);
+        for (let i = 0; i < 3; i++) {
+          if ((pa[i] || 0) > (pb[i] || 0)) return 1;
+          if ((pa[i] || 0) < (pb[i] || 0)) return -1;
+        }
+        return 0;
+      }
+
+      function patchManifestFromRelease(data, release) {
+        const tag = release.tag_name;
+        const version = tag.replace(/^v/i, '');
+        const assets = release.assets || [];
+        data.version = version;
+        data.tag = tag;
+        data.updated = (release.published_at || '').slice(0, 10) || data.updated;
+        data.releasePage = release.html_url || data.releasePage;
+        data.livePatched = true;
+
+        const setup = assets.find(function (a) { return /^Enigma-Setup-.*\.exe$/i.test(a.name); });
+        const portable = assets.find(function (a) { return /^Enigma-Portable-.*\.exe$/i.test(a.name); });
+        if (data.platforms && data.platforms.windows) {
+          if (setup) {
+            data.platforms.windows.primary.url = setup.browser_download_url;
+            data.platforms.windows.primary.filename = setup.name;
+          }
+          if (portable) {
+            data.platforms.windows.alternate.url = portable.browser_download_url;
+            data.platforms.windows.alternate.filename = portable.name;
+          }
+        }
+        if (data.platforms && data.platforms.macos && data.platforms.macos.variants) {
+          data.platforms.macos.variants.forEach(function (v) {
+            var re = new RegExp('Enigma-[\\d.]+-mac-' + v.arch + '\\.(zip|dmg)$', 'i');
+            var hit = assets.find(function (a) { return re.test(a.name); });
+            if (hit) { v.url = hit.browser_download_url; v.filename = hit.name; }
+          });
+        }
+        if (data.platforms && data.platforms.linux && data.platforms.linux.variants) {
+          var patterns = {
+            appimage: /Enigma-.*-linux-x86_64\.AppImage$/i,
+            deb: /Enigma-.*-linux-amd64\.deb$/i,
+            rpm: /Enigma-.*-linux-x86_64\.rpm$/i,
+          };
+          data.platforms.linux.variants.forEach(function (v) {
+            var re = patterns[v.format];
+            var hit = re && assets.find(function (a) { return re.test(a.name); });
+            if (hit) { v.url = hit.browser_download_url; v.filename = hit.name; }
+          });
+        }
+        if (data.platforms && data.platforms.freebsd && data.platforms.freebsd.primary) {
+          var appimage = assets.find(function (a) { return /\.AppImage$/i.test(a.name); });
+          if (appimage) {
+            data.platforms.freebsd.primary.url = appimage.browser_download_url;
+            data.platforms.freebsd.primary.filename = appimage.name;
+          }
+        }
+        return data;
+      }
+
+      function fetchLatestRelease() {
+        return fetch('https://api.github.com/repos/' + REPO + '/releases/latest', {
+          headers: { Accept: 'application/vnd.github+json' },
+          cache: 'no-store',
+        }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+      }
+
+      function loadManifest() {
+        return Promise.all([
+          fetch('downloads.json?v=' + Date.now(), { cache: 'no-store' })
+            .then(function (r) { if (!r.ok) throw new Error(); return r.json(); }),
+          fetchLatestRelease(),
+        ]).then(function (results) {
+          var data = results[0];
+          var latest = results[1];
+          if (latest && latest.tag_name) {
+            var liveVersion = latest.tag_name.replace(/^v/i, '');
+            var hasExe = (latest.assets || []).some(function (a) {
+              return /^Enigma-Setup-.*\.exe$/i.test(a.name);
+            });
+            if (hasExe && compareVersion(liveVersion, data.version) > 0) {
+              data = patchManifestFromRelease(data, latest);
+            }
+          }
+          applyManifest(data);
+        });
+      }
+
       function loadDownloadCount(fallback) {
         fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=100')
           .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
@@ -1104,10 +1195,7 @@
         loadDownloadCount(typeof data.downloadCount === 'number' ? data.downloadCount : null);
       }
 
-      fetch('downloads.json?v=' + Date.now(), { cache: 'no-store' })
-        .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
-        .then(applyManifest)
-        .catch(function () {
+      loadManifest().catch(function () {
           document.getElementById('detected-label').textContent = 'Use GitHub Releases';
           document.getElementById('version-line').textContent = '';
           document.getElementById('stat-version').textContent = '—';

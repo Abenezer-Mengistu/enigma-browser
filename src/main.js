@@ -222,6 +222,7 @@ function seedUserFiles(userId, opts = {}) {
         partition: null,
         templateId: starterSession.id,
         privacy: starterSession.defaults || {},
+        searchEngine: starterSession.defaults?.searchEngine || settingsOverride.searchEngine || DEFAULT_SETTINGS.searchEngine,
       });
       session.tabsByPid[sid] = [];
       session.activeTid[sid] = null;
@@ -336,6 +337,8 @@ const DEFAULT_SETTINGS = {
   theme: 'dark',
   showClock: true,
   compactTabs: false,
+  verticalTabs: false,
+  burnEphemeralOnQuit: false,
   blockTrackers: true,
   httpsOnly: false,
   doNotTrack: true,
@@ -1457,6 +1460,12 @@ ipcMain.handle('context-menu', (e, p) => {
     items.push(
       { label: 'Open image in new tab', click: () => send('open-link', p.srcURL) },
       { label: 'Copy image address', click: () => clipboard.writeText(p.srcURL) },
+      { type: 'separator' },
+    );
+  }
+  if (p.mediaType === 'video') {
+    items.push(
+      { label: 'Picture in Picture', click: () => send('cmd', 'pip') },
       { type: 'separator' },
     );
   }

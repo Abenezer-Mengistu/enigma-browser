@@ -378,6 +378,46 @@ html.compact-tabs .up-dot{width:6px;height:6px}
 html.compact-tabs .sp-meta{font-size:8px}
 html.compact-tabs .userrow{max-width:42%}
 
+/* Tab groups */
+.tab-group-h{
+  display:flex;align-items:center;gap:6px;padding:4px 10px;margin:2px 0;
+  border-radius:8px;cursor:pointer;user-select:none;flex-shrink:0;
+  font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;
+  background:rgba(255,255,255,.03);border:1px solid var(--b1);min-width:120px;
+}
+.tab-group-h:hover{background:rgba(255,255,255,.06);color:var(--t1)}
+.tab-group-dot{width:8px;height:8px;border-radius:50%;background:var(--grp-color,var(--acc));flex-shrink:0;box-shadow:0 0 8px var(--grp-color,var(--acc))}
+.tab-group-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab-group-count{font-size:9px;color:var(--t4);font-weight:600;padding:1px 5px;border-radius:999px;background:var(--s3)}
+.tab-group-chev{font-size:8px;color:var(--t3);width:10px;flex-shrink:0}
+.tab.in-group{margin-left:8px;border-left:2px solid var(--grp-color,transparent)}
+
+/* Vertical tabs layout */
+.vtab-sidebar{display:none;flex-shrink:0;width:220px;min-width:180px;max-width:280px;
+  background:linear-gradient(180deg,var(--glass),rgba(10,8,20,.6));
+  border-right:1px solid var(--b2);overflow:hidden;flex-direction:column;
+  backdrop-filter:blur(var(--chrome-blur)) saturate(1.3);-webkit-backdrop-filter:blur(var(--chrome-blur)) saturate(1.3)}
+.stage-main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
+html.vertical-tabs .vtab-sidebar{display:flex}
+html.vertical-tabs .stage{flex-direction:row}
+html.vertical-tabs .chrome-tabs{display:none}
+html.vertical-tabs .vtab-sidebar .tabbar{
+  flex:1;flex-direction:column;align-items:stretch;overflow-y:auto;overflow-x:hidden;
+  height:auto;padding:8px 6px;gap:3px;
+}
+html.vertical-tabs .vtab-sidebar .tab{
+  max-width:none;width:100%;min-width:0;border-radius:var(--tab-r);height:var(--tab-item-h);
+  border-bottom:1px solid transparent;
+}
+html.vertical-tabs .vtab-sidebar .tab.act{
+  border-radius:var(--tab-r);
+  box-shadow:inset 3px 0 0 var(--acc),0 0 16px rgba(124,58,237,.12);
+}
+html.vertical-tabs .vtab-sidebar .tab.act::before{display:none}
+html.vertical-tabs .vtab-sidebar .tab.act::after{display:none}
+html.vertical-tabs .vtab-sidebar .tab-group-h{width:100%;min-width:0;text-transform:none;font-size:11px}
+html.vertical-tabs .vtab-sidebar .add-tab{width:100%;justify-content:center;margin:4px 0 0;border-radius:var(--tab-r)}
+
 /* ═══ TABBAR ═══ */
 .tabbar{
   flex:1;min-width:0;height:var(--tab-h);background:transparent;
@@ -1331,7 +1371,7 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
       <div class="chrome-divider" aria-hidden="true"></div>
       <div class="sessionbar" id="sstrip" aria-label="Sessions"></div>
     </div>
-    <div class="chrome-tabs">
+    <div class="chrome-tabs" id="chrome-tab-slot">
       <div class="tabbar" id="tabbar" aria-label="Pages"></div>
     </div>
 
@@ -1395,6 +1435,8 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
 
   <!-- STAGE (content + side panels) -->
   <div class="stage" id="stage">
+  <aside class="vtab-sidebar" id="vtab-sidebar" aria-label="Vertical tabs"><div class="vtab-sidebar-inner" id="vtab-sidebar-inner"></div></aside>
+  <div class="stage-main">
   <div class="content" id="content">
     <div class="mobile-frame" id="mobile-frame" aria-hidden="true">
       <div class="mobile-frame-notch" id="mobile-frame-notch"></div>
@@ -1538,6 +1580,7 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
   <div class="notes-hint">Load unpacked Chrome extensions (Manifest V2/V3). Extensions apply to all sessions for this user.</div>
   <div class="pb" id="ext-body"><div class="pempty">No extensions installed yet.</div></div>
 </div>
+  </div><!-- /stage-main -->
   </div><!-- /stage -->
 
   <!-- STATUS BAR -->
@@ -1627,6 +1670,7 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
     <div>
       <div class="m-label">Container template</div>
       <div class="tpl-grid" id="tpl-grid"></div>
+      <div class="m-sub" id="m-engine-hint" style="margin-top:4px"></div>
     </div>
     <div>
       <div class="m-label">Session name</div>
@@ -1673,6 +1717,23 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
     <div class="sd-stat"><span>Cache size</span><b id="sd-cache">—</b></div>
     <div class="sd-stat"><span>Total storage</span><b id="sd-storage">—</b></div>
     <div class="sd-stat"><span>Filter rules active</span><b id="sd-rules">0</b></div>
+    <div>
+      <div class="m-label">Search engine</div>
+      <select class="s-sel" id="sd-engine" style="width:100%" onchange="B.setSessionSearchEngine(this.value)"></select>
+      <div class="m-sub" style="margin-top:4px">Overrides the global default for this container only</div>
+    </div>
+    <div>
+      <div class="m-label">Scheduled cleanup</div>
+      <select class="s-sel" id="sd-cleanup-mode" style="width:100%;margin-bottom:6px" onchange="B.setSessionCleanupMode(this.value)">
+        <option value="off">Manual only</option>
+        <option value="idle">Burn after idle period</option>
+        <option value="onQuit">Burn on browser quit</option>
+      </select>
+      <div id="sd-cleanup-days-row" style="display:none;align-items:center;gap:6px">
+        <input type="number" class="s-inp" id="sd-cleanup-days" min="1" max="365" value="7" style="width:72px" onchange="B.setSessionCleanupDays(+this.value)"/>
+        <span class="m-sub">days without use</span>
+      </div>
+    </div>
     <div>
       <div class="m-label">Sites with cookies</div>
       <div class="sd-origins" id="sd-origins"><span class="sd-tag">None yet</span></div>
@@ -1765,6 +1826,7 @@ const THEME_LIST = [
 ];
 const THEME_CYCLE = THEME_LIST.map(t => t[0]);
 const COLORS = ['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4','#84cc16','#6366f1','#f97316'];
+const GROUP_COLORS = ['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16'];
 const USER_AVATARS = ['👤','🧑','👩','👨','🧒','🦊','🐱','🐼','🌟','🚀','💼','🎮','📚','🎧','☕','🌿'];
 const PRIVACY_PRESETS = [
   { id: 'balanced', label: 'Balanced', hint: 'Trackers blocked, fingerprint & WebRTC protection on.' },
@@ -1858,6 +1920,7 @@ const MORE_MENU = [
   { label: 'Page', items: [
     { id: 'copy-url', icon: 'link', label: 'Copy URL', key: 'Ctrl+⇧+C' },
     { id: 'copy-title', icon: 'text', label: 'Copy title' },
+    { id: 'pip', icon: 'pip', label: 'Picture in Picture' },
     { id: 'find', icon: 'search', label: 'Find on page', key: 'Ctrl+F' },
     { id: 'print', icon: 'print', label: 'Print', key: 'Ctrl+P' },
     { id: 'screenshot', icon: 'camera', label: 'Screenshot' },
@@ -1900,6 +1963,7 @@ const CHROME_ICO = {
   desktop: '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
   mobile: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
   book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>',
+  pip: '<rect x="3" y="5" width="14" height="10" rx="1.5"/><rect x="11" y="11" width="8" height="6" rx="1" fill="currentColor" stroke="none" opacity=".35"/>',
 };
 function chromeIco(name) {
   const body = CHROME_ICO[name];
@@ -1929,9 +1993,10 @@ const B = (() => {
   let newtabs   = {};
   let bookmarks = [];
   let history   = [];
-  let settings  = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,closeTabsOnExit:false,rememberCloseTabsChoice:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,sessionRules:{}};
+  let settings  = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,verticalTabs:false,burnEphemeralOnQuit:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,closeTabsOnExit:false,rememberCloseTabsChoice:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,sessionRules:{}};
   let privacyDoc = { filterLists: true, fingerprintProtection: true, webrtcProtection: true, mixedContentBlock: false, siteExceptions: {} };
   let sessionMeta = {};
+  let tabGroupsByPid = {};
   let obFinishMode = 'account';
   let obBrowsers = [];
   let sessionTemplates = [];
@@ -1997,6 +2062,7 @@ const B = (() => {
       'toggle-pin': () => togglePin(),
       'copy-url': () => copyPageUrl(),
       'copy-title': () => copyPageTitle(),
+      'pip': () => enterPictureInPicture(),
       'find': () => openFind(),
       'print': () => printPage(),
       'screenshot': () => screenshotPage(),
@@ -2080,7 +2146,7 @@ const B = (() => {
       'zoom-in': zoomIn, 'zoom-out': zoomOut, 'zoom-reset': resetZoom,
       'back': goBack, 'fwd': goFwd, 'print': printPage,
       'new-incognito': openProfileModal, 'devtools': openDevTools,
-      'view-source': viewSource, 'reopen-tab': reopenClosedTab,
+      'view-source': viewSource, 'reopen-tab': reopenClosedTab, 'pip': enterPictureInPicture,
     };
     map[cmd]?.();
   });
@@ -2174,11 +2240,56 @@ const B = (() => {
     return !!h && (h.includes('.') || isLocalHost(h));
   }
 
-  function searchEngineFn(engine = settings.searchEngine) {
-    return ENGINES[engine] || ENGINES.google;
+  function searchEngineFn(pid = activePid) {
+    return ENGINES[sessionSearchEngine(pid)] || ENGINES.google;
+  }
+  function sessionSearchEngine(pid = activePid) {
+    const p = prof(pid);
+    if (!p) return settings.searchEngine || 'google';
+    if (p.searchEngine) return p.searchEngine;
+    const tplEng = p.privacy?.searchEngine;
+    if (tplEng && p.templateId && p.templateId !== 'custom') return tplEng;
+    return settings.searchEngine || 'google';
+  }
+  function engineLabel(e) {
+    const k = e || 'google';
+    return k[0].toUpperCase() + k.slice(1);
   }
 
-  function normUrl(raw) {
+  function tabGroups(pid = activePid) {
+    if (!tabGroupsByPid[pid]) tabGroupsByPid[pid] = [];
+    return tabGroupsByPid[pid];
+  }
+  function mkGroupId() { return 'grp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6); }
+  function createTabGroup(name, pid = activePid) {
+    const gs = tabGroups(pid);
+    const g = { id: mkGroupId(), name: (name || 'Group').slice(0, 24), color: GROUP_COLORS[gs.length % GROUP_COLORS.length], collapsed: false };
+    gs.push(g);
+    scheduleSessionSave();
+    renderTabBar();
+    return g;
+  }
+  function toggleGroupCollapsed(groupId, pid = activePid) {
+    const g = tabGroups(pid).find(x => x.id === groupId);
+    if (!g) return;
+    g.collapsed = !g.collapsed;
+    renderTabBar();
+    scheduleSessionSave();
+  }
+  function assignTabToGroup(tabId, groupId, pid = activePid) {
+    const t = tabRef(tabId, pid);
+    if (!t) return;
+    if (groupId) t.groupId = groupId;
+    else delete t.groupId;
+    renderTabBar();
+    scheduleSessionSave();
+  }
+  function pruneEmptyGroups(pid = activePid) {
+    const gs = tabGroups(pid);
+    tabGroupsByPid[pid] = gs.filter(g => tabs(pid).some(t => t.groupId === g.id));
+  }
+
+  function normUrl(raw, pid = activePid) {
     raw=(raw||'').trim();
     if (!raw) return '';
     if (/^(https?|view-source|blob):/.test(raw)) {
@@ -2189,7 +2300,7 @@ const B = (() => {
         try {
           const u = new URL(raw);
           if (!isValidHttpHost(u.hostname)) {
-            return searchEngineFn()(raw.replace(/^https?:\/\//, ''));
+            return searchEngineFn(pid)(raw.replace(/^https?:\/\//, ''));
           }
         } catch { return ''; }
       }
@@ -2198,7 +2309,7 @@ const B = (() => {
     if (/^(file|ftp|javascript|data|about):/.test(raw)) return '';
     if (/^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)\d/.test(raw)) return 'http://'+raw;
     if (/^[\w.-]+\.\w{2,}(\/|$|\?)/.test(raw) && !raw.includes(' ')) return 'https://'+raw;
-    return searchEngineFn()(raw);
+    return searchEngineFn(pid)(raw);
   }
 
   function fav(url) { try{return 'https://www.google.com/s2/favicons?domain='+new URL(url).hostname+'&sz=32';}catch{return null;} }
@@ -2407,14 +2518,15 @@ const B = (() => {
     });
   }
 
-  function buildTabElement(t, p, activeTidVal) {
+  function buildTabElement(t, p, activeTidVal, groupColor) {
     const act = t.id === activeTidVal;
     const isPinned = pinned.has(metaKey(activePid, t.id));
     const isMuted = muted.has(metaKey(activePid, t.id));
     const el = document.createElement('div');
-    el.className = 'tab' + (act ? ' act' : '') + (isPinned ? ' pinned' : '');
+    el.className = 'tab' + (act ? ' act' : '') + (isPinned ? ' pinned' : '') + (t.groupId ? ' in-group' : '');
     el.id = 'tabdom_' + t.id;
     el.dataset.tabid = t.id;
+    if (groupColor) el.style.setProperty('--grp-color', groupColor);
     if (isPinned && t.title) el.title = t.title;
 
     const fav = document.createElement('span');
@@ -2458,6 +2570,17 @@ const B = (() => {
     el.addEventListener('mouseenter', e => showTabPreview(e, t.id));
     el.addEventListener('mouseleave', () => hideTabPreview());
 
+    return el;
+  }
+
+  function buildGroupHeader(g, pid) {
+    const el = document.createElement('div');
+    el.className = 'tab-group-h' + (g.collapsed ? ' collapsed' : '');
+    el.dataset.groupId = g.id;
+    el.style.setProperty('--grp-color', g.color);
+    const count = tabs(pid).filter(t => t.groupId === g.id).length;
+    el.innerHTML = `<span class="tab-group-chev">${g.collapsed ? '▸' : '▾'}</span><span class="tab-group-dot"></span><span class="tab-group-name">${esc(g.name)}</span><span class="tab-group-count">${count}</span>`;
+    el.addEventListener('click', () => toggleGroupCollapsed(g.id, pid));
     return el;
   }
 
@@ -3554,15 +3677,51 @@ const B = (() => {
     return (n / 1048576).toFixed(1) + ' MB';
   }
 
+  async function enterPictureInPicture() {
+    closeMenu();
+    const wv = pageWebview('Open a page with video first');
+    if (!wv) return;
+    try {
+      const ok = await wv.executeJavaScript(`(async () => {
+        const v = document.querySelector('video:not([disablePictureInPicture])');
+        if (!v) return false;
+        try {
+          if (document.pictureInPictureElement) await document.exitPictureInPicture();
+          await v.requestPictureInPicture();
+          return true;
+        } catch { return false; }
+      })()`, true);
+      toast(ok ? '▣ Picture in Picture' : 'No PiP-capable video on this page');
+    } catch {
+      toast('Picture in Picture not available on this page');
+    }
+  }
+
   async function openSessionDashboard(pid) {
     const p = prof(pid || activePid);
     if (!p) return;
     dashboardPid = p.id;
     $('sd-title').textContent = p.name;
     $('sd-sub').textContent = p.templateId && p.templateId !== 'custom'
-      ? `${p.templateId} container · isolated storage`
-      : 'Session container · isolated storage';
+      ? `${p.templateId} container · ${engineLabel(sessionSearchEngine(p.id))} search`
+      : `${engineLabel(sessionSearchEngine(p.id))} search · isolated storage`;
     $('sess-dash').classList.add('show');
+    const engEl = $('sd-engine');
+    if (engEl) {
+      engEl.innerHTML = `<option value="default">Default (${engineLabel(settings.searchEngine)})</option>`
+        + Object.keys(ENGINES).map(e => `<option value="${e}">${engineLabel(e)}</option>`).join('');
+      engEl.value = p.searchEngine || 'default';
+    }
+    const cleanup = p.cleanup || {};
+    const modeEl = $('sd-cleanup-mode');
+    if (modeEl) {
+      modeEl.value = cleanup.mode || 'off';
+      modeEl.disabled = p.id === 'default';
+    }
+    const daysRow = $('sd-cleanup-days-row');
+    const daysInp = $('sd-cleanup-days');
+    if (daysRow) daysRow.style.display = cleanup.mode === 'idle' ? 'flex' : 'none';
+    if (daysInp) daysInp.value = String(cleanup.days || 7);
     const stats = await eAPI.sessionStats(p.id, !!p.ephemeral).catch(() => ({}));
     const blocked = stats.blocked ?? sessionBlockedByPid[p.id] ?? 0;
     $('sd-blocked').textContent = String(blocked);
@@ -3578,9 +3737,83 @@ const B = (() => {
       : '<span class="sd-tag">None yet</span>';
   }
 
+  function setSessionSearchEngine(val) {
+    const p = prof(dashboardPid || activePid);
+    if (!p) return;
+    p.searchEngine = val === 'default' ? null : val;
+    scheduleSessionSave();
+    renderSessionBar();
+    toast(`🔍 ${p.name}: ${val === 'default' ? 'default (' + engineLabel(settings.searchEngine) + ')' : engineLabel(val)}`);
+  }
+  function setSessionCleanupMode(mode) {
+    const p = prof(dashboardPid || activePid);
+    if (!p || p.id === 'default') return;
+    if (mode === 'off') delete p.cleanup;
+    else if (mode === 'idle') p.cleanup = { mode: 'idle', days: +( $('sd-cleanup-days')?.value || 7) };
+    else p.cleanup = { mode: 'onQuit' };
+    scheduleSessionSave();
+    const daysRow = $('sd-cleanup-days-row');
+    if (daysRow) daysRow.style.display = mode === 'idle' ? 'flex' : 'none';
+    toast(mode === 'off' ? 'Cleanup: manual only' : mode === 'idle' ? `Cleanup: burn after ${p.cleanup?.days || 7} idle days` : 'Cleanup: burn on quit');
+  }
+  function setSessionCleanupDays(days) {
+    const p = prof(dashboardPid || activePid);
+    if (!p?.cleanup || p.cleanup.mode !== 'idle') return;
+    p.cleanup.days = Math.max(1, Math.min(365, days || 7));
+    scheduleSessionSave();
+  }
+
   function closeSessionDashboard() {
     $('sess-dash')?.classList.remove('show');
     dashboardPid = null;
+  }
+
+  async function burnSessionQuiet(pid) {
+    const p = prof(pid);
+    if (!p || p.id === 'default') return;
+    tabs(pid).forEach(t => destroyWV(t.id, pid));
+    tabsByPid[pid] = [];
+    activeTid[pid] = null;
+    delete tabGroupsByPid[pid];
+    await eAPI.sessionBurn(pid, !!p.ephemeral);
+    sessionBlockedByPid[pid] = 0;
+    sessionMeta[pid] = { lastUsed: Date.now() };
+    ensureSessionTabs(pid);
+  }
+
+  async function runScheduledSessionCleanup() {
+    const now = Date.now();
+    for (const p of profiles) {
+      if (p.id === 'default') continue;
+      const c = p.cleanup || {};
+      if (c.mode !== 'idle' || !(c.days > 0)) continue;
+      const last = sessionMeta[p.id]?.lastUsed || 0;
+      if (!last) continue;
+      if (now - last >= c.days * 86400000) {
+        await burnSessionQuiet(p.id);
+        toast(`🔥 "${p.name}" burned — ${c.days} days idle`);
+        if (activePid === p.id) await renderAll();
+        else { renderSessionBar(); scheduleSessionSave(); }
+      }
+    }
+  }
+
+  async function burnScheduledSessionsOnQuit() {
+    const jobs = [];
+    if (settings.burnEphemeralOnQuit) {
+      for (const p of profiles) {
+        if (p.ephemeral) jobs.push(eAPI.sessionBurn(p.id, true));
+      }
+    }
+    for (const p of profiles) {
+      if (p.id === 'default') continue;
+      if (p.cleanup?.mode === 'onQuit') {
+        tabs(p.id).forEach(t => destroyWV(t.id, p.id));
+        tabsByPid[p.id] = [];
+        jobs.push(eAPI.sessionBurn(p.id, !!p.ephemeral));
+      }
+    }
+    if (jobs.length) await Promise.all(jobs);
   }
 
   async function burnSession() {
@@ -3646,6 +3879,7 @@ const B = (() => {
       settings.rememberCloseTabsChoice = true;
       await eAPI.settingsSave(settings);
     }
+    await burnScheduledSessionsOnQuit();
     clearTabsForExit();
     saveSessionState();
     eAPI.confirmWindowClose(true);
@@ -3653,6 +3887,7 @@ const B = (() => {
 
   async function handleWindowCloseRequest() {
     if (settings.closeTabsOnExit === true) {
+      await burnScheduledSessionsOnQuit();
       clearTabsForExit();
       saveSessionState();
       eAPI.confirmWindowClose(true);
@@ -3718,15 +3953,22 @@ const B = (() => {
       const p = profiles.find(x => x.id === pid);
       if (p?.ephemeral) continue;
       if (!Array.isArray(list) || !list.length) continue;
-      snap[pid] = list.map(t => ({ id: t.id, title: t.title, url: t.url, favicon: t.favicon }));
+      snap[pid] = list.map(t => ({ id: t.id, title: t.title, url: t.url, favicon: t.favicon, groupId: t.groupId || undefined }));
       if (activeTid[pid]) savedActiveTid[pid] = activeTid[pid];
+    }
+    const savedGroups = {};
+    for (const [pid, gs] of Object.entries(tabGroupsByPid)) {
+      const p = profiles.find(x => x.id === pid);
+      if (p?.ephemeral || !Array.isArray(gs) || !gs.length) continue;
+      savedGroups[pid] = gs.map(g => ({ id: g.id, name: g.name, color: g.color, collapsed: !!g.collapsed }));
     }
     eAPI.sessionSave({
       profiles: profiles.map(p => ({
         id: p.id, name: p.name, color: p.color, isIncognito: p.isIncognito, ephemeral: p.ephemeral,
         partition: p.partition, templateId: p.templateId, proxy: p.proxy, privacy: p.privacy,
+        searchEngine: p.searchEngine || null, cleanup: p.cleanup || null,
       })),
-      activePid, tabsByPid: snap, activeTid: savedActiveTid, sessionMeta,
+      activePid, tabsByPid: snap, activeTid: savedActiveTid, sessionMeta, tabGroupsByPid: savedGroups,
     });
   }
 
@@ -3780,6 +4022,7 @@ const B = (() => {
       sanitizeTabsForProfile(p.id);
     }
     if (s.activePid && profiles.find(p => p.id === s.activePid)) activePid = s.activePid;
+    tabGroupsByPid = s.tabGroupsByPid && typeof s.tabGroupsByPid === 'object' ? { ...s.tabGroupsByPid } : {};
   }
 
   async function initSessionOnStartup(boot) {
@@ -3792,10 +4035,13 @@ const B = (() => {
     if (Array.isArray(s?.profiles) && s.profiles.length) {
       profiles = s.profiles.map(p => {
         const copy = { ...p };
-        delete copy.searchEngine;
+        if (!copy.searchEngine && copy.privacy?.searchEngine && copy.templateId && copy.templateId !== 'custom') {
+          copy.searchEngine = copy.privacy.searchEngine;
+        }
         return copy;
       });
       sessionMeta = s.sessionMeta && typeof s.sessionMeta === 'object' ? { ...s.sessionMeta } : {};
+      tabGroupsByPid = s.tabGroupsByPid && typeof s.tabGroupsByPid === 'object' ? { ...s.tabGroupsByPid } : {};
       for (const p of profiles) {
         if (!p.partition) await ensurePartition(p);
       }
@@ -3938,7 +4184,7 @@ const B = (() => {
     items.push({
       type: 'search', icon: '🔍',
       text: `Search for "<strong>${esc(q)}</strong>"`,
-      sub: esc(searchEngineFn()(q)),
+      sub: esc(searchEngineFn(activePid)(q)),
       url: null, q,
     });
     return items;
@@ -4429,6 +4675,14 @@ const B = (() => {
           <button class="tgl${settings.compactTabs?' on':''}" onclick="B.toggleSetting('compactTabs',this)"></button>
         </div>
         <div class="s-row">
+          <div class="s-lbl">Vertical tabs<div class="s-sub">Show tabs in a sidebar — great for many pages</div></div>
+          <button class="tgl${settings.verticalTabs?' on':''}" onclick="B.toggleSetting('verticalTabs',this)"></button>
+        </div>
+        <div class="s-row">
+          <div class="s-lbl">Burn ephemeral sessions on quit<div class="s-sub">Wipe in-memory sessions when you close Enigma</div></div>
+          <button class="tgl${settings.burnEphemeralOnQuit?' on':''}" onclick="B.toggleSetting('burnEphemeralOnQuit',this)"></button>
+        </div>
+        <div class="s-row">
           <div class="s-lbl">Restore tabs automatically<div class="s-sub">Reopen last pages on launch without asking</div></div>
           <button class="tgl${settings.restoreSession===true?' on':''}" onclick="B.toggleSetting('restoreSession',this)"></button>
         </div>
@@ -4444,7 +4698,7 @@ const B = (() => {
           <input class="s-inp" value="${esc(settings.homepage)}" onchange="B.saveSetting('homepage',this.value)"/>
         </div>
         <div class="s-row">
-          <div class="s-lbl">Search engine</div>
+          <div class="s-lbl">Search engine<div class="s-sub">Default for Main session and containers set to Default</div></div>
           <select class="s-sel" id="settings-engine" onchange="B.onSearchEngineChange(this.value)">
             ${Object.keys(ENGINES).map(e=>`<option value="${e}"${settings.searchEngine===e?' selected':''}>${e[0].toUpperCase()+e.slice(1)}</option>`).join('')}
           </select>
@@ -4477,7 +4731,7 @@ const B = (() => {
           <div class="s-row">
             <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
               <div style="width:9px;height:9px;border-radius:50%;background:${p.color};flex-shrink:0"></div>
-              <div class="s-lbl">${esc(p.name)}<div class="s-sub">${tabs(p.id).length} tab${tabs(p.id).length===1?'':'s'}${p.ephemeral?' · Ephemeral':''}${p.templateId&&p.templateId!=='custom'?' · '+esc(p.templateId):''}</div></div>
+              <div class="s-lbl">${esc(p.name)}<div class="s-sub">${tabs(p.id).length} tab${tabs(p.id).length===1?'':'s'}${p.ephemeral?' · Ephemeral':''}${p.templateId&&p.templateId!=='custom'?' · '+esc(p.templateId):''}${sessionSearchEngine(p.id)!==settings.searchEngine?' · 🔍 '+engineLabel(sessionSearchEngine(p.id)):''}${p.cleanup?.mode==='idle'?' · auto-burn '+p.cleanup.days+'d':p.cleanup?.mode==='onQuit'?' · burn on quit':''}</div></div>
             </div>
             <button class="btn btn-g" style="padding:4px 10px;font-size:11px" onclick="B.openSessionDashboard('${p.id}')">Dashboard</button>
             <button class="btn btn-r" style="padding:4px 10px;font-size:11px" onclick="B.removeProfile('${p.id}')">Close</button>
@@ -4751,6 +5005,21 @@ const B = (() => {
   function applyCompactTabs() {
     document.documentElement.classList.toggle('compact-tabs', !!settings.compactTabs);
   }
+  function applyVerticalTabs() {
+    const vertical = !!settings.verticalTabs;
+    document.documentElement.classList.toggle('vertical-tabs', vertical);
+    const bar = $('tabbar');
+    const hSlot = $('chrome-tab-slot');
+    const vSlot = $('vtab-sidebar-inner');
+    if (bar && hSlot && vSlot) {
+      if (vertical) {
+        if (bar.parentElement !== vSlot) vSlot.appendChild(bar);
+      } else if (bar.parentElement !== hSlot) {
+        hSlot.appendChild(bar);
+      }
+    }
+    reportTabbarBounds();
+  }
   function toggleSetting(key, btn) {
     settings[key]=!settings[key];
     btn.className='tgl'+(settings[key]?' on':'');
@@ -4760,6 +5029,7 @@ const B = (() => {
       toast(key==='httpsOnly'&&settings.httpsOnly?'🔒 HTTPS-Only enabled':'Settings updated');
     }
     if(key==='compactTabs') applyCompactTabs();
+    if(key==='verticalTabs') applyVerticalTabs();
   }
   async function saveSetting(key,val) {
     settings[key]=val;
@@ -4769,11 +5039,6 @@ const B = (() => {
     settings.searchEngine = engine;
     settings.homepage = homepageForEngine(engine);
     await eAPI.settingsSave(settings);
-    let clearedProfiles = false;
-    for (const p of profiles) {
-      if (p.searchEngine) { delete p.searchEngine; clearedProfiles = true; }
-    }
-    if (clearedProfiles) scheduleSessionSave();
     const homeInp = document.querySelector('#settings-body input[onchange*="homepage"]');
     if (homeInp) homeInp.value = settings.homepage;
   }
@@ -4829,7 +5094,7 @@ const B = (() => {
   }
 
   async function loadUserData() {
-    const defaults = { homepage:'https://google.com', searchEngine:'google', theme:'dark', showClock:true, compactTabs:false, blockTrackers:true, httpsOnly:false, doNotTrack:true, blockPopups:true, restoreSession:false };
+    const defaults = { homepage:'https://google.com', searchEngine:'google', theme:'dark', showClock:true, compactTabs:false, verticalTabs:false, burnEphemeralOnQuit:false, blockTrackers:true, httpsOnly:false, doNotTrack:true, blockPopups:true, restoreSession:false };
     [bookmarks, history, settings] = await Promise.all([
       eAPI.bmLoad().catch(() => []),
       eAPI.historyLoad().catch(() => []),
@@ -4846,6 +5111,7 @@ const B = (() => {
     await initSessionOnStartup();
     applyTheme(settings.theme || 'dark');
     applyCompactTabs();
+    applyVerticalTabs();
     mainUserPartition = await eAPI.userMainPartition();
   }
 
@@ -5045,6 +5311,11 @@ const B = (() => {
     const tpl = sessionTemplates.find(t => t.id === id);
     if (tpl?.color) selColor = tpl.color;
     if (tpl && tpl.id !== 'custom' && !$('m-name').value.trim()) $('m-name').value = tpl.name;
+    const hint = $('m-engine-hint');
+    if (hint) {
+      const eng = tpl?.defaults?.searchEngine;
+      hint.textContent = eng ? `Search engine: ${engineLabel(eng)} (set per container)` : '';
+    }
     renderTemplateGrid();
     renderSwatches();
   }
@@ -5062,6 +5333,7 @@ const B = (() => {
       id, name, color: selColor, isIncognito: true, ephemeral: ephem, partition: null,
       templateId: selectedTemplateId,
       proxy,
+      searchEngine: tpl.defaults?.searchEngine || null,
       privacy: { ...tpl.defaults },
     };
     profiles.push(p);
@@ -5250,6 +5522,8 @@ const B = (() => {
 
   function renderTabBar() {
     const p = prof(), ts = tabs(), tid = activeTid[activePid];
+    pruneEmptyGroups(activePid);
+    const groups = tabGroups(activePid);
     const sorted = [
       ...ts.filter(t => pinned.has(metaKey(activePid, t.id))),
       ...ts.filter(t => !pinned.has(metaKey(activePid, t.id))),
@@ -5257,7 +5531,16 @@ const B = (() => {
     const bar = $('tabbar');
     if (!bar) return;
     bar.replaceChildren();
-    sorted.forEach(t => bar.appendChild(buildTabElement(t, p, tid)));
+    const renderOne = t => {
+      const g = t.groupId && groups.find(x => x.id === t.groupId);
+      bar.appendChild(buildTabElement(t, p, tid, g?.color));
+    };
+    sorted.filter(t => !t.groupId).forEach(renderOne);
+    groups.forEach(g => {
+      bar.appendChild(buildGroupHeader(g, activePid));
+      if (!g.collapsed) sorted.filter(t => t.groupId === g.id).forEach(renderOne);
+    });
+    sorted.filter(t => t.groupId && !groups.find(g => g.id === t.groupId)).forEach(renderOne);
     const addBtn = document.createElement('button');
     addBtn.className = 'add-tab';
     addBtn.dataset.action = 'new-page';
@@ -5339,10 +5622,16 @@ const B = (() => {
     const m=document.createElement('div');
     m.id='tab-ctx'; m.className='cmenu show';
     m.style.top=e.clientY+'px'; m.style.left=Math.min(e.clientX,window.innerWidth-210)+'px';
+    const grps = tabGroups(activePid);
+    const tabInGroup = tabs(activePid).find(t => t.id === tid)?.groupId;
     m.innerHTML=`
       ${menuRow({ id: 'dupe-tab', icon: 'copy', label: 'Duplicate tab' })}
       ${menuRow({ id: isPinned ? 'unpin-tab' : 'pin-tab', icon: 'pin', label: isPinned ? 'Unpin tab' : 'Pin tab' }, ` data-tabid="${tid}"`)}
       ${menuRow({ id: isMuted ? 'unmute-tab' : 'mute-tab', icon: 'mute', label: isMuted ? 'Unmute tab' : 'Mute tab' }, ` data-tabid="${tid}"`)}
+      <div class="cm-sep"></div>
+      ${menuRow({ id: 'new-group-tab', icon: 'layers', label: 'Add to new group' }, ` data-tabid="${tid}"`)}
+      ${grps.length ? grps.map(g => menuRow({ id: 'move-group-tab', label: esc(g.name) }, ` data-gid="${g.id}" data-tabid="${tid}"`)).join('') : ''}
+      ${tabInGroup ? menuRow({ id: 'ungroup-tab', label: 'Remove from group' }, ` data-tabid="${tid}"`) : ''}
       <div class="cm-sep"></div>
       ${menuRow({ id: 'new-tab', icon: 'plus', label: 'New tab' })}
       ${menuRow({ id: 'reopen-tab', icon: 'reopen', label: 'Reopen closed tab' })}
@@ -5365,6 +5654,12 @@ const B = (() => {
       if (action === 'dupe-tab') dupeTab();
       else if (action === 'pin-tab' || action === 'unpin-tab') _pinTab(tabId);
       else if (action === 'mute-tab' || action === 'unmute-tab') _muteTab(tabId);
+      else if (action === 'new-group-tab') {
+        const n = prompt('Group name:', 'Group');
+        if (n !== null) { const g = createTabGroup((n.trim() || 'Group')); assignTabToGroup(tabId, g.id); }
+      }
+      else if (action === 'move-group-tab') assignTabToGroup(tabId, btn.dataset.gid);
+      else if (action === 'ungroup-tab') assignTabToGroup(tabId, null);
       else if (action === 'new-tab') addTab();
       else if (action === 'reopen-tab') reopenClosed();
       else if (action === 'close-other-tabs') closeOtherTabs(tabId);
@@ -5849,7 +6144,7 @@ const B = (() => {
     const windowBoot = await eAPI.getWindowBoot().catch(() => null);
     mainUserPartition = await eAPI.userMainPartition();
     renderUserStrip();
-    const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,closeTabsOnExit:false,rememberCloseTabsChoice:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,checkUpdates:true,autoInstallUpdates:false};
+    const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,verticalTabs:false,burnEphemeralOnQuit:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,closeTabsOnExit:false,rememberCloseTabsChoice:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,checkUpdates:true,autoInstallUpdates:false};
     try {
       [bookmarks, history, settings, chromiumVer, electronVer, blockedCount, privacyDoc, sessionTemplates, fpScript] = await Promise.all([
         eAPI.bmLoad().catch(() => []),
@@ -5880,6 +6175,7 @@ const B = (() => {
     await refreshOsTheme();
     applyTheme(settings.theme || 'dark');
     applyCompactTabs();
+    applyVerticalTabs();
     const bootDate = $('boot-date');
     if (bootDate) {
       const n = new Date();
@@ -5887,6 +6183,7 @@ const B = (() => {
       $('boot-clock').textContent = n.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     }
     await initSessionOnStartup(windowBoot);
+    await runScheduledSessionCleanup();
     if (settings.closeTabsOnExit && settings.restoreSession !== true) saveSessionState();
     for (const p of profiles) sanitizeTabsForProfile(p.id);
     for (const p of profiles) await sanitizeTabUrls(p.id);
@@ -5919,6 +6216,8 @@ const B = (() => {
     closeTab, switchTab, dupeTab, togglePin, toggleMute, _pinTab, _muteTab, reopenClosed,
     switchProfile, removeProfile, openProfileModal, closeModal, createProfile, _sc, toggleEphem, selectTemplate,
     openSessionDashboard, closeSessionDashboard, burnSession,
+    setSessionSearchEngine, setSessionCleanupMode, setSessionCleanupDays, enterPictureInPicture,
+    createTabGroup, assignTabToGroup,
     addSiteException, removeSiteException, exportVault, importVault,
     switchUser, removeUser, openUserModal, closeUserModal, createUser, _scUser, _scUserTheme, _scUserAvatar, _scUserPrivacy,
     showOnboarding, showOnboardingMain, showOnboardingSignIn, obNext, obBack,

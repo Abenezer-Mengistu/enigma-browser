@@ -17,6 +17,19 @@ const {
   loadExtensions, saveExtensions, readManifest, applyExtensionsToSession, removeExtensionsFromSession,
 } = require('./extensions');
 const { detectBrowsers, importFromBrowser, starterSessionsSeed } = require('./browser-import');
+const {
+  deriveLocalKey, loadPasswordDoc, savePasswordDoc, listForHost, listBySession,
+  upsertEntry, removeEntry, exportPlain, importPlain,
+} = require('./password-store');
+
+const SYNC_VAULT_NAME = 'enigma-vault.json';
+const DNS_PRESETS = {
+  cloudflare: ['https://cloudflare-dns.com/dns-query'],
+  quad9: ['https://dns.quad9.net/dns-query'],
+  adguard: ['https://dns.adguard-dns.com/dns-query'],
+};
+let syncFolderWatcher = null;
+let lastSyncFolderMtime = 0;
 
 app.setName('Enigma');
 if (process.platform === 'win32') app.setAppUserModelId('app.enigmabrowser');
@@ -353,6 +366,10 @@ const DEFAULT_SETTINGS = {
   checkUpdates: true,
   autoInstallUpdates: false,
   sessionRules: {},
+  secureDns: 'off',
+  secureDnsCustom: '',
+  syncFolder: '',
+  syncWatchFolder: false,
 };
 
 const sessionConfigs = new Map();
@@ -518,6 +535,101 @@ let blockedTrackerCount = 0;
 function getSettings(userId = activeUserId) {
   if (!userId) return { ...DEFAULT_SETTINGS };
   return { ...DEFAULT_SETTINGS, ...read(userPaths(userId).settings, {}) };
+}
+
+function pwKey(userId = activeUserId) {
+  return deriveLocalKey(userId, machineFingerprint());
+}
+
+function buildSyncPayload(userId = activeUserId) {
+  const paths = userPaths(userId);
+  const key = pwKey(userId);
+  const pwDoc = loadPasswordDoc(read, userDir, userId);
+  return {
+    bookmarks: read(paths.bookmarks, []),
+    settings: getSettings(userId),
+    privacy: getPrivacyDoc(userId),
+    sessions: read(paths.session, null),
+    passwords: exportPlain(pwDoc, key),
+  };
+}
+
+function applySyncImport(data, userId = activeUserId) {
+  const paths = userPaths(userId);
+  if (data.bookmarks) write(paths.bookmarks, data.bookmarks);
+  if (data.settings) {
+    appSettings = { ...DEFAULT_SETTINGS, ...data.settings };
+    write(paths.settings, appSettings);
+    applySecureDns(appSettings);
+    restartSyncFolderWatch(appSettings);
+  }
+  if (data.privacy) savePrivacyDoc(data.privacy, userId);
+  if (data.sessions) write(paths.session, data.sessions);
+  if (data.passwords) {
+    const key = pwKey(userId);
+    const pwDoc = loadPasswordDoc(read, userDir, userId);
+    importPlain(pwDoc, data.passwords, key);
+    savePasswordDoc(write, userDir, userId, pwDoc);
+  }
+}
+
+function applySecureDns(settings = getSettings()) {
+  try {
+    if (!settings.secureDns || settings.secureDns === 'off') {
+      app.configureHostResolver({ secureDnsMode: 'off' });
+      return;
+    }
+    let servers = DNS_PRESETS[settings.secureDns];
+    if (settings.secureDns === 'custom') {
+      const custom = String(settings.secureDnsCustom || '').trim();
+      if (!custom) {
+        app.configureHostResolver({ secureDnsMode: 'off' });
+        return;
+      }
+      servers = [custom.includes('://') ? custom : `https://${custom}`];
+    }
+    if (!servers?.length) {
+      app.configureHostResolver({ secureDnsMode: 'off' });
+      return;
+    }
+    app.configureHostResolver({
+      secureDnsMode: 'secure',
+      secureDnsServers: servers,
+    });
+  } catch (e) {
+    console.error('[secure-dns]', e);
+  }
+}
+
+function stopSyncFolderWatch() {
+  if (syncFolderWatcher) {
+    try { syncFolderWatcher.close(); } catch { /* ignore */ }
+    syncFolderWatcher = null;
+  }
+}
+
+function restartSyncFolderWatch(settings = getSettings()) {
+  stopSyncFolderWatch();
+  const folder = String(settings.syncFolder || '').trim();
+  if (!settings.syncWatchFolder || !folder || !fs.existsSync(folder)) return;
+  const vaultPath = path.join(folder, SYNC_VAULT_NAME);
+  try {
+    if (fs.existsSync(vaultPath)) {
+      lastSyncFolderMtime = fs.statSync(vaultPath).mtimeMs;
+    }
+    syncFolderWatcher = fs.watch(folder, () => {
+      if (!fs.existsSync(vaultPath)) return;
+      const stat = fs.statSync(vaultPath);
+      if (stat.mtimeMs <= lastSyncFolderMtime) return;
+      lastSyncFolderMtime = stat.mtimeMs;
+      mainWin?.webContents.send('sync-folder-changed', {
+        path: vaultPath,
+        mtime: stat.mtimeMs,
+      });
+    });
+  } catch (e) {
+    console.error('[sync-folder-watch]', e);
+  }
 }
 
 function permissionLabel(permission) {
@@ -1104,33 +1216,18 @@ ipcMain.handle('site-exception-set', (_, host, action) => {
 
 ipcMain.handle('sync-export', (_, passphrase) => {
   if (!passphrase || String(passphrase).length < 8) throw new Error('Passphrase must be at least 8 characters');
-  return encryptVault(passphrase, {
-    bookmarks: read(userPaths().bookmarks, []),
-    settings: getSettings(),
-    privacy: getPrivacyDoc(),
-    sessions: read(userPaths().session, null),
-  });
+  return encryptVault(passphrase, buildSyncPayload());
 });
 
 ipcMain.handle('sync-import', (_, passphrase, vault) => {
   const data = decryptVault(passphrase, vault);
-  if (data.bookmarks) write(userPaths().bookmarks, data.bookmarks);
-  if (data.settings) {
-    appSettings = { ...DEFAULT_SETTINGS, ...data.settings };
-    write(userPaths().settings, appSettings);
-  }
-  if (data.privacy) savePrivacyDoc(data.privacy);
-  if (data.sessions) write(userPaths().session, data.sessions);
+  applySyncImport(data);
   return data;
 });
 
 ipcMain.handle('sync-export-file', async (_, passphrase) => {
-  const vault = encryptVault(passphrase, {
-    bookmarks: read(userPaths().bookmarks, []),
-    settings: getSettings(),
-    privacy: getPrivacyDoc(),
-    sessions: read(userPaths().session, null),
-  });
+  if (!passphrase || String(passphrase).length < 8) throw new Error('Passphrase must be at least 8 characters');
+  const vault = encryptVault(passphrase, buildSyncPayload());
   const r = await dialog.showSaveDialog(mainWin, {
     title: 'Export encrypted vault',
     defaultPath: 'enigma-vault.json',
@@ -1150,14 +1247,70 @@ ipcMain.handle('sync-import-file', async (_, passphrase) => {
   if (r.canceled || !r.filePaths?.[0]) return null;
   const vault = JSON.parse(fs.readFileSync(r.filePaths[0], 'utf8'));
   const data = decryptVault(passphrase, vault);
-  if (data.bookmarks) write(userPaths().bookmarks, data.bookmarks);
-  if (data.settings) {
-    appSettings = { ...DEFAULT_SETTINGS, ...data.settings };
-    write(userPaths().settings, appSettings);
-  }
-  if (data.privacy) savePrivacyDoc(data.privacy);
-  if (data.sessions) write(userPaths().session, data.sessions);
+  applySyncImport(data);
   return data;
+});
+
+ipcMain.handle('sync-folder-pick', async () => {
+  const r = await dialog.showOpenDialog(mainWin, {
+    title: 'Choose sync folder',
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  return r.canceled || !r.filePaths?.[0] ? null : r.filePaths[0];
+});
+
+ipcMain.handle('sync-folder-export', async (_, passphrase) => {
+  if (!passphrase || String(passphrase).length < 8) throw new Error('Passphrase must be at least 8 characters');
+  const folder = String(getSettings().syncFolder || '').trim();
+  if (!folder) throw new Error('No sync folder configured');
+  fs.mkdirSync(folder, { recursive: true });
+  const vault = encryptVault(passphrase, buildSyncPayload());
+  const dest = path.join(folder, SYNC_VAULT_NAME);
+  fs.writeFileSync(dest, JSON.stringify(vault, null, 2));
+  lastSyncFolderMtime = fs.statSync(dest).mtimeMs;
+  return dest;
+});
+
+ipcMain.handle('sync-folder-import', async (_, passphrase) => {
+  if (!passphrase || String(passphrase).length < 8) throw new Error('Passphrase must be at least 8 characters');
+  const folder = String(getSettings().syncFolder || '').trim();
+  if (!folder) throw new Error('No sync folder configured');
+  const src = path.join(folder, SYNC_VAULT_NAME);
+  if (!fs.existsSync(src)) throw new Error('No enigma-vault.json in sync folder');
+  const vault = JSON.parse(fs.readFileSync(src, 'utf8'));
+  const data = decryptVault(passphrase, vault);
+  applySyncImport(data);
+  lastSyncFolderMtime = fs.statSync(src).mtimeMs;
+  return src;
+});
+
+ipcMain.handle('password-bridge-script', () => {
+  const p = path.join(__dirname, '../assets/password-bridge.js');
+  return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '';
+});
+
+ipcMain.handle('passwords-for-host', (_, sessionId, host) => {
+  const doc = loadPasswordDoc(read, userDir, activeUserId);
+  return listForHost(doc, sessionId || 'default', host, pwKey());
+});
+
+ipcMain.handle('passwords-for-session', (_, sessionId) => {
+  const doc = loadPasswordDoc(read, userDir, activeUserId);
+  return listBySession(doc, sessionId || 'default', pwKey()).map(({ password, ...rest }) => rest);
+});
+
+ipcMain.handle('passwords-save', (_, entry) => {
+  const doc = loadPasswordDoc(read, userDir, activeUserId);
+  const saved = upsertEntry(doc, entry, pwKey());
+  savePasswordDoc(write, userDir, activeUserId, doc);
+  return { id: saved.id, host: saved.host, username: saved.username };
+});
+
+ipcMain.handle('passwords-remove', (_, id) => {
+  const doc = loadPasswordDoc(read, userDir, activeUserId);
+  const ok = removeEntry(doc, id);
+  if (ok) savePasswordDoc(write, userDir, activeUserId, doc);
+  return ok;
 });
 
 ipcMain.handle('validate-url', (_, url) => isNavigableUrl(url));
@@ -1198,6 +1351,8 @@ ipcMain.handle('settings-save', (_, d) => {
   write(userPaths().settings, appSettings);
   syncNativeTheme(appSettings.theme);
   syncOsThemeWatcher(appSettings.theme);
+  applySecureDns(appSettings);
+  restartSyncFolderWatch(appSettings);
   return true;
 });
 ipcMain.handle('os-prefers-dark', () => readOsPrefersDark());
@@ -1499,6 +1654,8 @@ if (!lock) {
     ensureUsersMigrated();
     const reg = getRegistry();
     if (reg.activeUserId) setActiveUser(reg.activeUserId);
+    applySecureDns(getSettings());
+    restartSyncFolderWatch(getSettings());
     syncNativeTheme(appSettings.theme);
     syncOsThemeWatcher(appSettings.theme);
     createSplash();

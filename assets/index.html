@@ -894,6 +894,9 @@ html.compact-tabs .navbar{gap:4px;padding:4px 8px 6px}
 .s-sel:focus{border-color:var(--acc)}
 .s-inp{background:var(--s3);border:1px solid var(--b2);color:var(--t1);padding:6px 12px;border-radius:8px;font-size:11px;outline:none;width:160px}
 .s-inp:focus{border-color:var(--acc)}
+.s-inp[type=number]{-moz-appearance:textfield;appearance:textfield}
+.s-inp[type=number]::-webkit-inner-spin-button,.s-inp[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.s-days-sel{width:88px;min-width:88px}
 .theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px;margin-top:6px}
 .theme-opt{padding:12px;border-radius:11px;border:2px solid var(--b1);cursor:pointer;text-align:center;font-size:11px;color:var(--t2);transition:all .15s;font-weight:600;background:rgba(255,255,255,.02)}
 .theme-opt:hover{border-color:var(--b2);color:var(--t1);transform:translateY(-1px)}
@@ -1730,8 +1733,15 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
         <option value="onQuit">Burn on browser quit</option>
       </select>
       <div id="sd-cleanup-days-row" style="display:none;align-items:center;gap:6px">
-        <input type="number" class="s-inp" id="sd-cleanup-days" min="1" max="365" value="7" style="width:72px" onchange="B.setSessionCleanupDays(+this.value)"/>
-        <span class="m-sub">days without use</span>
+        <select class="s-sel s-days-sel" id="sd-cleanup-days" onchange="B.setSessionCleanupDays(+this.value)">
+          <option value="3">3 days</option>
+          <option value="7" selected>7 days</option>
+          <option value="14">14 days</option>
+          <option value="30">30 days</option>
+          <option value="60">60 days</option>
+          <option value="90">90 days</option>
+        </select>
+        <span class="m-sub">without use</span>
       </div>
     </div>
     <div>
@@ -1993,7 +2003,7 @@ const B = (() => {
   let newtabs   = {};
   let bookmarks = [];
   let history   = [];
-  let settings  = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,verticalTabs:false,burnEphemeralOnQuit:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,closeTabsOnExit:false,rememberCloseTabsChoice:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,sessionRules:{}};
+  let settings  = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,verticalTabs:false,burnEphemeralOnQuit:false,secureDns:'off',secureDnsCustom:'',syncFolder:'',syncWatchFolder:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,closeTabsOnExit:false,rememberCloseTabsChoice:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,sessionRules:{}};
   let privacyDoc = { filterLists: true, fingerprintProtection: true, webrtcProtection: true, mixedContentBlock: false, siteExceptions: {} };
   let sessionMeta = {};
   let tabGroupsByPid = {};
@@ -2004,6 +2014,7 @@ const B = (() => {
   let sessionBlockedByPid = {};
   let dashboardPid = null;
   let fpScript = '';
+  let passwordBridgeSrc = '';
   let pendingRestoreSession = null;
   let zoom      = 1.0;
   let ephem     = false;
@@ -3140,6 +3151,7 @@ const B = (() => {
       if (fpOn && fpScript && t.url && !t.url.startsWith('about:')) {
         try { wv.executeJavaScript(fpScript, false); } catch {}
       }
+      void runPasswordAssist(wv, pid);
       scheduleSessionSave();
     });
     wv.addEventListener('page-favicon-updated', e => {
@@ -3154,6 +3166,7 @@ const B = (() => {
       t.url = e.url;
       recordNavHist(tabId, e.url, pid);
       if (pid === activePid && tabId === activeTid[pid]) updateNav();
+      void runPasswordAssist(wv, pid, true);
     });
     wv.addEventListener('did-navigate-in-page', e => {
       const t = tabRef(tabId, pid);
@@ -4796,13 +4809,52 @@ const B = (() => {
         </div>
       </div>
       <div class="s-sec">
+        <div class="s-sec-title">Secure DNS</div>
+        <div class="s-row">
+          <div class="s-lbl">DNS-over-HTTPS<div class="s-sub">Encrypt DNS lookups — Cloudflare, Quad9, or custom</div></div>
+          <select class="s-sel" id="settings-dns" onchange="B.onSecureDnsChange(this.value)">
+            <option value="off"${settings.secureDns==='off'||!settings.secureDns?' selected':''}>System default</option>
+            <option value="cloudflare"${settings.secureDns==='cloudflare'?' selected':''}>Cloudflare</option>
+            <option value="quad9"${settings.secureDns==='quad9'?' selected':''}>Quad9</option>
+            <option value="adguard"${settings.secureDns==='adguard'?' selected':''}>AdGuard</option>
+            <option value="custom"${settings.secureDns==='custom'?' selected':''}>Custom</option>
+          </select>
+        </div>
+        <div class="s-row" id="settings-dns-custom-row" style="${settings.secureDns==='custom'?'':'display:none'}">
+          <div class="s-lbl">Custom DoH URL</div>
+          <input class="s-inp" style="width:100%" value="${esc(settings.secureDnsCustom||'')}" placeholder="https://dns.example/dns-query" onchange="B.saveSetting('secureDnsCustom',this.value);B.applySecureDnsSetting()"/>
+        </div>
+      </div>
+      <div class="s-sec">
+        <div class="s-sec-title">Passwords (${esc(prof(activePid)?.name||'session')})</div>
+        <div class="s-row">
+          <div class="s-lbl">Session password vault<div class="s-sub">Saved logins are isolated per container — encrypted on disk</div></div>
+        </div>
+        <div class="exc-list" id="pw-list"><div class="pempty" style="padding:16px">No saved passwords for this session yet.</div></div>
+      </div>
+      <div class="s-sec">
         <div class="s-sec-title">Encrypted sync (optional)</div>
         <div class="s-row s-row-stack">
-          <div class="s-lbl">End-to-end encrypted vault<div class="s-sub">Export or import bookmarks, settings &amp; sessions with a passphrase</div></div>
+          <div class="s-lbl">End-to-end encrypted vault<div class="s-sub">Export or import bookmarks, settings, sessions &amp; passwords with a passphrase — no Enigma account</div></div>
           <input class="s-inp" id="sync-pass" type="password" placeholder="Passphrase (8+ characters)" autocomplete="off" style="width:100%"/>
           <div class="s-row-btns s-row-btns-grid">
             <button class="btn btn-g" onclick="B.exportVault()">Export vault</button>
             <button class="btn btn-g" onclick="B.importVault()">Import vault</button>
+          </div>
+        </div>
+        <div class="s-row s-row-stack" style="margin-top:8px">
+          <div class="s-lbl">Sync folder<div class="s-sub">Point at Google Drive, Synology, Dropbox, etc. — writes <code style="font-size:10px">enigma-vault.json</code></div></div>
+          <div class="exc-row">
+            <input class="s-inp" id="sync-folder" style="flex:1;min-width:0" value="${esc(settings.syncFolder||'')}" placeholder="C:\\Users\\You\\Google Drive\\Enigma" readonly/>
+            <button class="btn btn-g" style="padding:5px 10px;font-size:11px" onclick="B.pickSyncFolder()">Browse</button>
+          </div>
+          <div class="s-row" style="padding:0;margin-top:4px">
+            <div class="s-lbl">Watch folder for changes<div class="s-sub">Notify when vault file updates on another device</div></div>
+            <button class="tgl${settings.syncWatchFolder?' on':''}" onclick="B.toggleSetting('syncWatchFolder',this);B.applySyncFolderWatch()"></button>
+          </div>
+          <div class="s-row-btns s-row-btns-grid">
+            <button class="btn btn-g" onclick="B.exportVaultToFolder()">Write to folder</button>
+            <button class="btn btn-g" onclick="B.importVaultFromFolder()">Read from folder</button>
           </div>
         </div>
       </div>
@@ -4858,6 +4910,7 @@ const B = (() => {
       </div>`;
     renderSiteExceptions();
     renderSessionRules();
+    renderPasswordList();
     eAPI.appVersion().then(v => { const el = $('settings-ver'); if (el) el.textContent = v; }).catch(() => {});
     refreshSettingsUpdateStatus();
   }
@@ -4975,7 +5028,7 @@ const B = (() => {
   async function importVault() {
     const pass = $('sync-pass')?.value || '';
     if (pass.length < 8) { toast('Passphrase must be at least 8 characters'); return; }
-    if (!confirm('Import vault? This will merge bookmarks, settings, privacy rules, and session definitions.')) return;
+    if (!confirm('Import vault? This merges bookmarks, settings, privacy rules, sessions, and passwords.')) return;
     try {
       await eAPI.syncImportFile(pass);
       privacyDoc = await eAPI.privacyLoad();
@@ -4983,12 +5036,157 @@ const B = (() => {
       bookmarks = await eAPI.bmLoad();
       await initSessionOnStartup();
       for (const p of profiles) { if (!p.partition) await ensurePartition(p); }
+      applySecureDnsSetting();
       await renderAll();
       renderSettings();
       toast('✅ Vault imported — reload recommended for full effect');
     } catch {
       toast('❌ Import failed — check passphrase');
     }
+  }
+
+  async function pickSyncFolder() {
+    const folder = await eAPI.syncFolderPick();
+    if (!folder) return;
+    settings.syncFolder = folder;
+    await eAPI.settingsSave(settings);
+    const inp = $('sync-folder');
+    if (inp) inp.value = folder;
+    toast('📁 Sync folder set');
+  }
+
+  async function applySyncFolderWatch() {
+    await eAPI.settingsSave(settings);
+  }
+
+  async function exportVaultToFolder() {
+    const pass = $('sync-pass')?.value || '';
+    if (pass.length < 8) { toast('Passphrase must be at least 8 characters'); return; }
+    if (!settings.syncFolder) { toast('Choose a sync folder first'); return; }
+    try {
+      const dest = await eAPI.syncFolderExport(pass);
+      toast(dest ? '✅ Vault written to sync folder' : 'Export cancelled');
+    } catch (e) {
+      toast('❌ ' + (e?.message || 'Folder export failed'));
+    }
+  }
+
+  async function importVaultFromFolder() {
+    const pass = $('sync-pass')?.value || '';
+    if (pass.length < 8) { toast('Passphrase must be at least 8 characters'); return; }
+    if (!settings.syncFolder) { toast('Choose a sync folder first'); return; }
+    if (!confirm('Import vault from sync folder? This merges all encrypted data.')) return;
+    try {
+      await eAPI.syncFolderImport(pass);
+      privacyDoc = await eAPI.privacyLoad();
+      settings = await eAPI.settingsLoad();
+      bookmarks = await eAPI.bmLoad();
+      await initSessionOnStartup();
+      for (const p of profiles) { if (!p.partition) await ensurePartition(p); }
+      applySecureDnsSetting();
+      await renderAll();
+      renderSettings();
+      toast('✅ Sync folder imported');
+    } catch {
+      toast('❌ Import failed — check folder and passphrase');
+    }
+  }
+
+  async function onSecureDnsChange(mode) {
+    settings.secureDns = mode;
+    const row = $('settings-dns-custom-row');
+    if (row) row.style.display = mode === 'custom' ? '' : 'none';
+    await eAPI.settingsSave(settings);
+    toast(mode === 'off' ? 'DNS: system default' : `DNS: ${mode}`);
+  }
+
+  function applySecureDnsSetting() {
+    void eAPI.settingsSave(settings);
+  }
+
+  async function renderPasswordList() {
+    const el = $('pw-list');
+    if (!el) return;
+    const rows = await eAPI.passwordsForSession(activePid).catch(() => []);
+    if (!rows.length) {
+      el.innerHTML = '<div class="pempty" style="padding:16px">No saved passwords for this session yet.</div>';
+      return;
+    }
+    el.innerHTML = rows.map(r => `
+      <div class="exc-item">
+        <span><strong>${esc(r.username)}</strong> · ${esc(r.host)}</span>
+        <button class="btn btn-r" style="padding:3px 8px;font-size:10px" onclick="B.removePassword('${esc(r.id)}')">Remove</button>
+      </div>`).join('');
+  }
+
+  async function removePassword(id) {
+    if (!confirm('Remove this saved password?')) return;
+    await eAPI.passwordsRemove(id);
+    renderPasswordList();
+    toast('Password removed');
+  }
+
+  async function injectPasswordBridge(wv) {
+    if (!passwordBridgeSrc) {
+      passwordBridgeSrc = await eAPI.passwordBridgeScript().catch(() => '');
+    }
+    if (!passwordBridgeSrc) return;
+    try { await wv.executeJavaScript(passwordBridgeSrc, false); } catch { /* cross-origin */ }
+  }
+
+  async function handlePasswordCapture(wv, pid) {
+    try {
+      const pending = await wv.executeJavaScript('window.__enigmaPeekPending && window.__enigmaPeekPending()', true);
+      if (!pending?.h || !pending?.u || !pending?.p) return;
+      await wv.executeJavaScript('window.__enigmaClearPending && window.__enigmaClearPending()', true);
+      if (!confirm(`Save password for ${pending.u} on ${pending.h}?`)) return;
+      await eAPI.passwordsSave({
+        sessionId: pid,
+        host: pending.h,
+        username: pending.u,
+        password: pending.p,
+      });
+      toast('🔑 Password saved for this session');
+      if (openPanel === 'settings') renderPasswordList();
+    } catch { /* ignore */ }
+  }
+
+  async function offerPasswordAutofill(wv, pid) {
+    let host;
+    try { host = new URL(wv.getURL()).hostname; } catch { return; }
+    if (!host) return;
+    const creds = await eAPI.passwordsForHost(pid, host).catch(() => []);
+    if (!creds?.length) return;
+    const passEl = await wv.executeJavaScript('!!document.querySelector("input[type=password]")', true);
+    if (!passEl) return;
+    const filled = await wv.executeJavaScript('!!document.querySelector("input[type=password]")?.value', true);
+    if (filled) return;
+    if (creds.length === 1) {
+      const c = creds[0];
+      const ok = await wv.executeJavaScript(
+        `window.__enigmaApplyFill && window.__enigmaApplyFill(${JSON.stringify(c.username)}, ${JSON.stringify(c.password)})`,
+        true,
+      );
+      if (ok) toast(`🔑 Filled ${c.username}`);
+      return;
+    }
+    const labels = creds.map((c, i) => `${i + 1}. ${c.username}`).join('\n');
+    const choice = prompt(`Fill password for ${host}:\n${labels}\n\nEnter number:`);
+    const idx = parseInt(choice, 10) - 1;
+    if (!creds[idx]) return;
+    const c = creds[idx];
+    await wv.executeJavaScript(
+      `window.__enigmaApplyFill && window.__enigmaApplyFill(${JSON.stringify(c.username)}, ${JSON.stringify(c.password)})`,
+      true,
+    );
+    toast(`🔑 Filled ${c.username}`);
+  }
+
+  async function runPasswordAssist(wv, pid, captureOnly = false) {
+    if (!wv?.getURL || /^about:/.test(wv.getURL() || '')) return;
+    await injectPasswordBridge(wv);
+    if (!captureOnly) await offerPasswordAutofill(wv, pid);
+    await handlePasswordCapture(wv, pid);
   }
 
   let electronVer = '';
@@ -5094,7 +5292,7 @@ const B = (() => {
   }
 
   async function loadUserData() {
-    const defaults = { homepage:'https://google.com', searchEngine:'google', theme:'dark', showClock:true, compactTabs:false, verticalTabs:false, burnEphemeralOnQuit:false, blockTrackers:true, httpsOnly:false, doNotTrack:true, blockPopups:true, restoreSession:false };
+    const defaults = { homepage:'https://google.com', searchEngine:'google', theme:'dark', showClock:true, compactTabs:false, verticalTabs:false, burnEphemeralOnQuit:false, secureDns:'off', secureDnsCustom:'', syncFolder:'', syncWatchFolder:false, blockTrackers:true, httpsOnly:false, doNotTrack:true, blockPopups:true, restoreSession:false };
     [bookmarks, history, settings] = await Promise.all([
       eAPI.bmLoad().catch(() => []),
       eAPI.historyLoad().catch(() => []),
@@ -6144,9 +6342,9 @@ const B = (() => {
     const windowBoot = await eAPI.getWindowBoot().catch(() => null);
     mainUserPartition = await eAPI.userMainPartition();
     renderUserStrip();
-    const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,verticalTabs:false,burnEphemeralOnQuit:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,closeTabsOnExit:false,rememberCloseTabsChoice:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,checkUpdates:true,autoInstallUpdates:false};
+    const defaults = {homepage:'https://google.com',searchEngine:'google',theme:'dark',showClock:true,compactTabs:false,verticalTabs:false,burnEphemeralOnQuit:false,secureDns:'off',secureDnsCustom:'',syncFolder:'',syncWatchFolder:false,blockTrackers:true,httpsOnly:false,doNotTrack:true,blockPopups:true,restoreSession:false,closeTabsOnExit:false,rememberCloseTabsChoice:false,filterLists:true,fingerprintProtection:true,webrtcProtection:true,mixedContentBlock:false,checkUpdates:true,autoInstallUpdates:false};
     try {
-      [bookmarks, history, settings, chromiumVer, electronVer, blockedCount, privacyDoc, sessionTemplates, fpScript] = await Promise.all([
+      [bookmarks, history, settings, chromiumVer, electronVer, blockedCount, privacyDoc, sessionTemplates, fpScript, passwordBridgeSrc] = await Promise.all([
         eAPI.bmLoad().catch(() => []),
         eAPI.historyLoad().catch(() => []),
         eAPI.settingsLoad().catch(() => ({})),
@@ -6156,6 +6354,7 @@ const B = (() => {
         eAPI.privacyLoad().catch(() => ({})),
         eAPI.sessionTemplates().catch(() => []),
         eAPI.fingerprintScript().catch(() => ''),
+        eAPI.passwordBridgeScript().catch(() => ''),
       ]);
     } catch (e) {
       console.error('[init] load failed', e);
@@ -6208,6 +6407,9 @@ const B = (() => {
   });
   eAPI.on('report-tabbar-bounds', () => reportTabbarBounds());
   eAPI.on('window-close-request', () => { void handleWindowCloseRequest(); });
+  eAPI.on('sync-folder-changed', () => {
+    toast('📁 Sync folder updated — open Settings to import');
+  });
   window.addEventListener('resize', reportTabbarBounds);
   init();
 
@@ -6219,6 +6421,8 @@ const B = (() => {
     setSessionSearchEngine, setSessionCleanupMode, setSessionCleanupDays, enterPictureInPicture,
     createTabGroup, assignTabToGroup,
     addSiteException, removeSiteException, exportVault, importVault,
+    pickSyncFolder, exportVaultToFolder, importVaultFromFolder, applySyncFolderWatch,
+    onSecureDnsChange, applySecureDnsSetting, renderPasswordList, removePassword,
     switchUser, removeUser, openUserModal, closeUserModal, createUser, _scUser, _scUserTheme, _scUserAvatar, _scUserPrivacy,
     showOnboarding, showOnboardingMain, showOnboardingSignIn, obNext, obBack,
     finishOnboardingGuest, finishOnboardingAccount, finishOnboardingStart, importBrowserOnboarding, _scOb,

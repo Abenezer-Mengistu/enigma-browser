@@ -52,10 +52,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Refresh site icons
-        run: |
-          mkdir -p website/assets/icons
-          cp assets/icons/icon_32.png assets/icons/icon_64.png website/assets/icons/
-          touch website/.nojekyll
+        run: node scripts/sync-website-icons.mjs
 
       - uses: actions/configure-pages@v5
 

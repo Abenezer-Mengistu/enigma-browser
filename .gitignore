@@ -29,5 +29,7 @@ desktop.ini
 release-tmp/
 events.json
 
-release-tmp/
-events.json
+# Generated website data (run npm run website:build)
+website/downloads.json
+website/analytics-data.json
+website/assets/icons/

@@ -33,3 +33,7 @@ events.json
 website/downloads.json
 website/analytics-data.json
 website/assets/icons/
+
+# Local git hooks (copy from .githooks/pre-commit.example)
+.githooks/*
+!.githooks/pre-commit.example

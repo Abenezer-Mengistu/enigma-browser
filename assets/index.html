@@ -829,9 +829,9 @@ html.compact-tabs .navbar{gap:4px;padding:4px 8px 6px}
 .m-sub{font-size:12px;color:var(--t2);line-height:1.55;margin:0}
 .m-label{font-size:11px;color:var(--t3);margin-bottom:5px;font-weight:500;letter-spacing:.02em}
 .m-hint{font-size:10.5px;color:var(--t4);margin-top:4px;line-height:1.4}
-.m-inp,.m-sel{height:36px;border:1px solid var(--b2);border-radius:var(--r);padding:0 12px;font-size:13px;background:var(--s1);color:var(--t1);outline:none;width:100%}
+.m-inp,.m-sel{height:36px;border:1px solid var(--b2);border-radius:var(--r);padding:0 12px;font-size:13px;background-color:var(--s1);color:var(--t1);outline:none;width:100%}
 .m-inp:focus,.m-sel:focus{border-color:var(--acc);box-shadow:0 0 0 2px rgba(144,97,249,.2)}
-.m-sel{cursor:pointer}
+.m-sel{cursor:pointer;-webkit-appearance:none;-moz-appearance:none;appearance:none;padding-right:32px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
 .m-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .m-field{min-width:0}
 .m-chip-grid{display:flex;flex-wrap:wrap;gap:6px}
@@ -890,13 +890,20 @@ html.compact-tabs .navbar{gap:4px;padding:4px 8px 6px}
 .s-row-btns-grid .btn{width:100%;padding:7px 8px;font-size:11px;text-align:center;white-space:nowrap}
 .s-lbl{font-size:12.5px;color:var(--t1);flex:1;min-width:0;font-weight:500}
 .s-sub{font-size:10.5px;color:var(--t3);margin-top:3px}
-.s-sel{background:var(--s3);border:1px solid var(--b2);color:var(--t1);padding:6px 10px;border-radius:8px;font-size:11px;outline:none;cursor:pointer}
+.s-sel{background-color:var(--s3);border:1px solid var(--b2);color:var(--t1);padding:6px 28px 6px 10px;border-radius:8px;font-size:11px;outline:none;cursor:pointer;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
 .s-sel:focus{border-color:var(--acc)}
 .s-inp{background:var(--s3);border:1px solid var(--b2);color:var(--t1);padding:6px 12px;border-radius:8px;font-size:11px;outline:none;width:160px}
 .s-inp:focus{border-color:var(--acc)}
-.s-inp[type=number]{-moz-appearance:textfield;appearance:textfield}
-.s-inp[type=number]::-webkit-inner-spin-button,.s-inp[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-.s-days-sel{width:88px;min-width:88px}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none!important;appearance:none!important;margin:0;display:none;height:0}
+select,.m-sel,.si-select{-webkit-appearance:none;-moz-appearance:none;appearance:none}
+.sd-days-pick{display:flex;flex-wrap:wrap;gap:6px}
+.sd-day-opt{
+  padding:5px 11px;border-radius:8px;border:1px solid var(--b2);background:var(--s3);
+  color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;transition:all .12s;line-height:1.2;
+}
+.sd-day-opt:hover{border-color:var(--b3);color:var(--t1)}
+.sd-day-opt.sel{border-color:var(--acc);color:var(--acc3);background:rgba(124,58,237,.14);box-shadow:0 0 0 1px rgba(124,58,237,.2)}
 .theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px;margin-top:6px}
 .theme-opt{padding:12px;border-radius:11px;border:2px solid var(--b1);cursor:pointer;text-align:center;font-size:11px;color:var(--t2);transition:all .15s;font-weight:600;background:rgba(255,255,255,.02)}
 .theme-opt:hover{border-color:var(--b2);color:var(--t1);transform:translateY(-1px)}
@@ -1176,7 +1183,7 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
 .si-row span:first-child{color:var(--t3)}
 .si-row span:last-child{color:var(--t1);font-weight:500}
 .si-divider{height:1px;background:var(--b1);margin:8px 0}
-.si-select{max-width:150px;padding:4px 8px;border-radius:8px;border:1px solid var(--b2);background:var(--s2);color:var(--t1);font-size:11px}
+.si-select{max-width:150px;padding:4px 28px 4px 8px;border-radius:8px;border:1px solid var(--b2);background-color:var(--s2);color:var(--t1);font-size:11px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
 .si-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .si-actions .btn{flex:1;min-width:120px;padding:8px 10px;font-size:11px}
 .si-perm{font-size:10px;color:var(--t3);margin-top:6px;line-height:1.5}
@@ -1732,16 +1739,16 @@ button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
         <option value="idle">Burn after idle period</option>
         <option value="onQuit">Burn on browser quit</option>
       </select>
-      <div id="sd-cleanup-days-row" style="display:none;align-items:center;gap:6px">
-        <select class="s-sel s-days-sel" id="sd-cleanup-days" onchange="B.setSessionCleanupDays(+this.value)">
-          <option value="3">3 days</option>
-          <option value="7" selected>7 days</option>
-          <option value="14">14 days</option>
-          <option value="30">30 days</option>
-          <option value="60">60 days</option>
-          <option value="90">90 days</option>
-        </select>
-        <span class="m-sub">without use</span>
+      <div id="sd-cleanup-days-row" style="display:none;flex-direction:column;gap:6px">
+        <span class="m-sub">Burn after this many days without use</span>
+        <div class="sd-days-pick" id="sd-cleanup-days">
+          <button type="button" class="sd-day-opt" data-days="3" onclick="B.setSessionCleanupDays(3)">3 days</button>
+          <button type="button" class="sd-day-opt" data-days="7" onclick="B.setSessionCleanupDays(7)">7 days</button>
+          <button type="button" class="sd-day-opt" data-days="14" onclick="B.setSessionCleanupDays(14)">14 days</button>
+          <button type="button" class="sd-day-opt" data-days="30" onclick="B.setSessionCleanupDays(30)">30 days</button>
+          <button type="button" class="sd-day-opt" data-days="60" onclick="B.setSessionCleanupDays(60)">60 days</button>
+          <button type="button" class="sd-day-opt" data-days="90" onclick="B.setSessionCleanupDays(90)">90 days</button>
+        </div>
       </div>
     </div>
     <div>
@@ -3732,9 +3739,8 @@ const B = (() => {
       modeEl.disabled = p.id === 'default';
     }
     const daysRow = $('sd-cleanup-days-row');
-    const daysInp = $('sd-cleanup-days');
     if (daysRow) daysRow.style.display = cleanup.mode === 'idle' ? 'flex' : 'none';
-    if (daysInp) daysInp.value = String(cleanup.days || 7);
+    highlightCleanupDays(cleanup.days || 7);
     const stats = await eAPI.sessionStats(p.id, !!p.ephemeral).catch(() => ({}));
     const blocked = stats.blocked ?? sessionBlockedByPid[p.id] ?? 0;
     $('sd-blocked').textContent = String(blocked);
@@ -3750,6 +3756,13 @@ const B = (() => {
       : '<span class="sd-tag">None yet</span>';
   }
 
+  function highlightCleanupDays(days) {
+    const allowed = [3, 7, 14, 30, 60, 90];
+    const pick = allowed.includes(days) ? days : 7;
+    document.querySelectorAll('#sd-cleanup-days .sd-day-opt').forEach(btn => {
+      btn.classList.toggle('sel', +btn.dataset.days === pick);
+    });
+  }
   function setSessionSearchEngine(val) {
     const p = prof(dashboardPid || activePid);
     if (!p) return;
@@ -3762,11 +3775,12 @@ const B = (() => {
     const p = prof(dashboardPid || activePid);
     if (!p || p.id === 'default') return;
     if (mode === 'off') delete p.cleanup;
-    else if (mode === 'idle') p.cleanup = { mode: 'idle', days: +( $('sd-cleanup-days')?.value || 7) };
+    else if (mode === 'idle') p.cleanup = { mode: 'idle', days: p.cleanup?.days || 7 };
     else p.cleanup = { mode: 'onQuit' };
     scheduleSessionSave();
     const daysRow = $('sd-cleanup-days-row');
     if (daysRow) daysRow.style.display = mode === 'idle' ? 'flex' : 'none';
+    if (mode === 'idle') highlightCleanupDays(p.cleanup?.days || 7);
     toast(mode === 'off' ? 'Cleanup: manual only' : mode === 'idle' ? `Cleanup: burn after ${p.cleanup?.days || 7} idle days` : 'Cleanup: burn on quit');
   }
   function setSessionCleanupDays(days) {
@@ -3774,6 +3788,7 @@ const B = (() => {
     if (!p?.cleanup || p.cleanup.mode !== 'idle') return;
     p.cleanup.days = Math.max(1, Math.min(365, days || 7));
     scheduleSessionSave();
+    highlightCleanupDays(p.cleanup.days);
   }
 
   function closeSessionDashboard() {

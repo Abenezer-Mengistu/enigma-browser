@@ -862,12 +862,14 @@ function createBrowserWindow(opts = {}) {
       hasActiveDownloads: () => downloads.some(d => d.state === 'progressing'),
       shouldCheckUpdates: () => getSettings().checkUpdates !== false,
     });
-    const failedUpdate = checkPendingUpdateOnStartup();
-    if (failedUpdate) {
-      win.webContents.once('did-finish-load', () => {
-        if (!win.isDestroyed()) win.webContents.send('update-install-failed', failedUpdate);
-      });
-    }
+    win.webContents.once('did-finish-load', () => {
+      if (win.isDestroyed() || !app.isPackaged || getSettings().checkUpdates === false) return;
+      checkForUpdates().then((result) => {
+        if (win.isDestroyed() || !result) return;
+        if (result.failedInstall) win.webContents.send('update-install-failed', result);
+        else if (result.available) win.webContents.send('update-available', result);
+      }).catch(() => {});
+    });
     ensureUsersMigrated();
     const reg = getRegistry();
     if (reg.activeUserId) setActiveUser(reg.activeUserId);

@@ -1925,6 +1925,7 @@ const CM_SVG = {
   close: '<svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
   reopen: '<svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>',
   'close-right': '<svg viewBox="0 0 24 24"><path d="M5 12h12"/><path d="m13 8 4 4-4 4"/></svg>',
+  pip: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="14" height="10" rx="1.5"/><rect x="11" y="11" width="8" height="6" rx="1" fill="currentColor" stroke="none" opacity=".35"/></svg>',
 };
 const MORE_MENU = [
   { label: 'Tabs', items: [
@@ -6090,16 +6091,40 @@ const B = (() => {
     else eAPI.openUpdatePage?.();
   }
 
+  function parseUpdateVersion(v) {
+    const m = String(v || '').replace(/^v/i, '').match(/(\d+)\.(\d+)\.(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : null;
+  }
+  function isUpdateVersionNewer(latest, current) {
+    const a = parseUpdateVersion(latest);
+    const b = parseUpdateVersion(current);
+    if (!a || !b) return false;
+    for (let i = 0; i < 3; i++) {
+      if (a[i] > b[i]) return true;
+      if (a[i] < b[i]) return false;
+    }
+    return false;
+  }
+
   function applyPendingUpdate(info, { toastOnNew = false, forceBanner = false } = {}) {
     if (!info?.available) return { shown: false, info };
+    pendingUpdate = info;
     if (info.failedInstall || info.blockAutoInstall) {
       showUpdateFailedInstall(info);
       return { shown: true, info };
     }
+    if (
+      settings.dismissedUpdateVersion
+      && info.latestVersion
+      && isUpdateVersionNewer(info.latestVersion, settings.dismissedUpdateVersion)
+    ) {
+      delete settings.dismissedUpdateVersion;
+      eAPI.settingsSave(settings);
+    }
     if (!forceBanner && settings.dismissedUpdateVersion === info.latestVersion && !updateReady) {
+      refreshSettingsUpdateStatus();
       return { shown: false, info };
     }
-    pendingUpdate = info;
     if (info.ready) updateReady = true;
     $('update-ver').textContent = info.latestVersion;
     const notes = $('update-notes');
@@ -6187,6 +6212,8 @@ const B = (() => {
     } catch (e) {
       if (!silent) console.warn('[update]', e);
       return null;
+    } finally {
+      if (!silent) refreshSettingsUpdateStatus();
     }
   }
 
